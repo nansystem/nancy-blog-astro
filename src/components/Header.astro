@@ -1,52 +1,71 @@
 ---
 import { SITE_TITLE } from '../consts';
-import HeaderLink from './HeaderLink.astro';
 ---
 
 <header>
 	<nav>
-		<h2><a href="/">{SITE_TITLE}</a></h2>
-		<div class="internal-links">
-			<HeaderLink href="/category/javascript">JavaScript</HeaderLink>
-			<HeaderLink href="/category/css">CSS</HeaderLink>
-			<HeaderLink href="/category/google-cloud">GoogleCloud</HeaderLink>
+		<a class="site-title" href="/">{SITE_TITLE}</a>
+		<div class="nav-links">
+			<a href="/category/javascript">JavaScript</a>
+			<a href="/category/python">Python</a>
+			<a href="/category/css">CSS</a>
+			<a href="/category/google cloud">Google Cloud</a>
+			<a href="/category/vue.js">Vue.js</a>
 		</div>
 	</nav>
 </header>
 <style>
 	header {
-		margin: 0;
-		padding: 0 1em;
-		background: white;
-		box-shadow: 0 2px 8px rgba(var(--black), 5%);
-	}
-	h2 {
-		margin: 0;
-		font-size: 1em;
-	}
-
-	h2 a,
-	h2 a.active {
-		text-decoration: none;
+		border-bottom: 1px solid rgb(var(--border));
+		background: #fff;
 	}
 	nav {
+		max-width: 768px;
+		margin: 0 auto;
+		padding: 0.75em 1em;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		gap: 1em;
 	}
-	nav a {
-		padding: 1em 0.5em;
-		color: var(--black);
-		border-bottom: 4px solid transparent;
+	.site-title {
+		font-size: 1.1em;
+		font-weight: 700;
+		color: rgb(var(--black));
+		text-decoration: none;
+		white-space: nowrap;
+	}
+	.site-title:hover {
+		text-decoration: none;
+		opacity: 0.7;
+	}
+	.nav-links {
+		display: flex;
+		gap: 0.25em;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+	.nav-links a {
+		font-size: 0.8em;
+		color: rgb(var(--gray));
+		text-decoration: none;
+		padding: 0.25em 0.5em;
+		border-radius: 4px;
+		transition: background 0.15s, color 0.15s;
+	}
+	.nav-links a:hover {
+		background: rgb(var(--gray-light));
+		color: rgb(var(--gray-dark));
 		text-decoration: none;
 	}
-	nav a.active {
-		text-decoration: none;
-		border-bottom-color: var(--accent);
-	}
-	@media (max-width: 720px) {
-		.internal-links {
-			font-size: 0.875em;
+	@media (max-width: 768px) {
+		nav {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.5em;
+		}
+		.nav-links {
+			justify-content: flex-start;
 		}
 	}
 </style>
