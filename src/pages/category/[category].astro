@@ -1,0 +1,83 @@
+---
+import { getCollection } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE_DESCRIPTION } from '../../consts';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('blog', ({ data }) => data.published !== false);
+	const categories = [...new Set(posts.flatMap((post) => post.data.categories))];
+	return categories.map((category) => ({
+		params: { category: category.toLowerCase() },
+		props: {
+			category,
+			posts: posts
+				.filter((post) =>
+					post.data.categories.some((c: string) => c.toLowerCase() === category.toLowerCase()),
+				)
+				.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
+		},
+	}));
+}
+
+const { category, posts } = Astro.props;
+---
+
+<BaseLayout title={`${category} - nansystem`} description={SITE_DESCRIPTION}>
+	<h1>{category}</h1>
+	<section>
+		<ul>
+			{
+				posts.map((post: any) => (
+					<li>
+						<a href={post.data.permalink}>
+							<h4 class="title">{post.data.title}</h4>
+							<p class="date">
+								<FormattedDate date={post.data.date} />
+							</p>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+</BaseLayout>
+
+<style>
+	h1 {
+		margin-bottom: 1em;
+	}
+	ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+	}
+	ul li {
+		width: 100%;
+	}
+	ul li * {
+		text-decoration: none;
+		transition: 0.2s ease;
+	}
+	ul li a {
+		display: block;
+		padding: 0.5em 0;
+	}
+	.title {
+		margin: 0;
+		color: rgb(var(--black));
+		line-height: 1.4;
+	}
+	.date {
+		margin: 0;
+		color: rgb(var(--gray));
+		font-size: 0.875em;
+	}
+	ul li a:hover h4,
+	ul li a:hover .date {
+		color: rgb(var(--accent));
+	}
+</style>

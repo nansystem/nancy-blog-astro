@@ -1,0 +1,64 @@
+---
+import { getCollection } from 'astro:content';
+import FormattedDate from '../components/FormattedDate.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const posts = (await getCollection('blog', ({ data }) => data.published !== false))
+	.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+	<section>
+		<ul>
+			{
+				posts.map((post) => (
+					<li>
+						<a href={post.data.permalink}>
+							<h4 class="title">{post.data.title}</h4>
+							<p class="date">
+								<FormattedDate date={post.data.date} />
+							</p>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+</BaseLayout>
+
+<style>
+	ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+	}
+	ul li {
+		width: 100%;
+	}
+	ul li * {
+		text-decoration: none;
+		transition: 0.2s ease;
+	}
+	ul li a {
+		display: block;
+		padding: 0.5em 0;
+	}
+	.title {
+		margin: 0;
+		color: rgb(var(--black));
+		line-height: 1.4;
+	}
+	.date {
+		margin: 0;
+		color: rgb(var(--gray));
+		font-size: 0.875em;
+	}
+	ul li a:hover h4,
+	ul li a:hover .date {
+		color: rgb(var(--accent));
+	}
+</style>
