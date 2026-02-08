@@ -7,7 +7,7 @@ categories:
 tags:
   - test
 permalink: /test-obsidian-publishル
-published: true
+published: false
 ---
  テスト記事です。
  更新です。
