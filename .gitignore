@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # obsidian
 .obsidian/
+Welcome.md
+templates/
+src/content/blog/templates/
