@@ -3,8 +3,5 @@
   "compatibility_date": "2026-02-08",
   "assets": {
     "directory": "./dist"
-  },
-  "routes": [
-    { "pattern": "nansystem.com", "custom_domain": true, "override_existing_dns_record": true }
-  ]
+  }
 }
