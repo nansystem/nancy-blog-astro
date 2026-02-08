@@ -162,6 +162,47 @@ li {
 	}
 }
 
+/* 横並びコード表示 */
+.side-by-side {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	align-items: start;
+	/* 768pxコンテナから飛び出して幅を最大活用 */
+	max-width: 1400px;
+	width: 100vw;
+	margin-left: 50%;
+	transform: translateX(-50%);
+	padding: 0 1em;
+	box-sizing: border-box;
+}
+
+.side-by-side-panel::before {
+	content: attr(data-label);
+	display: block;
+	font-size: 0.85rem;
+	font-weight: bold;
+	color: rgb(var(--gray));
+	margin-bottom: 0.5rem;
+}
+
+/* 各パネルのコードを個別スクロール可能にする */
+.side-by-side-panel pre {
+	margin-top: 0;
+	max-height: 80vh;
+	overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+	.side-by-side {
+		grid-template-columns: 1fr;
+		width: 100%;
+		margin-left: 0;
+		transform: none;
+		padding: 0;
+	}
+}
+
 .sr-only {
 	border: 0;
 	padding: 0;

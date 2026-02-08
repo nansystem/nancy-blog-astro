@@ -1,0 +1,485 @@
+---
+title: "nuqsの基本をテストコードで理解する"
+description: "nuqsのuseQueryState・useQueryStatesの挙動を、Next.jsなしのテストコードで検証する。parsers、withDefault、複数パラメータの同時更新まで。"
+date: 2026-02-08
+categories:
+  - JavaScript
+permalink: /nuqs-testing
+published: false
+---
+
+## この記事でやること
+
+nuqsはReact向けのURL状態管理ライブラリで、URLのクエリパラメータを `useState` のように扱える。Next.js / React Router / Remix など主要フレームワークに対応している。
+
+```
+URL    ?q=チョコ&page=3
+        ↕ 双方向に同期
+State  q === "チョコ"  (parseAsString)
+       page === 3      (parseAsInteger — 文字列 "3" を number に変換)
+```
+
+`setQ("抹茶")` を呼ぶとURLも `?q=抹茶&page=3` に変わり、ブラウザの戻るボタンで元に戻せる。この双方向の同期をnuqsが担う。
+
+nuqsはテスト用に `NuqsTestingAdapter` を提供しており、実際のルーターなしでURLパラメータの読み書きをシミュレートできる。`searchParams` で初期パラメータを渡し、`onUrlUpdate` でURLの変化を検証する仕組みだ。
+
+この記事では、Vitest + Testing Libraryのテストコードだけでnuqsの基本的な挙動を検証する。
+
+## 検証環境
+
+```bash
+npm create vite@latest nuqs-testing -- --template react-ts
+cd nuqs-testing
+npm install
+npm install nuqs
+npm install -D vitest @testing-library/react @testing-library/user-event @testing-library/jest-dom jsdom
+```
+
+`vitest.config.ts` を作成する。
+
+```ts
+// vitest.config.ts
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./src/test-setup.ts",
+  },
+});
+```
+
+```ts
+// src/test-setup.ts
+import "@testing-library/jest-dom/vitest";
+```
+
+`package.json` に `test` スクリプトを追加する。
+
+```json
+{
+  "scripts": {
+    "test": "vitest"
+  }
+}
+```
+
+これで `npm test` でテストが実行できる。
+
+## テストの基本構造
+
+nuqsのテストは3ステップで書く。
+
+1. `NuqsTestingAdapter` で初期URLパラメータを渡す
+2. コンポーネントを操作する
+3. 画面の表示とURLの変化を検証する
+
+```tsx
+import { render } from "@testing-library/react";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+
+render(<MyComponent />, {
+  wrapper: ({ children }) => (
+    <NuqsTestingAdapter
+      searchParams="?key=value"   // 1. 初期パラメータ
+      onUrlUpdate={onUrlUpdate}    // 3. URL変化の検証用
+    >
+      {children}
+    </NuqsTestingAdapter>
+  ),
+});
+```
+
+以降、この構造でnuqsの各機能を検証していく。
+
+## useQueryState — 1つのパラメータを管理する
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="コンポーネント">
+
+```tsx
+// src/components/name-input.tsx
+"use client";
+
+import { useQueryState, parseAsString } from "nuqs";
+
+export function NameInput() {
+  const [name, setName] = useQueryState(
+    "name",
+    parseAsString.withDefault("")
+  );
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="名前を入力"
+      />
+      <p>こんにちは、{name || "ゲスト"}さん</p>
+    </div>
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="テスト">
+
+```tsx
+// src/components/name-input.test.tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
+import { describe, expect, it, vi } from "vitest";
+import { NameInput } from "./name-input";
+
+describe("NameInput", () => {
+  it("初期パラメータなしではデフォルト値が使われる", () => {
+    render(<NameInput />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter>{children}</NuqsTestingAdapter>
+      ),
+    });
+
+    expect(screen.getByText("こんにちは、ゲストさん")).toBeInTheDocument();
+  });
+
+  it("初期パラメータがあれば表示に反映される", () => {
+    render(<NameInput />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter searchParams="?name=太郎">
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    expect(screen.getByText("こんにちは、太郎さん")).toBeInTheDocument();
+  });
+
+  it("入力するとURLパラメータが更新される", async () => {
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+
+    render(<NameInput />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    await user.type(screen.getByPlaceholderText("名前を入力"), "花子");
+
+    // 画面に反映される
+    expect(screen.getByText("こんにちは、花子さん")).toBeInTheDocument();
+    // onUrlUpdate はURLが変わるたびに呼ばれるモック関数。
+    // lastCall は最後の呼び出しの引数配列で、[0] がその第1引数（UrlUpdateEvent）。
+    const { searchParams } = onUrlUpdate.mock.lastCall![0];
+    expect(searchParams.get("name")).toBe("花子");
+  });
+});
+```
+
+</div>
+</div>
+
+### このテストでわかること
+
+- `searchParams` を渡さなければ `withDefault("")` の値が使われる
+- `searchParams="?name=太郎"` で初期状態を制御できる
+- ユーザー入力で画面とURLの両方が更新される
+
+## parsers — 型ごとの変換を検証する
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="コンポーネント">
+
+```tsx
+// src/components/parser-demo.tsx
+"use client";
+
+import {
+  useQueryState,
+  parseAsString,
+  parseAsInteger,
+  parseAsBoolean,
+  parseAsArrayOf,
+} from "nuqs";
+
+export function ParserDemo() {
+  const [q] = useQueryState("q", parseAsString.withDefault(""));
+  const [page] = useQueryState("page", parseAsInteger.withDefault(1));
+  const [active] = useQueryState("active", parseAsBoolean.withDefault(false));
+  const [tags] = useQueryState(
+    "tags",
+    parseAsArrayOf(parseAsString).withDefault([])
+  );
+
+  return (
+    <div>
+      <p data-testid="q">{q}</p>
+      <p data-testid="page">{page + 1}</p>
+      <p data-testid="active">{String(active === true)}</p>
+      <p data-testid="tags">{tags.join(",")}</p>
+    </div>
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="テスト">
+
+```tsx
+// src/components/parser-demo.test.tsx
+import { render, screen } from "@testing-library/react";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { describe, expect, it } from "vitest";
+import { ParserDemo } from "./parser-demo";
+
+describe("parsers", () => {
+  it("parseAsString — 文字列をそのまま扱う", () => {
+    render(<ParserDemo />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter searchParams="?q=ジェラート">
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    expect(screen.getByTestId("q")).toHaveTextContent("ジェラート");
+  });
+
+  it("parseAsInteger — 文字列を整数に変換する", () => {
+    render(<ParserDemo />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter searchParams="?page=3">
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    // page + 1 を表示しているので、numberなら4、stringなら"31"になる
+    expect(screen.getByTestId("page")).toHaveTextContent("4");
+  });
+
+  it("parseAsBoolean — 文字列をbooleanに変換する", () => {
+    render(<ParserDemo />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter searchParams="?active=true">
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    // active === true を表示しているので、booleanなら"true"、string "true"なら"false"になる
+    expect(screen.getByTestId("active")).toHaveTextContent("true");
+  });
+
+  it("parseAsArrayOf — カンマ区切りを配列にする", () => {
+    render(<ParserDemo />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter searchParams="?tags=チョコ,抹茶">
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    // tags.join(",") を表示しているので、配列なら成功、stringなら.joinが存在せずエラーになる
+    expect(screen.getByTestId("tags")).toHaveTextContent("チョコ,抹茶");
+  });
+
+  it("パラメータがなければwithDefaultの値が使われる", () => {
+    render(<ParserDemo />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter>{children}</NuqsTestingAdapter>
+      ),
+    });
+
+    expect(screen.getByTestId("q")).toHaveTextContent("");
+    expect(screen.getByTestId("page")).toHaveTextContent("2");
+    expect(screen.getByTestId("active")).toHaveTextContent("false");
+    expect(screen.getByTestId("tags")).toHaveTextContent("");
+  });
+});
+```
+
+</div>
+</div>
+
+### このテストでわかること
+
+| パーサー | URLの値 | 型 | 検証方法 |
+|---|---|---|---|
+| `parseAsString` | `?q=ジェラート` | `string` | そのまま表示 |
+| `parseAsInteger` | `?page=3` | `number` | `page + 1` → `4`（stringなら `"31"`） |
+| `parseAsBoolean` | `?active=true` | `boolean` | `active === true` → `true`（stringなら `false`） |
+| `parseAsArrayOf(parseAsString)` | `?tags=チョコ,抹茶` | `string[]` | `tags.join(",")` が成功（stringなら `.join` でエラー） |
+
+URLパラメータは本来すべて文字列だが、nuqsのparsersが型変換を行ってくれる。`parseAsArrayOf` はデフォルトでカンマ区切り（`?tags=a,b`）であり、同じキーの繰り返し（`?tags=a&tags=b`）ではない。`withDefault` がないとパラメータ未指定時に `null` が返る。
+## useQueryStates — 複数パラメータをまとめて管理する
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="コンポーネント">
+
+```tsx
+// src/components/product-filter.tsx
+"use client";
+
+import { useQueryStates, parseAsString, parseAsInteger } from "nuqs";
+
+export function ProductFilter() {
+  const [filters, setFilters] = useQueryStates({
+    q: parseAsString.withDefault(""),
+    category: parseAsString.withDefault(""),
+    page: parseAsInteger.withDefault(1),
+  });
+
+  return (
+    <div>
+      <input
+        data-testid="search"
+        type="text"
+        value={filters.q}
+        onChange={(e) => setFilters({ q: e.target.value })}
+      />
+      <select
+        data-testid="category"
+        value={filters.category}
+        onChange={(e) => setFilters({ category: e.target.value })}
+      >
+        <option value="">すべて</option>
+        <option value="gelato">ジェラート</option>
+        <option value="sorbet">ソルベ</option>
+      </select>
+      <button onClick={() => setFilters({ q: "チョコ", page: 1 })}>
+        チョコで検索
+      </button>
+      <p data-testid="state">
+        {filters.q}|{filters.category}|{filters.page}
+      </p>
+    </div>
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="テスト">
+
+```tsx
+// src/components/product-filter.test.tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
+import { describe, expect, it, vi } from "vitest";
+import { ProductFilter } from "./product-filter";
+
+describe("ProductFilter", () => {
+  it("複数のパラメータを初期値から読み取れる", () => {
+    render(<ProductFilter />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter searchParams="?q=抹茶&category=gelato&page=2">
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    expect(screen.getByTestId("state")).toHaveTextContent("抹茶|gelato|2");
+  });
+
+  it("setFiltersで一部のパラメータだけ更新できる", async () => {
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+
+    render(<ProductFilter />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter
+          searchParams="?q=&category=gelato&page=2"
+          onUrlUpdate={onUrlUpdate}
+        >
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    await user.selectOptions(screen.getByTestId("category"), "sorbet");
+
+    const lastCall = onUrlUpdate.mock.calls.at(-1)![0];
+    expect(lastCall.searchParams.get("category")).toBe("sorbet");
+    expect(lastCall.searchParams.get("page")).toBe("2");
+    expect(lastCall.searchParams.get("q")).toBe("");
+  });
+
+  it("setFiltersで複数パラメータを同時に更新できる", async () => {
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+
+    render(<ProductFilter />, {
+      wrapper: ({ children }) => (
+        <NuqsTestingAdapter
+          searchParams="?page=5"
+          onUrlUpdate={onUrlUpdate}
+        >
+          {children}
+        </NuqsTestingAdapter>
+      ),
+    });
+
+    await user.click(screen.getByText("チョコで検索"));
+
+    expect(screen.getByTestId("state")).toHaveTextContent("チョコ||1");
+
+    const lastCall = onUrlUpdate.mock.calls.at(-1)![0];
+    expect(lastCall.searchParams.get("q")).toBe("チョコ");
+    // page=1はデフォルト値なのでURLから省略される
+    expect(lastCall.searchParams.get("page")).toBeNull();
+  });
+});
+```
+
+</div>
+</div>
+
+### このテストでわかること
+
+- `useQueryStates` は複数のパラメータを1つのオブジェクトで管理する
+- `setFilters({ category: "sorbet" })` のように一部だけ更新できる
+- `setFilters({ q: "チョコ", page: 1 })` で複数パラメータを**1回のURL更新**で同時に変更できる
+- `useQueryState` を複数並べた場合は `setQ` と `setPage` が別々のURL更新になるが、`useQueryStates` ならまとめられる
+
+## ハマりポイント
+
+### parseAsArrayOfはカンマ区切り
+
+`parseAsArrayOf(parseAsString)` で配列を扱う場合、URLの形式は同じキーの繰り返し（`?tags=チョコ&tags=抹茶`）ではなく、カンマ区切り（`?tags=チョコ,抹茶`）になる。
+
+HTMLのフォームや一般的なクエリパラメータでは繰り返し形式がよく使われるため、直感に反しやすい。繰り返しキー形式を使いたい場合は `parseAsNativeArrayOf` (v2.7.0+) を使う。
+
+```tsx
+import { parseAsNativeArrayOf, parseAsString } from "nuqs";
+
+const [tags, setTags] = useQueryState(
+  "tags",
+  parseAsNativeArrayOf(parseAsString)
+);
+// ?tags=チョコ&tags=抹茶 → ["チョコ", "抹茶"]
+```
+
+### デフォルト値と同じ値をセットするとURLから消える
+
+`withDefault(1)` を設定した状態で `setFilters({ page: 1 })` を呼ぶと、`page` パラメータはURLに出力されない。`searchParams.get("page")` は `"1"` ではなく `null` を返す。
+
+これはnuqsの設計上の挙動で、デフォルト値と同じ値は冗長なためURLに含めないようになっている。コンポーネント側の `page` 変数は `withDefault` により `1` が返るので、表示上は問題ない。検証時にURLの値を直接チェックする場合に注意が必要。
+
+## まとめ
+
+`NuqsTestingAdapter` を使えば、Next.jsのサーバーを起動せずにnuqsの挙動を検証できる。
+
+この記事で確認したのは3つ。
+
+- `useQueryState` + parser で、URLパラメータを型安全に1つ管理できる
+- `withDefault` で、パラメータ未指定時のnullを回避できる
+- `useQueryStates` で、複数パラメータをまとめて管理・同時更新できる
