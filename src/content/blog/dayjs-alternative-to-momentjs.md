@@ -4,8 +4,6 @@ description: JavaScriptの日付操作には罠が多く、業務では日付操
 date: 2019-03-28
 categories:
   - JavaScript
-tags:
-  - dayjs
 permalink: /dayjs-alternative-to-momentjs 
 published: true
 ---

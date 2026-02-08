@@ -5,8 +5,6 @@ date: 2019-05-12
 categories:
   - Flask
   - Google Cloud
-tags:
-  - Google App Engine Standard
 permalink: /flask-on-google-app-engine-standard
 published: true
 ---

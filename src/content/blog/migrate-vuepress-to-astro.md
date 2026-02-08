@@ -4,11 +4,6 @@ description: Claude Codeのエージェントチーム機能を使い、VuePress
 date: 2026-02-08
 categories:
   - Astro
-tags:
-  - VuePress
-  - Astro
-  - Cloudflare Pages
-  - Claude Code
 permalink: /migrate-vuepress-to-astro
 published: true
 ---

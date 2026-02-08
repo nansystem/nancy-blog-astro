@@ -5,8 +5,6 @@ date: 2019-08-17
 categories:
   - Google Cloud
   - Python
-tags:
-  - Cloud Firestore
 permalink: /python-with-cloud-firestore-query-all-documents
 published: true
 ---

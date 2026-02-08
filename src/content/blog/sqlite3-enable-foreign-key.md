@@ -3,7 +3,7 @@ title: sqlite3で外部キー制約を常に有効にする
 description: sqlite3で外部キー制約を常に有効にするには.sqlitercにPRAGMA foreign_keys = ON;と書く
 date: 2022-03-04
 categories:
-  - sqlite3
+  - SQLite
 permalink: /sqlite3-enable-foreign-key
 published: true
 ---

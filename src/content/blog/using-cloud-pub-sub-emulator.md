@@ -4,8 +4,6 @@ description: Cloud Pub/Subのエミュレーターを使ってローカル環境
 date: 2019-05-28
 categories:
   - Google Cloud
-tags:
-  - Cloud Pub Sub
 permalink: /using-cloud-pub-sub-emulator
 published: true
 ---

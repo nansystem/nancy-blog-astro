@@ -4,8 +4,6 @@ description:
 date: <% tp.date.now("YYYY-MM-DD") %>
 categories:
   -
-tags:
-  -
 permalink: /<% tp.file.title %>
 published: false
 ---

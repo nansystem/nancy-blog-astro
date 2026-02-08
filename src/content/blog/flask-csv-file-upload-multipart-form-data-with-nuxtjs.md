@@ -4,7 +4,7 @@ description: Flask + Nuxt.js(spa) + axiosでCSVファイルをmultipart/form-dat
 date: 2019-08-10
 categories:
   - Flask
-  - Nuxt.js
+  - Vue.js
 permalink: /flask-csv-file-upload-multipart-form-data-with-nuxtjs
 published: true
 ---

@@ -4,8 +4,6 @@ description: Nuxt.jsでdotenv-moduleを使い、nuxt.config.jsから値が読み
 date: 2019-08-08
 categories:
   - Vue.js
-tags:
-  - Nuxt.js
 permalink: /nuxt-dotenv-module-pitfall
 published: true
 ---

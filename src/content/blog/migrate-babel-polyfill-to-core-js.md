@@ -4,8 +4,6 @@ description: Babel 7.4.0で非推奨になった@babel/polyfillを使わず、co
 date: 2019-05-22
 categories:
   - JavaScript
-tags:
-  - Babel
 permalink: /migrate-babel-polyfill-to-core-js
 published: true
 ---

@@ -4,9 +4,6 @@ description: Cloud Pub/Subの配信タイプpushのサブスクリプション�
 date: 2019-05-26
 categories:
   - Google Cloud
-tags:
-  - Cloud Pub Sub
-  - Google Cloud Functions
 permalink: /using-google-cloud-pub-sub-to-push-to-google-cloud-functions
 published: true
 ---

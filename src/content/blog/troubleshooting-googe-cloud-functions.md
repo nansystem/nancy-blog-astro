@@ -4,8 +4,6 @@ description: Google Cloud FunctionsをCLIで動かすまでのトラブルシュ
 date: 2019-04-20
 categories:
   - Google Cloud
-tags:
-  - Google Cloud Functions
 permalink: /troubleshooting-googe-cloud-functions
 published: true
 ---

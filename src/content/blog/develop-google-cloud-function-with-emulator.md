@@ -4,8 +4,6 @@ description: ""
 date: 2019-04-25
 categories:
   - Google Cloud
-tags:
-  - Google Cloud Functions
 permalink: /develop-and_debug_google-cloud-function-with-emulator-locally
 published: true
 ---

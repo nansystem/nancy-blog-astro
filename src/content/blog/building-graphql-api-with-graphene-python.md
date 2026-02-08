@@ -4,8 +4,6 @@ description: Graphene + FlaskでGraphQLサーバを作り、QueryとMutationを�
 date: 2019-06-20
 categories:
   - Python
-tags:
-  - GraphQL
 permalink: /building-graphql-api-with-graphene-python
 published: true
 ---

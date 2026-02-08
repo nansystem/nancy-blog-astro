@@ -4,8 +4,6 @@ description: Google App Engine StandardのPython3.7をローカルのdev_appserv
 date: 2019-05-13
 categories:
   - Google Cloud
-tags:
-  - Google App Engine Standard
 permalink: /run-google-app-engine-standard-python-with-local-dev-appserver
 published: true
 ---

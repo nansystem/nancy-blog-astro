@@ -4,8 +4,6 @@ description: Protocol buffersのenumを操作する。フィールド名を指�
 date: 2019-06-06
 categories:
   - Python
-tags:
-  - Protocol Buffers
 permalink: /protocol-buffers-enum-in-python
 published: true
 ---

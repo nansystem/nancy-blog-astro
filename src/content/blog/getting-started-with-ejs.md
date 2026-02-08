@@ -4,8 +4,6 @@ description: テンプレートエンジンであるejsの基本的な使い方�
 date: 2019-03-15
 categories:
   - JavaScript
-tags:
-  - ejs
 permalink: /getting-started-with-ejs
 published: true
 ---

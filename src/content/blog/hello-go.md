@@ -2,8 +2,8 @@
 title: Go言語はじめた
 description: MacにGoをインストールして、Visual Studio Code上でdlvでデバッグできる環境を作る。  
 date: 2020-03-28
-categories: 
-  - go
+categories:
+  - Go
 permalink: /hello-go
 published: true
 ---

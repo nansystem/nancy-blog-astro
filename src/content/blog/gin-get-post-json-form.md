@@ -2,8 +2,8 @@
 title: ginでフォーム、JSONのリクエストを受け取る
 description: ginでフォーム、JSONのリクエストを受け取る
 date: 2020-04-18
-categories: 
-  - go
+categories:
+  - Go
 permalink: /gin-get-post-json-form
 published: true
 ---

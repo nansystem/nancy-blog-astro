@@ -5,8 +5,6 @@ date: 2020-09-02
 categories:
   - Google Cloud
   - Python
-tags:
-  - Cloud Run
 permalink: /cloud-run-with-flask-and-pipenv
 published: true
 ---

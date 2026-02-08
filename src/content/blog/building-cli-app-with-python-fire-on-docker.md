@@ -4,8 +4,6 @@ description: python-fireで作ったCLIアプリを1行ずつ確認しながらD
 date: 2019-08-05
 categories:
   - Python
-tags:
-  - Docker
 permalink: /building-cli-app-with-python-fire-on-docker
 published: true
 ---

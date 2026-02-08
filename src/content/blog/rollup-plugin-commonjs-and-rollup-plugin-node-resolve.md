@@ -4,8 +4,6 @@ description: Rollupで複数のファイルを1つにまとめる際に`rollup-p
 date: 2019-03-01
 categories:
   - JavaScript
-tags:
-  - Rollup
 permalink: /rollup-plugin-commonjs-and-rollup-plugin-node-resolve
 published: true
 ---

@@ -4,8 +4,6 @@ description: 静的サイトに問い合わせフォームを設定したい場�
 date: 2019-02-20
 categories:
   - static site
-tags:
-  - Google Forms
 permalink: /create-a-contact-form-with-google-form-and-auto-reply
 published: true
 ---

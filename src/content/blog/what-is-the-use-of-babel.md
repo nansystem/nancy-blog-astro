@@ -4,8 +4,6 @@ description: webpackやrollupのようなバンドラーや、Vue CLIのよう�
 date: 2019-03-20
 categories:
   - JavaScript
-tags:
-  - Babel
 permalink: /what-is-the-use-of-babel
 published: true
 ---

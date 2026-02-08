@@ -2,8 +2,8 @@
 title: gvmでGoのバージョンを変更する
 description: Goのバージョンを変更して試したかったのでGoのバージョン管理ツールgvmを使った
 date: 2020-04-17
-categories: 
-  - go
+categories:
+  - Go
 permalink: /gvm-go-version-management
 published: true
 ---

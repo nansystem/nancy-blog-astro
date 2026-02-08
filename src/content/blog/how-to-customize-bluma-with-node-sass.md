@@ -4,9 +4,6 @@ description: BulmaをSCSSでカスタマイズできる環境を構築してい�
 date: 2019-02-16
 categories:
   - CSS
-tags:
-  - Bulma
-  - SCSS  
 permalink: /how-to-customize-bluma-with-node-sass
 published: true
 ---

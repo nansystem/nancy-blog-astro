@@ -4,8 +4,6 @@ description: Adobe IllustratorやPhotoshopを使わず、CSSだけで文字を�
 date: 2019-02-25
 categories:
   - CSS
-tags:
-  - image
 permalink: /make-text-over-image-more-readable-with-css
 published: true
 ---

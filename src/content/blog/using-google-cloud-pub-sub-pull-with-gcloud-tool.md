@@ -4,8 +4,6 @@ description: Cloud Pub/Subとは何かを説明した後、配信タイプpull�
 date: 2019-05-24
 categories:
   - Google Cloud
-tags:
-  - Cloud Pub Sub
 permalink: /using-google-cloud-pub-sub-pull-with-gcloud-tool
 published: true
 ---

@@ -4,8 +4,6 @@ description: PythonでgRPCのUnary RPC(1リクエスト-1レスポンス)を実�
 date: 2019-06-09
 categories:
   - Python
-tags:
-  - gRPC
 permalink: /python-grpc-unary-rpc-1request-1response
 published: true
 ---

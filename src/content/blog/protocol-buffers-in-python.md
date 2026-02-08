@@ -4,8 +4,6 @@ description: protobufをインストールし、.protoファイルからPython�
 date: 2019-06-02
 categories:
   - Python
-tags:
-  - Protocol Buffers
 permalink: /protocol-buffers-in-python
 published: true
 ---

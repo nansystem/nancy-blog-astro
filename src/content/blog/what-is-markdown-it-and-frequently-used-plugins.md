@@ -4,8 +4,6 @@ description: JavaScriptでMarkdownをHTMLに変換したいときには、`markd
 date: 2019-03-08
 categories:
   - JavaScript
-tags:
-  - markdown-it
 permalink: /what-is-markdown-it-and-frequently-used-plugins 
 published: true
 ---

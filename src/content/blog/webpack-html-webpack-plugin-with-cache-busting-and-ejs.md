@@ -4,8 +4,6 @@ description: html-webpack-plugin、css-loader、mini-css-extract-plugin、ejs-co
 date: 2019-03-24
 categories:
   - JavaScript
-tags:
-  - webpack4
 permalink: /webpack-html-webpack-plugin-with-cache-busting-and-ejs
 published: true
 ---

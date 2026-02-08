@@ -3,7 +3,7 @@ title: powerline-goの表示からユーザー名やホスト名の部分(user >
 description: powerline-go
 date: 2021-01-06
 categories:
-  - wsl2
+  - WSL
 permalink: /customize-powerline-go
 published: true
 ---

@@ -3,7 +3,7 @@ title: MySQLでenumの値をランダムに用意してINSERTする
 description: MySQLでenumのようないずれかの値を保持するフィールドにランダムな値を用意してINSERTする
 date: 2021-09-22
 categories:
-  - mysql
+  - MySQL
 permalink: /mysql-insert-enum-test-data
 published: true
 ---
