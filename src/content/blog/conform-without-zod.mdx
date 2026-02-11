@@ -1,18 +1,18 @@
 ---
-title: "ConformをZodなし・テストコードで理解する"
-description: "ConformのuseForm・getInputProps・エラー構造の挙動を、Zodなしのテストコードで検証する。a11y属性の自動生成、状態管理、フィールドエラーとフォームエラーの分離まで。"
+title: "ConformがZodなしでやってくれること"
+description: "Conformはバリデーションライブラリではない。HTML属性の自動生成、defaultValueとlastResultによる状態管理、エラーの振り分けをテストコードで検証する。"
 date: 2026-02-11T12:00:00+09:00
 categories:
   - JavaScript
 permalink: /conform-without-zod
-published: false
+published: true
 ---
 
 ## この記事でやること
 
 業務ではConform + Zodをセットで使うことが多いと思う。ただ、学ぶときは要素を1つでも減らして対象を絞るほうが理解しやすい。遠回りに見えるかもしれないが、まずConformだけで何ができて何ができないのかを確認したい。
 
-Conformが担っているのはバリデーションよりも、a11y属性の自動生成、フォーム状態管理、エラーの構造化といった「フォームの土台」のほうだ。Zodを外すと、その土台が見えてくる。
+Conformが担っているのはバリデーションよりも、HTML属性の自動生成、defaultValueとlastResultによる状態管理、エラーの振り分けのほうだ。Zodを外すと、それが見えてくる。
 
 ```
 useForm
@@ -24,9 +24,9 @@ useForm
 
 この記事では、Vitest + Testing Libraryのテストコードだけで、Conformが「Zodなしで何をしてくれるのか」を3つの観点で検証する。
 
-1. a11y属性の自動生成
-2. フォーム状態管理の設計思想
-3. エラーの「置き場所」の思想
+1. HTML属性の自動生成
+2. defaultValueとlastResult
+3. フィールドエラーとフォームエラー
 
 ## 検証環境
 
@@ -161,11 +161,11 @@ return (
 
 #### `signup-email` というidはどこから来た？
 
-コードでは `id: "signup"` しか指定していないのに、inputには `id="signup-email"` が付いている。これはConformが `formId-fieldName` の規則で自動生成している。`label` の `for="signup-email"` も一致するので、ラベルをクリックしたときに対応するinputにフォーカスが当たる。スクリーンリーダーもラベルとinputの関係を認識できる。
+Conformが `formId-fieldName` の規則で自動生成している。`label` の `for` と一致するので、ラベルクリックでinputにフォーカスが当たり、スクリーンリーダーも両者の関係を認識できる。
 
 #### `getInputProps` の第2引数 `{ type: "email" }` は何？
 
-`getInputProps` は `id` や `constraint` の設定からHTML属性を生成するが、`type` だけは自動で判断できない。同じ `string` 型でも `type="email"` なのか `type="text"` なのかはUIの都合で変わるためだ。よく使うパターンはこのあたり。
+`type` だけは自動で判断できないため、第2引数で指定する。
 
 | 第2引数 | 用途 |
 |---|---|
@@ -178,20 +178,22 @@ return (
 
 #### `constraint` で `required: true` にしたのに、HTMLでは `required=""` になっている？
 
-これはHTMLの仕様どおりの動作だ。HTMLの `required` は[論理属性（boolean attribute）](https://developer.mozilla.org/ja/docs/Glossary/Boolean/HTML)で、属性が存在すれば「必須」、存在しなければ「必須でない」を意味する。`required=""` と `required` は同じ意味になる。
+HTMLの[論理属性](https://developer.mozilla.org/ja/docs/Glossary/Boolean/HTML)は属性の有無で判定されるので、`required=""` と `required` は同じ意味だ。
 
 #### `constraint` で指定できるプロパティは？
 
 `constraint` は省略可能で、指定した値がそのまま `<input>` の `required` や `minlength` 属性になる。
 
-ConformはJSが読み込まれた後に `noValidate` を付与し、ブラウザの[制約バリデーション](https://developer.mozilla.org/ja/docs/Web/HTML/Constraint_validation)を無効化する。つまりJSが動いている状態では `constraint` の属性はバリデーションとしては機能しない。JSが読み込まれる前のフォールバックとして付けている。ページ表示直後はまだ `noValidate` が付いていないので、ブラウザ標準のバリデーションがそのまま動く。
+ただしConformはJS読み込み後に `noValidate` を付与するため、JS動作中は `constraint` の属性はバリデーションとして機能しない。JS読み込み前の[ブラウザ標準バリデーション](https://developer.mozilla.org/ja/docs/Web/HTML/Constraint_validation)のフォールバック用だ。
 
 **Zodなしの状態でsubmitボタンを押すと、クライアント側では何もチェックされずフォームがそのまま送信される。**
 
 
-## フォーム状態管理の設計思想
+## defaultValueとlastResult
 
-Conformの `useForm` はバリデーションライブラリではなく状態管理ツールだ。`defaultValue` による初期値の宣言、`form.status` によるsubmit結果の管理、そしてuncontrolledパターンの採用がその設計思想を表している。
+`getInputProps` は `value` ではなく `defaultValue` を返す。入力値はReactのstateではなく[DOMからFormData経由で取得する](https://conform.guide/)設計だ。
+
+`lastResult` にはフォーム送信後のバリデーション結果（`status`, `initialValue`, `error`）を渡す。Conformがエラー表示や入力値の再セットを行う。未送信時は `lastResult` を渡さないので `form.status` は `undefined` になる。
 
 <div class="side-by-side">
 <div class="side-by-side-panel" data-label="コンポーネント">
@@ -221,6 +223,7 @@ export function ProfileForm({ lastResult }: ProfileFormProps) {
       username: "ゲスト",
       bio: "",
     },
+    // フォーム送信後のバリデーション結果を渡す。未送信ならundefined
     lastResult: lastResult ?? undefined,
   });
 
@@ -239,6 +242,7 @@ export function ProfileForm({ lastResult }: ProfileFormProps) {
         />
       </div>
 
+      {/* form.statusは "success" | "error" | undefined */}
       <output data-testid="form-status">
         {form.status ?? "未送信"}
       </output>
@@ -259,8 +263,8 @@ import { describe, expect, it } from "vitest";
 import type { SubmissionResult } from "@conform-to/dom";
 import { ProfileForm } from "./form-metadata";
 
-describe("ProfileForm - フォーム状態管理の設計思想", () => {
-  it("defaultValueが初期値としてinputに反映される（uncontrolled）", () => {
+describe("ProfileForm - defaultValueとlastResult", () => {
+  it("defaultValueが初期値としてinputに反映される", () => {
     render(<ProfileForm />);
 
     const usernameInput = screen.getByLabelText(
@@ -288,6 +292,8 @@ describe("ProfileForm - フォーム状態管理の設計思想", () => {
   it("lastResultでstatus='success'の場合成功状態が反映される", () => {
     const lastResult: SubmissionResult<string[]> = {
       status: "success",
+      // 送信時の入力値。
+      // エラー時にユーザーが入力した値をフォームに再表示するために使われる
       initialValue: { username: "太郎", bio: "こんにちは" },
     };
 
@@ -330,17 +336,54 @@ describe("ProfileForm - フォーム状態管理の設計思想", () => {
 </div>
 </div>
 
-### このテストでわかること
+### parse()とreply()
 
-- **`defaultValue` は宣言的に初期値を設定する。** `useState` のように値とsetterを管理するのではなく、フォーム生成時に初期値を渡すだけ。以降はDOMが値を保持する
-- **`form.status` はsubmit結果を宣言的に管理する。** `lastResult` を渡せば `"success"` / `"error"` が反映される。送信前は `undefined`
-- **uncontrolledパターンを採用している。** `getInputProps` は `value` ではなく `defaultValue` を返す。Reactの再レンダリングに依存せず、DOM自体が入力値を保持する
+テストでは `SubmissionResult` を手書きして `useForm` に渡した。
 
-Conformが `noValidate` をデフォルトで設定するのも、この設計の一部だ。ブラウザ標準のバリデーションUIを無効化し、`lastResult` によるサーバーサイドバリデーションの結果を唯一のエラー源とする。クライアントとサーバーでバリデーションロジックが分散しない。
+```ts
+const lastResult: SubmissionResult<string[]> = {
+  status: "error",
+  initialValue: { username: "", bio: "" },
+  error: {
+    username: ["ユーザー名は必須です"],
+  },
+};
+```
 
-## エラーの「置き場所」の思想
+実際のアプリではこのオブジェクトを手書きしない。`@conform-to/dom` が提供する `parse()` 関数で組み立てる。
 
-Conformはエラーを最初から2つの層に分離している。フィールドレベルエラー（`fields.*.errors`）とフォームレベルエラー（`form.errors`）だ。`lastResult` の `error` オブジェクトで、キーが `""` （空文字）ならフォームエラー、フィールド名ならフィールドエラーとして振り分けられる。
+```ts
+import { parse } from "@conform-to/dom";
+
+// formData はブラウザのFormData API。値の取得は formData.get("username") のようにする
+// parse() がこれを { username: "太郎", bio: "こんにちは" } に変換して payload として渡す
+const submission = parse(formData, {
+  resolve(payload) {
+    // キー: フィールド名、値: エラーメッセージの配列
+    const error: Record<string, string[]> = {};
+
+    if (!payload.username) {
+      error.username = ["ユーザー名は必須です"];
+    }
+
+    if (Object.keys(error).length > 0) {
+      return { error };
+    }
+    return { value: payload };
+  },
+});
+
+// reply() はバリデーション結果を useForm の lastResult が受け取れる形式に変換する
+const lastResult = submission.reply();
+```
+
+- `parse()`: FormDataをオブジェクトに変換し、`resolve` 内のバリデーションを実行する
+- `reply()`: バリデーション結果から `SubmissionResult` を返す。送信値を `initialValue`（フォーム再表示用の値）に変換し、`status` と `error` を含む
+- `SubmissionResult`: `error` のキーがフィールド名と対応しており、Conformが `fields.username.errors` に振り分ける。次のセクションでエラーの表示方法を詳しく見ていく
+
+## フィールドエラーとフォームエラー
+
+Conformはエラーをフィールドエラー（`fields.*.errors`）とフォームエラー（`form.errors`）に分けている。`lastResult` の `error` オブジェクトで、キーが `""` （空文字）ならフォームエラー、フィールド名ならフィールドエラーとして振り分けられる。
 
 <div class="side-by-side">
 <div class="side-by-side-panel" data-label="コンポーネント">
@@ -444,7 +487,7 @@ import { describe, expect, it } from "vitest";
 import type { SubmissionResult } from "@conform-to/dom";
 import { ContactForm } from "./error-structure";
 
-describe("ContactForm - エラーの置き場所の思想", () => {
+describe("ContactForm - フィールドエラーとフォームエラー", () => {
   it("フィールドエラーが各フィールドに表示される", () => {
     const lastResult: SubmissionResult<string[]> = {
       status: "error",
@@ -469,7 +512,7 @@ describe("ContactForm - エラーの置き場所の思想", () => {
     ).toBeInTheDocument();
   });
 
-  it("フォームレベルエラーがフィールドエラーと分離して表示される", () => {
+  it("フォームエラーが表示される", () => {
     const lastResult: SubmissionResult<string[]> = {
       status: "error",
       initialValue: {
@@ -491,32 +534,7 @@ describe("ContactForm - エラーの置き場所の思想", () => {
     ).toBeInTheDocument();
   });
 
-  it("フィールドエラーとフォームエラーが同時に存在できる", () => {
-    const lastResult: SubmissionResult<string[]> = {
-      status: "error",
-      initialValue: { name: "", email: "", message: "" },
-      error: {
-        "": ["サーバーエラーが発生しました"],
-        name: ["名前は必須です"],
-        email: ["メールアドレスは必須です"],
-      },
-    };
-
-    render(<ContactForm lastResult={lastResult} />);
-
-    // フォームレベルエラー
-    expect(
-      screen.getByText("サーバーエラーが発生しました")
-    ).toBeInTheDocument();
-    // フィールドレベルエラー
-    expect(
-      screen.getByText("名前は必須です")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("メールアドレスは必須です")
-    ).toBeInTheDocument();
-  });
-
+  // aria-invalid: 「この入力欄の値に問題がある」ことをスクリーンリーダーに伝える属性
   it("エラーがある場合aria-invalidがtrueになる", () => {
     const lastResult: SubmissionResult<string[]> = {
       status: "error",
@@ -542,6 +560,7 @@ describe("ContactForm - エラーの置き場所の思想", () => {
       .not.toHaveAttribute("aria-invalid", "true");
   });
 
+  // aria-describedby: inputとエラーメッセージ要素を紐づけ、スクリーンリーダーがエラー内容を読み上げられるようにする
   it("aria-describedbyがerrorIdを含みエラーメッセージと紐づく", () => {
     const lastResult: SubmissionResult<string[]> = {
       status: "error",
@@ -577,25 +596,11 @@ describe("ContactForm - エラーの置き場所の思想", () => {
 </div>
 </div>
 
-### このテストでわかること
-
-Conformのエラー構造は `lastResult.error` のキーで振り分けられる。
-
-| キー | 振り分け先 | 用途 |
-|---|---|---|
-| `""` (空文字) | `form.errors` | サーバーエラー、認証エラーなどフォーム全体の問題 |
-| `"email"` | `fields.email.errors` | 入力値の形式エラーなどフィールド固有の問題 |
-
-エラーがあるフィールドには自動で `aria-invalid="true"` が付与される。さらに `aria-describedby` が `errorId` を参照するため、スクリーンリーダーがエラーメッセージを読み上げられる。この紐づけを手動で実装する必要がない。
-
-フォームエラーとフィールドエラーは同時に存在できる。たとえば「サーバーエラーが発生しました」（フォームエラー）と「名前は必須です」（フィールドエラー）を同時に表示するケースをConformは最初から想定している。
 
 ## まとめ
 
-Zodを外してConformだけを動かすと、このライブラリが担っている3つの責務が見える。
+Conformはバリデーションライブラリではない。フォームのHTML属性生成、状態管理、エラーの振り分けを自動化するライブラリだ。
 
-- **a11y属性の自動生成**: `getFormProps` / `getInputProps` が `id`, `name`, `type`, `required`, `form`, `aria-*` を1行で付与する。`fields.*.id` が `formId-fieldName` 規則で生成されるため、labelとの紐づけも手動管理が不要
-- **フォーム状態管理**: `defaultValue` で初期値を宣言し、`lastResult` で送信結果を注入する。uncontrolledパターンにより、Reactの再レンダリングに依存しない
-- **エラーの構造化**: `error` オブジェクトのキーが `""` ならフォームエラー、フィールド名ならフィールドエラーとして自動で振り分けられる。`aria-invalid` と `aria-describedby` も自動で付与される
-
-Zodを足すのは、この土台の上にバリデーションルールを宣言するためだ。土台を理解してからZodを足すと、どこまでがConformの仕事でどこからがZodの仕事かが明確になる。
+- **HTML属性の自動生成**: `getFormProps` / `getInputProps` が `id`, `name`, `required` などを付与する。`id` と `label` の紐づけも自動で管理される
+- **フォーム状態管理**: `defaultValue` で初期値を宣言し、`lastResult` で送信結果を渡す。`form.status` や `fields.*.errors` のフォーマットが統一されているので、フォームごとに状態管理の形式がばらつかない
+- **エラーの振り分け**: `error` のキーが `""` ならフォームエラー、フィールド名ならフィールドエラーに振り分けられる。`aria-invalid` と `aria-describedby` も自動で付与される
