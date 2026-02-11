@@ -73,6 +73,11 @@ C:\obsidian\remote\nancy-blog → C:\repos\nancy-blog-astro\src\content\blog
    ```
 3. push で Cloudflare が自動ビルド & デプロイ
 
+## カテゴリ方針
+
+React / Next.js の記事を増やす。フロントエンドの主流であり、案件獲得につながるため。
+React関連のライブラリ（Conform, nuqs など）の記事カテゴリは `JavaScript` ではなく `React` にする。
+
 ## 記事設計ガイドライン（住太陽 SEO理論準拠）
 
 ### 記事の禁止ワード
