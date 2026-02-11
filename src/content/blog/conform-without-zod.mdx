@@ -1,0 +1,601 @@
+---
+title: "ConformをZodなし・テストコードで理解する"
+description: "ConformのuseForm・getInputProps・エラー構造の挙動を、Zodなしのテストコードで検証する。a11y属性の自動生成、状態管理、フィールドエラーとフォームエラーの分離まで。"
+date: 2026-02-11T12:00:00+09:00
+categories:
+  - JavaScript
+permalink: /conform-without-zod
+published: false
+---
+
+## この記事でやること
+
+業務ではConform + Zodをセットで使うことが多いと思う。ただ、学ぶときは要素を1つでも減らして対象を絞るほうが理解しやすい。遠回りに見えるかもしれないが、まずConformだけで何ができて何ができないのかを確認したい。
+
+Conformが担っているのはバリデーションよりも、a11y属性の自動生成、フォーム状態管理、エラーの構造化といった「フォームの土台」のほうだ。Zodを外すと、その土台が見えてくる。
+
+```
+useForm
+  ├─ getFormProps  → form要素にid, noValidate, onSubmitを設定
+  ├─ getInputProps → input要素にname, id, type, required, aria-*を自動生成
+  ├─ fields.*      → 各フィールドのid, errors, errorIdを管理
+  └─ form.status   → submit結果を宣言的に管理（success / error）
+```
+
+この記事では、Vitest + Testing Libraryのテストコードだけで、Conformが「Zodなしで何をしてくれるのか」を3つの観点で検証する。
+
+1. a11y属性の自動生成
+2. フォーム状態管理の設計思想
+3. エラーの「置き場所」の思想
+
+## 検証環境
+
+```bash
+npm create vite@latest conform-without-zod -- --template react-ts
+cd conform-without-zod
+npm install
+npm install @conform-to/dom @conform-to/react
+npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
+```
+
+`vitest.config.ts` を作成する。
+
+```ts
+// vitest.config.ts
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./src/test-setup.ts",
+  },
+});
+```
+
+```ts
+// src/test-setup.ts
+import "@testing-library/jest-dom/vitest";
+```
+
+`package.json` に `test` スクリプトを追加する。
+
+```json
+{
+  "scripts": {
+    "test": "vitest"
+  }
+}
+```
+
+これで `npm test` でテストが実行できる。
+
+## useFormの基本 — formとfieldsを受け取る
+
+Conformではまず `useForm` フックを呼ぶ。戻り値の `form` と `fields` を使って、フォームのHTML属性を生成する。
+
+```tsx
+// useForm の戻り値は [form, fields] の2要素
+// <SignupSchema> を渡すと fields.email, fields.password が型安全になる（省略も可）
+const [form, fields] = useForm<SignupSchema>({
+  id: "signup",       // フォームの識別子
+  constraint: {       // 省略可。HTMLバリデーション属性を設定する
+    email: { required: true },
+    password: { required: true, minLength: 8 },
+  },
+});
+
+// → id="signup" novalidate="" ← ブラウザ標準のバリデーションUIを無効化
+<form {...getFormProps(form)}>
+
+// → required="" id="signup-email" form="signup" type="email" name="email"
+<input {...getInputProps(fields.email, { type: "email" })} />
+```
+
+型パラメータ `<SignupSchema>` を渡すと、`fields` のキーが型安全になる。`fields.email` は存在するが `fields.phone` はコンパイルエラーになる。
+
+では、このコードが実際にどんなHTMLを生成するのか見てみよう。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="書くコード">
+
+```tsx
+import { useForm, getFormProps, getInputProps } from "@conform-to/react";
+
+interface SignupSchema {
+  email: string;
+  password: string;
+}
+
+const [form, fields] = useForm<SignupSchema>({
+  id: "signup",
+  constraint: {
+    email: { required: true },
+    password: { required: true, minLength: 8 },
+  },
+});
+
+return (
+  <form {...getFormProps(form)}>
+    <label htmlFor={fields.email.id}>メールアドレス</label>
+    <input {...getInputProps(fields.email, { type: "email" })} />
+
+    <label htmlFor={fields.password.id}>パスワード</label>
+    <input {...getInputProps(fields.password, { type: "password" })} />
+  </form>
+);
+```
+
+</div>
+<div class="side-by-side-panel" data-label="生成されるHTML">
+
+```html
+<form id="signup" novalidate="">
+  <label for="signup-email">メールアドレス</label>
+  <input
+    required=""
+    id="signup-email"
+    form="signup"
+    type="email"
+    name="email"
+  >
+
+  <label for="signup-password">パスワード</label>
+  <input
+    required=""
+    id="signup-password"
+    form="signup"
+    minlength="8"
+    type="password"
+    name="password"
+  >
+</form>
+```
+
+</div>
+</div>
+
+### 生成されたHTMLを見て気になるところ
+
+#### `signup-email` というidはどこから来た？
+
+コードでは `id: "signup"` しか指定していないのに、inputには `id="signup-email"` が付いている。これはConformが `formId-fieldName` の規則で自動生成している。`label` の `for="signup-email"` も一致するので、ラベルをクリックしたときに対応するinputにフォーカスが当たる。スクリーンリーダーもラベルとinputの関係を認識できる。
+
+#### `getInputProps` の第2引数 `{ type: "email" }` は何？
+
+`getInputProps` は `id` や `constraint` の設定からHTML属性を生成するが、`type` だけは自動で判断できない。同じ `string` 型でも `type="email"` なのか `type="text"` なのかはUIの都合で変わるためだ。よく使うパターンはこのあたり。
+
+| 第2引数 | 用途 |
+|---|---|
+| `{ type: "text" }` | 一般的なテキスト入力 |
+| `{ type: "email" }` | メールアドレス入力 |
+| `{ type: "password" }` | パスワード入力 |
+| `{ type: "number" }` | 数値入力 |
+| `{ type: "checkbox" }` | チェックボックス |
+| `{ type: "hidden" }` | 隠しフィールド |
+
+#### `constraint` で `required: true` にしたのに、HTMLでは `required=""` になっている？
+
+これはHTMLの仕様どおりの動作だ。HTMLの `required` は[論理属性（boolean attribute）](https://developer.mozilla.org/ja/docs/Glossary/Boolean/HTML)で、属性が存在すれば「必須」、存在しなければ「必須でない」を意味する。`required=""` と `required` は同じ意味になる。
+
+#### `constraint` で指定できるプロパティは？
+
+`constraint` は省略可能で、指定した値がそのまま `<input>` の `required` や `minlength` 属性になる。
+
+ConformはJSが読み込まれた後に `noValidate` を付与し、ブラウザの[制約バリデーション](https://developer.mozilla.org/ja/docs/Web/HTML/Constraint_validation)を無効化する。つまりJSが動いている状態では `constraint` の属性はバリデーションとしては機能しない。JSが読み込まれる前のフォールバックとして付けている。ページ表示直後はまだ `noValidate` が付いていないので、ブラウザ標準のバリデーションがそのまま動く。
+
+**Zodなしの状態でsubmitボタンを押すと、クライアント側では何もチェックされずフォームがそのまま送信される。**
+
+
+## フォーム状態管理の設計思想
+
+Conformの `useForm` はバリデーションライブラリではなく状態管理ツールだ。`defaultValue` による初期値の宣言、`form.status` によるsubmit結果の管理、そしてuncontrolledパターンの採用がその設計思想を表している。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="コンポーネント">
+
+```tsx
+// src/components/form-metadata.tsx
+import {
+  useForm,
+  getFormProps,
+  getInputProps,
+} from "@conform-to/react";
+import type { SubmissionResult } from "@conform-to/dom";
+
+interface ProfileSchema {
+  username: string;
+  bio: string;
+}
+
+interface ProfileFormProps {
+  lastResult?: SubmissionResult<string[]> | null;
+}
+
+export function ProfileForm({ lastResult }: ProfileFormProps) {
+  const [form, fields] = useForm<ProfileSchema>({
+    id: "profile",
+    defaultValue: {
+      username: "ゲスト",
+      bio: "",
+    },
+    lastResult: lastResult ?? undefined,
+  });
+
+  return (
+    <form {...getFormProps(form)}>
+      <div>
+        <label htmlFor={fields.username.id}>ユーザー名</label>
+        <input
+          {...getInputProps(fields.username, { type: "text" })}
+        />
+      </div>
+      <div>
+        <label htmlFor={fields.bio.id}>自己紹介</label>
+        <input
+          {...getInputProps(fields.bio, { type: "text" })}
+        />
+      </div>
+
+      <output data-testid="form-status">
+        {form.status ?? "未送信"}
+      </output>
+
+      <button type="submit">保存</button>
+    </form>
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="テスト">
+
+```tsx
+// src/components/form-metadata.test.tsx
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import type { SubmissionResult } from "@conform-to/dom";
+import { ProfileForm } from "./form-metadata";
+
+describe("ProfileForm - フォーム状態管理の設計思想", () => {
+  it("defaultValueが初期値としてinputに反映される（uncontrolled）", () => {
+    render(<ProfileForm />);
+
+    const usernameInput = screen.getByLabelText(
+      "ユーザー名"
+    ) as HTMLInputElement;
+    expect(usernameInput).toHaveValue("ゲスト");
+  });
+
+  it("defaultValueが空文字のフィールドは空で表示される", () => {
+    render(<ProfileForm />);
+
+    const bioInput = screen.getByLabelText(
+      "自己紹介"
+    ) as HTMLInputElement;
+    expect(bioInput).toHaveValue("");
+  });
+
+  it("lastResultなしの場合statusは未定義", () => {
+    render(<ProfileForm />);
+
+    expect(screen.getByTestId("form-status"))
+      .toHaveTextContent("未送信");
+  });
+
+  it("lastResultでstatus='success'の場合成功状態が反映される", () => {
+    const lastResult: SubmissionResult<string[]> = {
+      status: "success",
+      initialValue: { username: "太郎", bio: "こんにちは" },
+    };
+
+    render(<ProfileForm lastResult={lastResult} />);
+
+    expect(screen.getByTestId("form-status"))
+      .toHaveTextContent("success");
+  });
+
+  it("lastResultでstatus='error'の場合エラー状態が反映される", () => {
+    const lastResult: SubmissionResult<string[]> = {
+      status: "error",
+      initialValue: { username: "", bio: "" },
+      error: {
+        username: ["ユーザー名は必須です"],
+      },
+    };
+
+    render(<ProfileForm lastResult={lastResult} />);
+
+    expect(screen.getByTestId("form-status"))
+      .toHaveTextContent("error");
+  });
+
+  it("getInputPropsがdefaultValueを返す（valueではない＝uncontrolled）", () => {
+    render(<ProfileForm />);
+
+    const usernameInput = screen.getByLabelText(
+      "ユーザー名"
+    ) as HTMLInputElement;
+
+    // HTMLInputElementのdefaultValueプロパティで確認
+    expect(usernameInput.defaultValue).toBe("ゲスト");
+    // React uncontrolledパターン: DOMのvalue属性で管理
+    expect(usernameInput.value).toBe("ゲスト");
+  });
+});
+```
+
+</div>
+</div>
+
+### このテストでわかること
+
+- **`defaultValue` は宣言的に初期値を設定する。** `useState` のように値とsetterを管理するのではなく、フォーム生成時に初期値を渡すだけ。以降はDOMが値を保持する
+- **`form.status` はsubmit結果を宣言的に管理する。** `lastResult` を渡せば `"success"` / `"error"` が反映される。送信前は `undefined`
+- **uncontrolledパターンを採用している。** `getInputProps` は `value` ではなく `defaultValue` を返す。Reactの再レンダリングに依存せず、DOM自体が入力値を保持する
+
+Conformが `noValidate` をデフォルトで設定するのも、この設計の一部だ。ブラウザ標準のバリデーションUIを無効化し、`lastResult` によるサーバーサイドバリデーションの結果を唯一のエラー源とする。クライアントとサーバーでバリデーションロジックが分散しない。
+
+## エラーの「置き場所」の思想
+
+Conformはエラーを最初から2つの層に分離している。フィールドレベルエラー（`fields.*.errors`）とフォームレベルエラー（`form.errors`）だ。`lastResult` の `error` オブジェクトで、キーが `""` （空文字）ならフォームエラー、フィールド名ならフィールドエラーとして振り分けられる。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="コンポーネント">
+
+```tsx
+// src/components/error-structure.tsx
+import {
+  useForm,
+  getFormProps,
+  getInputProps,
+  getTextareaProps,
+} from "@conform-to/react";
+import type { SubmissionResult } from "@conform-to/dom";
+
+interface ContactSchema {
+  name: string;
+  email: string;
+  message: string;
+}
+
+interface ContactFormProps {
+  lastResult?: SubmissionResult<string[]> | null;
+}
+
+export function ContactForm({ lastResult }: ContactFormProps) {
+  const [form, fields] = useForm<ContactSchema>({
+    id: "contact",
+    lastResult: lastResult ?? undefined,
+    constraint: {
+      name: { required: true },
+      email: { required: true },
+      message: { required: true, minLength: 10 },
+    },
+  });
+
+  return (
+    <form {...getFormProps(form)}>
+      {/* フォームレベルエラー */}
+      {form.errors && (
+        <div role="alert" id={form.errorId}>
+          {form.errors.map((error, i) => (
+            <p key={i}>{error}</p>
+          ))}
+        </div>
+      )}
+
+      <div>
+        <label htmlFor={fields.name.id}>名前</label>
+        <input
+          {...getInputProps(fields.name, { type: "text" })}
+        />
+        {/* フィールドレベルエラー */}
+        {fields.name.errors && (
+          <div id={fields.name.errorId} role="alert">
+            {fields.name.errors.map((error, i) => (
+              <p key={i}>{error}</p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor={fields.email.id}>メールアドレス</label>
+        <input
+          {...getInputProps(fields.email, { type: "email" })}
+        />
+        {fields.email.errors && (
+          <div id={fields.email.errorId} role="alert">
+            {fields.email.errors.map((error, i) => (
+              <p key={i}>{error}</p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor={fields.message.id}>メッセージ</label>
+        <textarea {...getTextareaProps(fields.message)} />
+        {fields.message.errors && (
+          <div id={fields.message.errorId} role="alert">
+            {fields.message.errors.map((error, i) => (
+              <p key={i}>{error}</p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button type="submit">送信</button>
+    </form>
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="テスト">
+
+```tsx
+// src/components/error-structure.test.tsx
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import type { SubmissionResult } from "@conform-to/dom";
+import { ContactForm } from "./error-structure";
+
+describe("ContactForm - エラーの置き場所の思想", () => {
+  it("フィールドエラーが各フィールドに表示される", () => {
+    const lastResult: SubmissionResult<string[]> = {
+      status: "error",
+      initialValue: {
+        name: "太郎",
+        email: "invalid",
+        message: "",
+      },
+      error: {
+        email: ["メールアドレスの形式が正しくありません"],
+        message: ["メッセージは10文字以上必要です"],
+      },
+    };
+
+    render(<ContactForm lastResult={lastResult} />);
+
+    expect(
+      screen.getByText("メールアドレスの形式が正しくありません")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("メッセージは10文字以上必要です")
+    ).toBeInTheDocument();
+  });
+
+  it("フォームレベルエラーがフィールドエラーと分離して表示される", () => {
+    const lastResult: SubmissionResult<string[]> = {
+      status: "error",
+      initialValue: {
+        name: "太郎",
+        email: "taro@example.com",
+        message: "こんにちは、お世話になっております",
+      },
+      error: {
+        "": ["送信に失敗しました。時間をおいて再度お試しください"],
+      },
+    };
+
+    render(<ContactForm lastResult={lastResult} />);
+
+    expect(
+      screen.getByText(
+        "送信に失敗しました。時間をおいて再度お試しください"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("フィールドエラーとフォームエラーが同時に存在できる", () => {
+    const lastResult: SubmissionResult<string[]> = {
+      status: "error",
+      initialValue: { name: "", email: "", message: "" },
+      error: {
+        "": ["サーバーエラーが発生しました"],
+        name: ["名前は必須です"],
+        email: ["メールアドレスは必須です"],
+      },
+    };
+
+    render(<ContactForm lastResult={lastResult} />);
+
+    // フォームレベルエラー
+    expect(
+      screen.getByText("サーバーエラーが発生しました")
+    ).toBeInTheDocument();
+    // フィールドレベルエラー
+    expect(
+      screen.getByText("名前は必須です")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("メールアドレスは必須です")
+    ).toBeInTheDocument();
+  });
+
+  it("エラーがある場合aria-invalidがtrueになる", () => {
+    const lastResult: SubmissionResult<string[]> = {
+      status: "error",
+      initialValue: {
+        name: "太郎",
+        email: "",
+        message: "",
+      },
+      error: {
+        email: ["メールアドレスは必須です"],
+      },
+    };
+
+    render(<ContactForm lastResult={lastResult} />);
+
+    const emailInput = screen.getByLabelText("メールアドレス");
+    expect(emailInput)
+      .toHaveAttribute("aria-invalid", "true");
+
+    // エラーのないフィールドにはaria-invalid="true"がない
+    const nameInput = screen.getByLabelText("名前");
+    expect(nameInput)
+      .not.toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("aria-describedbyがerrorIdを含みエラーメッセージと紐づく", () => {
+    const lastResult: SubmissionResult<string[]> = {
+      status: "error",
+      initialValue: { name: "", email: "", message: "" },
+      error: {
+        email: ["メールアドレスは必須です"],
+      },
+    };
+
+    render(<ContactForm lastResult={lastResult} />);
+
+    const emailInput = screen.getByLabelText("メールアドレス");
+    const ariaDescribedBy = emailInput
+      .getAttribute("aria-describedby");
+    expect(ariaDescribedBy).toBeTruthy();
+
+    // aria-describedbyで参照されるエラー要素が存在する
+    const errorElement = document.getElementById(
+      ariaDescribedBy!.split(" ")[0]
+    );
+    expect(errorElement).not.toBeNull();
+  });
+
+  it("エラーなしの場合エラー要素が表示されない", () => {
+    render(<ContactForm />);
+
+    expect(screen.queryByRole("alert"))
+      .not.toBeInTheDocument();
+  });
+});
+```
+
+</div>
+</div>
+
+### このテストでわかること
+
+Conformのエラー構造は `lastResult.error` のキーで振り分けられる。
+
+| キー | 振り分け先 | 用途 |
+|---|---|---|
+| `""` (空文字) | `form.errors` | サーバーエラー、認証エラーなどフォーム全体の問題 |
+| `"email"` | `fields.email.errors` | 入力値の形式エラーなどフィールド固有の問題 |
+
+エラーがあるフィールドには自動で `aria-invalid="true"` が付与される。さらに `aria-describedby` が `errorId` を参照するため、スクリーンリーダーがエラーメッセージを読み上げられる。この紐づけを手動で実装する必要がない。
+
+フォームエラーとフィールドエラーは同時に存在できる。たとえば「サーバーエラーが発生しました」（フォームエラー）と「名前は必須です」（フィールドエラー）を同時に表示するケースをConformは最初から想定している。
+
+## まとめ
+
+Zodを外してConformだけを動かすと、このライブラリが担っている3つの責務が見える。
+
+- **a11y属性の自動生成**: `getFormProps` / `getInputProps` が `id`, `name`, `type`, `required`, `form`, `aria-*` を1行で付与する。`fields.*.id` が `formId-fieldName` 規則で生成されるため、labelとの紐づけも手動管理が不要
+- **フォーム状態管理**: `defaultValue` で初期値を宣言し、`lastResult` で送信結果を注入する。uncontrolledパターンにより、Reactの再レンダリングに依存しない
+- **エラーの構造化**: `error` オブジェクトのキーが `""` ならフォームエラー、フィールド名ならフィールドエラーとして自動で振り分けられる。`aria-invalid` と `aria-describedby` も自動で付与される
+
+Zodを足すのは、この土台の上にバリデーションルールを宣言するためだ。土台を理解してからZodを足すと、どこまでがConformの仕事でどこからがZodの仕事かが明確になる。
