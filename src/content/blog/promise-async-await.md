@@ -1,6 +1,6 @@
 ---
 title: JavaScript axiosをasync、awaitとtry、catch、finallyで制御する
-description: ""
+description: "axiosを使ったHTTP通信をasync/awaitで制御する方法を解説。Babel7とwebpackとjson-serverの環境構築から、try/catch/finallyによるエラーハンドリングまで実装する。"
 date: 2019-03-31
 categories:
   - JavaScript
