@@ -175,7 +175,7 @@ index.html
 Google Chromeのデベロッパーツールを確認すると、`index.js`で用意したメッセージが出力されている。
 
 Google Chromeのデベロッパーツール
-![Hello HtmlWebpackPlugin](/images/20190324-console-hello-html.png)
+![Hello HtmlWebpackPlugin](../../assets/images/20190324-console-hello-html.png)
 
 ## titleやmetaタグ、ファイル名を変更する
 
@@ -342,7 +342,7 @@ admin.html
 Google Chromeで画面を確認すると、CSSが読み込まれ文字が赤色に変わっている。
 
 Google Chrome
-![extract css](/images/20190324-extract-css.png)
+![extract css](../../assets/images/20190324-extract-css.png)
 
 ### Cache Bustingを試す
 

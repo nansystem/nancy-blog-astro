@@ -304,7 +304,7 @@ $ node dist/bundle.js
 ```
 
 よし。ブラウザでも1ファイルで実行できていることが確認できた。
-![ブラウザでバンドルしたファイルが動くことを確認する](/images/20190301-confirm-bundle-file-in-brower.png)
+![ブラウザでバンドルしたファイルが動くことを確認する](../../assets/images/20190301-confirm-bundle-file-in-brower.png)
 
 ## まとめられたファイルに関数がexportされるようにする
 

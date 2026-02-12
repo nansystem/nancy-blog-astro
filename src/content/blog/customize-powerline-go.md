@@ -1,6 +1,6 @@
 ---
 title: powerline-goの表示からユーザー名やホスト名の部分(user > DESKTOP-A48OM8R)を消す
-description: powerline-go
+description: powerline-goのプロンプトからユーザー名やホスト名を非表示にし、パスの表示をコンパクトにカスタマイズする手順を解説する。
 date: 2021-01-06
 categories:
   - WSL
@@ -12,7 +12,7 @@ published: true
 
 しかし、デフォルトの設定ではパスの表示が横に長すぎて、ノートパソコンだと入力領域が画面の半分くらいから始まっていた。そこでユーザー名やホスト名を表示しないよう設定した。
 
-![Windows Terminal](/images/20210106-terminal.png)
+![Windows Terminal](../../assets/images/20210106-terminal.png)
 
 ## powerline-goのカスタマイズ方法
 
@@ -54,7 +54,7 @@ function _update_ps1() {
 ```
 
 これで以下のようにすっきりする。  
-![customize Windows Terminal](/images/20210106-customize-terminal.png)
+![customize Windows Terminal](../../assets/images/20210106-customize-terminal.png)
 
 参照  
 https://github.com/justjanne/powerline-go#customization

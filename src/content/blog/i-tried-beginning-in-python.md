@@ -30,7 +30,7 @@ pipenvとは、**パッケージの管理と、仮想環境を作成**するツ�
 パッケージとは複数のモジュールをまとめたもので、モジュールは拡張子.pyで書かれたファイルのことだ。(この説明は正確ではないようだが、必要になったときに深掘りしようと思う)  
 パッケージは[The Python Package Index (PyPI)](https://pypi.org/)と呼ばれる場所で共有されており、開発者はパッケージ名と必要であればバージョンを指定することで、簡易にパッケージをインストールすることができる。
 
-![PyPI](/images/20190429-pypi.png)
+![PyPI](../../assets/images/20190429-pypi.png)
 
 しかし、pipでパッケージをインストールすると、グローバルにインストールされてしまう。(ただし、オプションでインストール先はコントロールできる模様)  
 つまり、複数のプロジェクトで開発している場合、不要なパッケージが入ってしまったり、バージョンをそろえられなくなり不便である。  
@@ -171,7 +171,7 @@ $ FLASK_APP=hello.py flask run
 ```
 
 ブラウザを開くと`hello.py`で`return`していた文字列「Hello World」が表示される。
-![FlaskでHello World](/images/20190429-hello-world.png)
+![FlaskでHello World](../../assets/images/20190429-hello-world.png)
 
 ・参考  
 https://www.m3tech.blog/entry/python-packaging  

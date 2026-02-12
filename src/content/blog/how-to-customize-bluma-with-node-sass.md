@@ -162,7 +162,7 @@ index.html
 ```
 
 ブラウザでHTMLを確認してみると、いい感じで読み込めてる。
-![Bulmaを読み込んだHTML](/images/20190216-bulma-site.png)
+![Bulmaを読み込んだHTML](../../assets/images/20190216-bulma-site.png)
 
 最後に、`style.scss`でbulmaのスタイルを変更できるか確かめる。
 bulmaで使われるプライマリーカラー`$primary`変数を指定し、ボタンの色が変わるか確かめる。
@@ -175,7 +175,7 @@ $primary: #ff141c;
 
 再度ブラウザでHTMLを確認してみると、「Primary」と書かれたボタンの色が赤色に変わっていることがわかる。
 
-![Bulmaの色を変更したHTML](/images/20190216-bulma-site-changed.png)
+![Bulmaの色を変更したHTML](../../assets/images/20190216-bulma-site-changed.png)
 
 Bulmaの変数は`$primary`だけではなく、フォントやグリッドの幅も変更できる。
 

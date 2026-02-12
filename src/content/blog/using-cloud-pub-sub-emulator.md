@@ -52,8 +52,7 @@ localhost:8085
 
 ### Pythonのgoogle-cloud-pubsubライブラリをpipenvでインストールする
 
-pipenvのインストールと使い方はこちらの記事
-[MacでPythonが動く環境を構築して、Flaskから文字列を返すところまで](/i-tried-beginning-in-python/#pipenvのインストール)に記載している。
+pipenvのインストールと使い方は[MacでPythonが動く環境を構築して、Flaskから文字列を返すところまで](/i-tried-beginning-in-python/#pipenvのインストール)に記載している。
 
 作業するディレクトリに空のPipfileを用意し、Python3.7が動く仮想環境を作成する。
 

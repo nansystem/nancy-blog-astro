@@ -79,7 +79,7 @@ fi
 
 ここまでの設定で、以下のようにコマンドラインにgitのブランチ名が表示される。
 
-![Windows Terminal](/images/20201209-terminal.png)
+![Windows Terminal](../../assets/images/20201209-terminal.png)
 
 参考  
 https://github.com/moovweb/gvm  

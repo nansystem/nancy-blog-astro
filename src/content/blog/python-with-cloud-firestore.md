@@ -112,7 +112,7 @@ print(db)
 ```
 
 Visual Studio Codeでデバッグして動かしてみると、`from_service_account_json()`メソッドで取得したオブジェクトに、Cloud Firestoreを操作できそうなものが入っていることがわかる👀  
-![dbに入っているもの](/images/20190518-firestore-obj.png)
+![dbに入っているもの](../../assets/images/20190518-firestore-obj.png)
 
 ## 操作
 
@@ -121,7 +121,7 @@ Visual Studio Codeでデバッグして動かしてみると、`from_service_acc
 ### 追加
 
 Google Cloud PlatformのコンソールでFirestoreが空であることを確認する。
-![consoleでFirestoreが空であることを確認する](/images/20190518-console-firestore.png)
+![consoleでFirestoreが空であることを確認する](../../assets/images/20190518-console-firestore.png)
 
 `db.collection(コレクションのパス).document(ドキュメントのパス)`でドキュメントへの参照を取得し、`set()`メソッドでデータを追加する。
 
@@ -146,7 +146,7 @@ doc_ref.set({
 ```
 
 上記のPython実行後に再度コンソールを確認すると、`set`した内容が表示されている。
-![追加されてる](/images/20190518-setted.png)
+![追加されてる](../../assets/images/20190518-setted.png)
 
 ### 参照
 

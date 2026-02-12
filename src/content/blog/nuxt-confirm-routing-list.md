@@ -62,4 +62,4 @@ No issues found.
 Chrome拡張のVue.js devtoolsからURL一覧を確認する。  
 ルーティングタブの`Routes`を選ぶと表示される。  
 そんなところにあったんかい。  
-![Vue.js devtoolsからURL一覧を確認する](/images/20210607-vue-dev-tool-for-confirm-routing-list.jpg)
+![Vue.js devtoolsからURL一覧を確認する](../../assets/images/20210607-vue-dev-tool-for-confirm-routing-list.jpg)

@@ -46,7 +46,7 @@ style.css
 ```
 
 ブラウザで表示確認
-![init-html](/images/20190407-init-html.png)
+![init-html](../../assets/images/20190407-init-html.png)
 
 ## body全体に背景色を指定する
 
@@ -80,7 +80,7 @@ body {
 }
 ```
 
-![100vw100vhで背景](/images/20190407-100vw100vh.png)
+![100vw100vhで背景](../../assets/images/20190407-100vw100vh.png)
 
 ### html, bodyに100%で全画面に背景を表示する
 
@@ -108,7 +108,7 @@ body {
 }
 ```
 
-![html,bodyにheight:100%を指定](/images/20190407-html-body-100percent.png)
+![html,bodyにheight:100%を指定](../../assets/images/20190407-html-body-100percent.png)
 
 ### height: 100vh と height: 100%の違い
 
@@ -125,7 +125,7 @@ body {
 ビューポートはスクロールバーを含んだ値になる。したがって、スクロールバーが常に表示されているブラウザでは意図せず横スクロールが表示されることがある。
 
 この挙動をMacで確認するため、スクロールバーが常に表示されるようにする。「システム環境設定」>「一般」>「スクロールバーの表示」から「常に表示」を選択する。
-![Macでスクロールバーを常に表示](/images/20190407-mac-scrollbar.jpg)
+![Macでスクロールバーを常に表示](../../assets/images/20190407-mac-scrollbar.jpg)
 
 高さが表示領域を超えるよう`.box1`、`.box2`にそれぞれ`height: 100vh;`を指定したHTMLを用意する。
 
@@ -162,7 +162,7 @@ body {
 
 ブラウザで表示を確認すると、縦スクロールバーの横幅分、横にスクロールできるようになってしまった。
 これの対処として、`max-width: 100%`を追加して画面幅を超えないようにできるが、それであれば最初から`vw`を使わず`width: 100%`とした方がわかりやすいように思う。
-![縦スクロールバーの幅分、横幅が増えてしまう](/images/20190407-scrollbar-width.jpg)
+![縦スクロールバーの幅分、横幅が増えてしまう](../../assets/images/20190407-scrollbar-width.jpg)
 
 ## 子要素を全画面表示して背景色を指定する
 
@@ -192,7 +192,7 @@ body {
 
 `top:0`、`left:0`で画面の左上を基準に`width:100%`、`height:100%`で幅と高さを指定することで画面全体に背景を指定している。
 
-![width、heightに100%指定](/images/20190407-fixed-width100-height100.png)
+![width、heightに100%指定](../../assets/images/20190407-fixed-width100-height100.png)
 
 ### top:0、left:0、right:0、bottom:0で全画面に背景を表示する
 
@@ -210,7 +210,7 @@ body {
 }
 ```
 
-![top:0、left:0、right:0、bottom:0で全画面に背景を表示](/images/20190407-t0r0l0b0.png)
+![top:0、left:0、right:0、bottom:0で全画面に背景を表示](../../assets/images/20190407-t0r0l0b0.png)
 
 ・参考  
 https://stackoverflow.com/questions/28080910/what-does-top-0-left-0-bottom-0-right-0-mean/44488046  
