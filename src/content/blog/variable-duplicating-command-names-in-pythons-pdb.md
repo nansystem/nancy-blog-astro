@@ -8,16 +8,16 @@ permalink: /variable-duplicating-command-names-in-pythons-pdb
 published: true
 ---
 
-
 pdbのコマンド名と同名の変数、たとえば`u`や`l`をコマンドラインで入力しても、変数の中身が確認できない。  
 pdbのコマンドと認識されるためである。  
-その場合、`!`を変数名の前につけるか、`p 変数名`とすれば参照できるようになる。  
-  
+その場合、`!`を変数名の前につけるか、`p 変数名`とすれば参照できるようになる。
+
 たとえば、以下のようなユーザーIDを元にユーザーを取得するコードがあったとする。  
 デバッグしたい位置に`breakpoint()`と記載する。Python3.7より前なら`import pdb; pdb.set_trace()`とする。
 
 sample.py
-``` python
+
+```python
 from typing import Optional
 
 class User:
@@ -40,7 +40,7 @@ get_user(2)
 
 ファイルを実行する。
 
-``` bash
+```bash
 python sample.py
 ```
 
@@ -48,9 +48,9 @@ python sample.py
 ここで`u`と入力するとpdbのコマンドと認識され変数の内容を確認できない。  
 そこで!uと変数名の前に!をつければよい。  
 あるいはp(printの略) uとする。  
-なお、クラスのフィールド値を参照したい場合は、`__dict__`で確認できる。  
+なお、クラスのフィールド値を参照したい場合は、`__dict__`で確認できる。
 
-``` bash
+```bash
 -> return u
 (Pdb) !u
 <__main__.User object at 0x7fbf48db6490>
@@ -64,27 +64,27 @@ python sample.py
 
 pdbの拡張として`ipdb`というモジュールがある。  
 `ipdb`は表示をカラフルにし、変数の候補を表示してくれる。  
-こちらを使う場合は別途インストールが必要である。  
+こちらを使う場合は別途インストールが必要である。
 
-``` bash
+```bash
 pip install ipdb
 ```
 
-`breakpoint()`はデフォルトで`pdb`を使うので、`ipdb`を使いたい場合は以下の環境変数を設定する。  
+`breakpoint()`はデフォルトで`pdb`を使うので、`ipdb`を使いたい場合は以下の環境変数を設定する。
 
-``` bash
+```bash
 export PYTHONBREAKPOINT=ipdb.set_trace
 ```
 
 `p`と入力し`tab`を入力すると、`p`を先頭にしたコマンドの候補が表示される。  
 多少デバッグが捗るかもしれない。
 
-``` bash
+```bash
 ipdb> p
-         pass       %paste     %pdoc      pinfo2     %precision  
-         pow()      %pastebin  %%perl     %pinfo2    %prun       
-         print      %pdb       pfile      %pip       %%prun      
+         pass       %paste     %pdoc      pinfo2     %precision
+         pow()      %pastebin  %%perl     %pinfo2    %prun
+         print      %pdb       pfile      %pip       %%prun
          property   pdef       %pfile     %popd      %psearch   >
-         p          %pdef      pinfo      pp         psource     
+         p          %pdef      pinfo      pp         psource
          %page      pdoc       %pinfo     %pprint    %psource
 ```

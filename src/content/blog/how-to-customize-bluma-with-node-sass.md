@@ -8,21 +8,21 @@ permalink: /how-to-customize-bluma-with-node-sass
 published: true
 ---
 
-
 レスポンシブに対応したCSSフレームワークに[Bulma](https://bulma.io/)がある。  
 このBulmaのフォントや色(プライマリーからやアクセントカラーなど)、グリッド幅をSCSSでカスタマイズできる環境を構築していく。  
 まずはSCSSをコンパイルできる環境を構築し、次にBulmaをSCSSでカスタマイズできるようにしていく。
 
-
 ## node-sassでSCSSファイルをコンパイルできるようにする
-SCSSファイルをコンパイルできるようにするため、`node-sass`をインストールする。  
 
-``` sh
+SCSSファイルをコンパイルできるようにするため、`node-sass`をインストールする。
+
+```sh
 npm install -D node-sass
 ```
 
-package.json 
-``` json
+package.json
+
+```json
 {
   "devDependencies": {
     "node-sass": "^4.11.0"
@@ -34,7 +34,8 @@ package.json
 scssディレクトリにscssファイルを作成し、cssディレクトリにコンパイルされたcssファイルを出力できるようにディレクトリとファイルを用意する。
 
 ディレクトリ
-``` bash
+
+```bash
 .
 ├── css
 ├── package-lock.json
@@ -46,8 +47,8 @@ scssディレクトリにscssファイルを作成し、cssディレクトリに
 `style.scss`で変数を使ってみてコンパイルされるのを確認する。
 `$primary-color`という変数を使って、`body`の背景色を指定する。
 
-``` scss
-$primary-color: #FF141C;
+```scss
+$primary-color: #ff141c;
 
 body {
   background-color: $primary-color;
@@ -56,25 +57,29 @@ body {
 
 `node-sass`を実行することによりSCSSからCSSを出力する。  
 `node-sass 入力元のSCSSファイル 出力先のCSSファイル`という形でコンパイルすることができる。
-``` sh
+
+```sh
 npx node-sass scss/style.scss css/style.css
 ```
 
 出力された`style.css`を確認すると、変数が展開され`#FF141C`が設定されている。  
 これでSCSSのコンパイルが確認できた。
-``` css
+
+```css
 body {
-  background-color: #FF141C; }
+  background-color: #ff141c;
+}
 ```
 
 ## SCSSのコンパイルを自動化する
+
 毎回`npx node-sass scss/style.scss css/style.css`とコマンドを打つのは手間なので、
 SCSSを自動でコンパイルできるようにする。  
 `npm-scripts`でSCSSファイルを`--watch`オプションにより監視する。  
 `css-watch`scriptの最後に指定している`--watch`の前に書かれている`--`は、`css-build`scriptを実行する際のオプションを提供している。  
 つまり、`css-watch`scriptを実行すると`node-sass scss/style.scss css/style.csc --watch`が実行されることになる。
 
-``` sh
+```sh
 "scripts": {
   "css-build": "node-sass scss/style.scss css/style.css",
   "css-watch": "npm run css-build -- --watch",
@@ -85,14 +90,16 @@ SCSSを自動でコンパイルできるようにする。
 `npm run css-build`を実行すると、`node-sass`コマンドを打っていたのと同じように`style.css`が出力される。そして、`npm start`で`style.scss`が変更されるたびに自動で`style.css`が生成されるようになる。
 
 ## bulmaをSCSSでカスタマイズできるようにする
+
 bulmaをインストールする。
 
-``` sh
+```sh
 npm install -D bulma
 ```
 
 package.json
-``` json
+
+```json
 {
   "devDependencies": {
     "bulma": "^0.7.4",
@@ -103,7 +110,7 @@ package.json
 
 bulmaを読み込むため、`style.scss`に`@import`で`node_modules`ディレクトリ下にある`bulma.sass`を指定する。
 
-``` scss
+```scss
 @charset "utf-8";
 @import "../node_modules/bulma/bulma.sass";
 ```
@@ -111,7 +118,8 @@ bulmaを読み込むため、`style.scss`に`@import`で`node_modules`ディレ�
 そして、`index.html`を作成して`style.css`を読み込む。
 
 index.html
-``` html{7}
+
+```html{7}
 <!DOCTYPE html>
 <html>
 <head>
@@ -156,13 +164,12 @@ index.html
 ブラウザでHTMLを確認してみると、いい感じで読み込めてる。
 ![Bulmaを読み込んだHTML](/images/20190216-bulma-site.png)
 
-
 最後に、`style.scss`でbulmaのスタイルを変更できるか確かめる。
 bulmaで使われるプライマリーカラー`$primary`変数を指定し、ボタンの色が変わるか確かめる。
 
-``` scss
+```scss
 @charset "utf-8";
-$primary: #FF141C;
+$primary: #ff141c;
 @import "../node_modules/bulma/bulma.sass";
 ```
 
@@ -170,7 +177,7 @@ $primary: #FF141C;
 
 ![Bulmaの色を変更したHTML](/images/20190216-bulma-site-changed.png)
 
-Bulmaの変数は`$primary`だけではなく、フォントやグリッドの幅も変更できる。  
+Bulmaの変数は`$primary`だけではなく、フォントやグリッドの幅も変更できる。
 
 ・参考リンク  
 https://bulma.io/documentation/customize/with-node-sass/  

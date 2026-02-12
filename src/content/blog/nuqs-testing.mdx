@@ -84,8 +84,8 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 render(<MyComponent />, {
   wrapper: ({ children }) => (
     <NuqsTestingAdapter
-      searchParams="?key=value"   // 1. 初期パラメータ
-      onUrlUpdate={onUrlUpdate}    // 3. URL変化の検証用
+      searchParams="?key=value" // 1. 初期パラメータ
+      onUrlUpdate={onUrlUpdate} // 3. URL変化の検証用
     >
       {children}
     </NuqsTestingAdapter>
@@ -107,10 +107,7 @@ render(<MyComponent />, {
 import { useQueryState, parseAsString } from "nuqs";
 
 export function NameInput() {
-  const [name, setName] = useQueryState(
-    "name",
-    parseAsString.withDefault("")
-  );
+  const [name, setName] = useQueryState("name", parseAsString.withDefault(""));
 
   return (
     <div>
@@ -140,9 +137,7 @@ import { NameInput } from "./name-input";
 describe("NameInput", () => {
   it("初期パラメータなしではデフォルト値が使われる", () => {
     render(<NameInput />, {
-      wrapper: ({ children }) => (
-        <NuqsTestingAdapter>{children}</NuqsTestingAdapter>
-      ),
+      wrapper: ({ children }) => <NuqsTestingAdapter>{children}</NuqsTestingAdapter>,
     });
 
     expect(screen.getByText("こんにちは、ゲストさん")).toBeInTheDocument();
@@ -151,9 +146,7 @@ describe("NameInput", () => {
   it("初期パラメータがあれば表示に反映される", () => {
     render(<NameInput />, {
       wrapper: ({ children }) => (
-        <NuqsTestingAdapter searchParams="?name=太郎">
-          {children}
-        </NuqsTestingAdapter>
+        <NuqsTestingAdapter searchParams="?name=太郎">{children}</NuqsTestingAdapter>
       ),
     });
 
@@ -166,9 +159,7 @@ describe("NameInput", () => {
 
     render(<NameInput />, {
       wrapper: ({ children }) => (
-        <NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
-          {children}
-        </NuqsTestingAdapter>
+        <NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>{children}</NuqsTestingAdapter>
       ),
     });
 
@@ -202,22 +193,13 @@ describe("NameInput", () => {
 // src/components/parser-demo.tsx
 "use client";
 
-import {
-  useQueryState,
-  parseAsString,
-  parseAsInteger,
-  parseAsBoolean,
-  parseAsArrayOf,
-} from "nuqs";
+import { useQueryState, parseAsString, parseAsInteger, parseAsBoolean, parseAsArrayOf } from "nuqs";
 
 export function ParserDemo() {
   const [q] = useQueryState("q", parseAsString.withDefault(""));
   const [page] = useQueryState("page", parseAsInteger.withDefault(1));
   const [active] = useQueryState("active", parseAsBoolean.withDefault(false));
-  const [tags] = useQueryState(
-    "tags",
-    parseAsArrayOf(parseAsString).withDefault([])
-  );
+  const [tags] = useQueryState("tags", parseAsArrayOf(parseAsString).withDefault([]));
 
   return (
     <div>
@@ -244,9 +226,7 @@ describe("parsers", () => {
   it("parseAsString — 文字列をそのまま扱う", () => {
     render(<ParserDemo />, {
       wrapper: ({ children }) => (
-        <NuqsTestingAdapter searchParams="?q=ジェラート">
-          {children}
-        </NuqsTestingAdapter>
+        <NuqsTestingAdapter searchParams="?q=ジェラート">{children}</NuqsTestingAdapter>
       ),
     });
 
@@ -256,9 +236,7 @@ describe("parsers", () => {
   it("parseAsInteger — 文字列を整数に変換する", () => {
     render(<ParserDemo />, {
       wrapper: ({ children }) => (
-        <NuqsTestingAdapter searchParams="?page=3">
-          {children}
-        </NuqsTestingAdapter>
+        <NuqsTestingAdapter searchParams="?page=3">{children}</NuqsTestingAdapter>
       ),
     });
 
@@ -269,9 +247,7 @@ describe("parsers", () => {
   it("parseAsBoolean — 文字列をbooleanに変換する", () => {
     render(<ParserDemo />, {
       wrapper: ({ children }) => (
-        <NuqsTestingAdapter searchParams="?active=true">
-          {children}
-        </NuqsTestingAdapter>
+        <NuqsTestingAdapter searchParams="?active=true">{children}</NuqsTestingAdapter>
       ),
     });
 
@@ -282,9 +258,7 @@ describe("parsers", () => {
   it("parseAsArrayOf — カンマ区切りを配列にする", () => {
     render(<ParserDemo />, {
       wrapper: ({ children }) => (
-        <NuqsTestingAdapter searchParams="?tags=チョコ,抹茶">
-          {children}
-        </NuqsTestingAdapter>
+        <NuqsTestingAdapter searchParams="?tags=チョコ,抹茶">{children}</NuqsTestingAdapter>
       ),
     });
 
@@ -294,9 +268,7 @@ describe("parsers", () => {
 
   it("パラメータがなければwithDefaultの値が使われる", () => {
     render(<ParserDemo />, {
-      wrapper: ({ children }) => (
-        <NuqsTestingAdapter>{children}</NuqsTestingAdapter>
-      ),
+      wrapper: ({ children }) => <NuqsTestingAdapter>{children}</NuqsTestingAdapter>,
     });
 
     expect(screen.getByTestId("q")).toHaveTextContent("");
@@ -312,14 +284,15 @@ describe("parsers", () => {
 
 ### このテストでわかること
 
-| パーサー | URLの値 | 型 | 検証方法 |
-|---|---|---|---|
-| `parseAsString` | `?q=ジェラート` | `string` | そのまま表示 |
-| `parseAsInteger` | `?page=3` | `number` | `page + 1` → `4`（stringなら `"31"`） |
-| `parseAsBoolean` | `?active=true` | `boolean` | `active === true` → `true`（stringなら `false`） |
+| パーサー                        | URLの値             | 型         | 検証方法                                               |
+| ------------------------------- | ------------------- | ---------- | ------------------------------------------------------ |
+| `parseAsString`                 | `?q=ジェラート`     | `string`   | そのまま表示                                           |
+| `parseAsInteger`                | `?page=3`           | `number`   | `page + 1` → `4`（stringなら `"31"`）                  |
+| `parseAsBoolean`                | `?active=true`      | `boolean`  | `active === true` → `true`（stringなら `false`）       |
 | `parseAsArrayOf(parseAsString)` | `?tags=チョコ,抹茶` | `string[]` | `tags.join(",")` が成功（stringなら `.join` でエラー） |
 
 URLパラメータは本来すべて文字列だが、nuqsのparsersが型変換を行ってくれる。`parseAsArrayOf` はデフォルトでカンマ区切り（`?tags=a,b`）であり、同じキーの繰り返し（`?tags=a&tags=b`）ではない。`withDefault` がないとパラメータ未指定時に `null` が返る。
+
 ## useQueryStates — 複数パラメータをまとめて管理する
 
 <div class="side-by-side">
@@ -355,9 +328,7 @@ export function ProductFilter() {
         <option value="gelato">ジェラート</option>
         <option value="sorbet">ソルベ</option>
       </select>
-      <button onClick={() => setFilters({ q: "チョコ", page: 1 })}>
-        チョコで検索
-      </button>
+      <button onClick={() => setFilters({ q: "チョコ", page: 1 })}>チョコで検索</button>
       <p data-testid="state">
         {filters.q}|{filters.category}|{filters.page}
       </p>
@@ -396,10 +367,7 @@ describe("ProductFilter", () => {
 
     render(<ProductFilter />, {
       wrapper: ({ children }) => (
-        <NuqsTestingAdapter
-          searchParams="?q=&category=gelato&page=2"
-          onUrlUpdate={onUrlUpdate}
-        >
+        <NuqsTestingAdapter searchParams="?q=&category=gelato&page=2" onUrlUpdate={onUrlUpdate}>
           {children}
         </NuqsTestingAdapter>
       ),
@@ -419,10 +387,7 @@ describe("ProductFilter", () => {
 
     render(<ProductFilter />, {
       wrapper: ({ children }) => (
-        <NuqsTestingAdapter
-          searchParams="?page=5"
-          onUrlUpdate={onUrlUpdate}
-        >
+        <NuqsTestingAdapter searchParams="?page=5" onUrlUpdate={onUrlUpdate}>
           {children}
         </NuqsTestingAdapter>
       ),
@@ -461,10 +426,7 @@ HTMLのフォームや一般的なクエリパラメータでは繰り返し形�
 ```tsx
 import { parseAsNativeArrayOf, parseAsString } from "nuqs";
 
-const [tags, setTags] = useQueryState(
-  "tags",
-  parseAsNativeArrayOf(parseAsString)
-);
+const [tags, setTags] = useQueryState("tags", parseAsNativeArrayOf(parseAsString));
 // ?tags=チョコ&tags=抹茶 → ["チョコ", "抹茶"]
 ```
 

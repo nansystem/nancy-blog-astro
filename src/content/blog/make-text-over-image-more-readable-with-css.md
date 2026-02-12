@@ -8,8 +8,6 @@ permalink: /make-text-over-image-more-readable-with-css
 published: true
 ---
 
-
-
 全画面表示の背景画像に、文字をのせる。  
 インパクトのあるレイアウトだ。  
 簡単におしゃれなサイトが作れると思い、このレイアウトでサイトをつくってみる。
@@ -18,50 +16,50 @@ published: true
 背景画像の上の文字を読みやくするにはちょっとしたテクニックが必要だ。  
 この記事ではAdobe IllustratorやPhotoshopを使わず、CSSだけで文字を読みやすくするテクニックを紹介する。
 
-
 ## 準備
+
 まずは全画面に背景画像が表示されるようにし、テキストを画面の中央に配置する。  
 全画面中央配置にはBulmaを使っている。  
-BulmaをSCSSでカスタマイズする手順は下記の記事にまとめている。  
+BulmaをSCSSでカスタマイズする手順は下記の記事にまとめている。
 
 [BulmaをSCSSでカスタマイズできる環境をつくる](/how-to-customize-bluma-with-node-sass/)
 
 ### テキストを全画面中央配置する
+
 index.html
+
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fullscreen image</title>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <section class="hero is-fullheight has-text-centered">
-    <div class="hero-body">
-      <div class="container">
-        <h1 class="title">
-          Fullheight title
-        </h1>
-        <h2 class="subtitle">
-          Fullheight subtitle
-        </h2>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fullscreen image</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <section class="hero is-fullheight has-text-centered">
+      <div class="hero-body">
+        <div class="container">
+          <h1 class="title">Fullheight title</h1>
+          <h2 class="subtitle">Fullheight subtitle</h2>
+        </div>
       </div>
-    </div>
-  </section>
-</body>
+    </section>
+  </body>
 </html>
 ```
 
 style.scss
-``` scss
+
+```scss
 @charset "utf-8";
 @import "../node_modules/bulma/bulma.sass";
 ```
 
 ディレクトリ構成
-``` bash
+
+```bash
 ├── css
 │   └── style.css
 ├── img
@@ -78,31 +76,34 @@ style.scss
 ![全画面中央配置](/images/20190225-3.png)
 
 ### 画像を全画面の背景にする
+
 次に全画面の背景画像を設定していく。  
 style.scssに`background-image`を指定することで背景画像を設定する。  
 `width`、`height`を`100%`として画像の表示領域を画面全体とし、  
 `background-size`を`cover`にすることで画像の縦横比を保持したまま表示領域いっぱいに背景画像が表示される。
 
-``` scss
+```scss
 .hero--bg {
   background-image: url(../img/bg.jpg);
   background-size: cover;
-  
+
   width: 100%;
   height: 100%;
 }
 ```
+
 準備はここまで。  
 画像の上に文字を配置したが、文字が画像に埋もれて読みづらくなっている。  
-これを読みやすくしていこいう。  
+これを読みやすくしていこいう。
 
 ![全画面に背景画像を配置する](/images/20190225-4.png)
 
 ## 文字を大きくして、色を白にする
-まずはこれを試す。  
-タイトルの文字を大きくして、白にするだけで読みやすくなる。単純。簡単。  
 
-``` html{4,7}
+まずはこれを試す。  
+タイトルの文字を大きくして、白にするだけで読みやすくなる。単純。簡単。
+
+```html{4,7}
   <section class="hero is-fullheight has-text-centered hero--bg">
     <div class="hero-body">
       <div class="container container--hero">
@@ -117,7 +118,7 @@ style.scssに`background-image`を指定することで背景画像を設定す�
   </section>
 ```
 
-``` scss
+```scss
 .title--hero {
   font-size: 5rem;
   color: #fff;
@@ -132,10 +133,12 @@ style.scssに`background-image`を指定することで背景画像を設定す�
 ![全画面中央配置](/images/20190225-7.png)
 
 ## 背景全体を暗くする
+
 背景を暗くすることで、より文字を読みやすくすることができる。
 `before擬似要素`で背景画像の全面に要素を用意し、`rgba`で半透明の黒を重ねる。
-``` scss
-.hero--bg::before{
+
+```scss
+.hero--bg::before {
   content: "";
   position: absolute;
   top: 0;
@@ -143,7 +146,7 @@ style.scssに`background-image`を指定することで背景画像を設定す�
   display: block;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0, 0.4);
+  background: rgba(0, 0, 0, 0.4);
 }
 ```
 
@@ -151,25 +154,27 @@ style.scssに`background-image`を指定することで背景画像を設定す�
 
 背景を暗くしたので、文字の色が白以外でも大丈夫。
 
-``` scss
+```scss
 .title--hero {
   font-size: 5rem;
   color: #00e3ff;
 }
 ```
+
 ![背景を暗くすることで文字の色を背景に近い色をつかってもよい](/images/20190225-6.png)
 
 ## 背景画像をぼかす
+
 背景画像をぼかし、文字に焦点があいやすくすることで文字を読みやすくする。  
 ぼかしにはfilterを使う。  
 ただし、filterはIE11が対応してないので注意する。  
 https://caniuse.com/#feat=css-filters
 
-``` scss
+```scss
 .hero--bg {
   background-image: url(../img/bg.jpg);
   background-size: cover;
-  
+
   width: 100%;
   height: 100%;
 
@@ -178,7 +183,7 @@ https://caniuse.com/#feat=css-filters
 }
 
 .hero--bg::before {
-  content: '';
+  content: "";
   position: absolute;
   z-index: -1;
   // blurで指定したpxと同じ値を指定する
@@ -192,7 +197,6 @@ https://caniuse.com/#feat=css-filters
 ```
 
 ![9](/images/20190225-9.png)
-
 
 <br />
 <br />

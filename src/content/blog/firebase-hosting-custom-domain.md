@@ -8,20 +8,21 @@ permalink: /firebase-hosting-custom-domain
 published: true
 ---
 
-
 VuePressで生成した静的サイトをFirebase Hostingに公開している。
 ドメインを設定していないので、スタードメインでドメインを取得し、
 そのドメインをFirebase Hostingに設定していく。
 
 ## Firebase Hostingでドメインを設定するには
+
 Firebase Hostingでサイトを公開すると、プロジェクト名の後にfirebaseapp.comが続いたドメインでアクセスできるようになる。
 
-```[プロジェクト名].firebaseapp.com```
+`[プロジェクト名].firebaseapp.com`
 
 Firebase Hostingには自分で取得したドメインであるカスタム ドメインを設定する機能があるので、
 まずはドメインを取得する。
 
 ## スタードメインでドメインを取得する
+
 <a href="https://px.a8.net/svt/ejp?a8mat=358PUA+7QP6Q+1WTI+C0B9U" target="_blank" rel="nofollow">スタードメイン</a>
 <img border="0" width="1" height="1" src="https://www12.a8.net/0.gif?a8mat=358PUA+7QP6Q+1WTI+C0B9U" alt="">で「お好きなドメイン名」に取得したいドメイン名を入力し、「検索」ボタンをクリックする。ドメイン検索結果で「取得できません」と表示されず、「取得する」と書かれているドメインであればOK。
 ドメインは「.com」が安いかな。
@@ -32,6 +33,7 @@ Firebase Hostingには自分で取得したドメインであるカスタム ド
 ![スタードメインでドメインの管理画面](/images/20190202-star-domain__manage.png)
 
 ## ドメインをFirebase Hostingに設定する
+
 [Firebase Console](https://console.firebase.google.com/?hl=ja)からプロジェクト名を選択する。
 サイドナビからHostingを選択し、「ドメインを接続」ボタンをクリックする。
 ドメインを接続というモーダルウィンドウが表示されるので、先ほど取得したドメインを入力し、「次へ」ボタンをクリックする。
@@ -67,7 +69,6 @@ Firebase Consoleに戻り、実行画面でセットアップモードが「ク�
 ![wwwドメイン設定](/images/20190202-chrome__ok.png)
 
 設定お疲れ様でした✨
-
 
 ・関連リンク
 

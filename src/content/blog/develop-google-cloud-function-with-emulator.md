@@ -8,53 +8,56 @@ permalink: /develop-and_debug_google-cloud-function-with-emulator-locally
 published: true
 ---
 
-
-
 Google Cloud Functionsをローカルで開発、デバッグできるようにする。
 まずはGoogle Cloud Functionsをローカルで開発できるようエミューレータをインストールし、そのあとにVisual Studio Codeでデバッグできるようにする。
 
-
 ## Google Cloud Functionsをローカルで動かす
+
 Google Cloud Functionsをローカルで動かすために、エミューレータをインストールする。
 
-``` sh
+```sh
 $ npm install -g @google-cloud/functions-emulator
 ```
 
 インストールできていることを確認する。
-``` sh
+
+```sh
 $ functions --help
 ```
 
 確認用の関数を用意する。(ここでexportsした`helloGET`関数をGoogle Cloud Functionsに登録する)
 index.js
-``` js
+
+```js
 exports.helloGET = (req, res) => {
-  console.log('I am a log entry!');
-  console.error('I am an error!');
-  res.send('Hello World!');
+  console.log("I am a log entry!");
+  console.error("I am an error!");
+  res.send("Hello World!");
 };
 ```
 
 エミュレータを起動する。
-``` sh
+
+```sh
 $ functions start
 ```
 
 `functions deploy 関数名 トリガー`で関数を Google Cloud Functionsに登録する。
 HTTPアクセスで関数が動くことを確認するため、トリガーは`--trigger-http`を指定する。
 
-``` sh
+```sh
 $ functions deploy helloGET --trigger-http
 ```
 
 デプロイが終わるとURLが表示されるので、そのURLをcurlでたたく。
-``` sh
+
+```sh
 Resource   │ http://localhost:8010/techblog-111111/asia-northeast1/helloGET
 ```
 
 `res.send`で指定していた`Hello World!`が返ってきている。
-``` sh
+
+```sh
 $ curl http://localhost:8010/techblog-111111/asia-northeast1/helloGET
 Hello World!
 ```
@@ -62,7 +65,7 @@ Hello World!
 さらに、`functions logs read`でログを確認する。
 関数が起動したことが分かり、`info`、`error`それぞれのログが出力されていることを確認できる。
 
-``` sh
+```sh
 $ functions logs read
 2019-04-24T11:53:24.949Z - info: User function triggered, starting execution
 2019-04-24T11:53:24.949Z - info: I am a log entry!
@@ -71,13 +74,15 @@ $ functions logs read
 ```
 
 ## Visual Studio CodeでGoogle Cloud Functionsをローカルでデバッグする
-`functions inspect 関数名`によりデバッグでつかうポートが表示される。  
-``` sh
+
+`functions inspect 関数名`によりデバッグでつかうポートが表示される。
+
+```sh
 $ functions inspect helloGET
 Debugger for helloGET listening on port 9229.
 ```
 
-Visual Studio Codeを開き、`index.js`の行をダブルクリックしてデバッグポイントを追加しておく。 
+Visual Studio Codeを開き、`index.js`の行をダブルクリックしてデバッグポイントを追加しておく。
 ![デバッグポイントを追加する](/images/20190425-add-debug-point.jpg)
 
 次にデバッグの設定をしていく。  
@@ -93,7 +98,8 @@ Visual Studio Codeを開き、`index.js`の行をダブルクリックしてデ�
 - port: 9229(エミュレータで表示されたポート)
 
 launch.json
-``` json
+
+```json
 {
   "version": "0.2.0",
   "configurations": [
@@ -102,8 +108,8 @@ launch.json
       "request": "attach",
       "name": "Inspect Function",
       "protocol": "inspector",
-      "port": 9229,
-    },
+      "port": 9229
+    }
   ]
 }
 ```
@@ -123,4 +129,4 @@ launch.json
 ・参考  
 https://cloud.google.com/functions/docs/emulator?hl=ja  
 https://cloud.google.com/functions/docs/monitoring/logging  
-https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Debugging-with-Visual-Studio-Code  
+https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Debugging-with-Visual-Studio-Code

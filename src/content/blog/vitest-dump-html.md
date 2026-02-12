@@ -70,9 +70,7 @@ describe("HTML dump", () => {
       initialValue: { name: "", email: "" },
       error: { email: ["メールアドレスは必須です"] },
     };
-    const { container } = render(
-      <ContactForm lastResult={lastResult} />
-    );
+    const { container } = render(<ContactForm lastResult={lastResult} />);
     console.log("=== フィールドエラーあり ===");
     console.log(container.innerHTML);
   });

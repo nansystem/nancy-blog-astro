@@ -134,13 +134,7 @@ return (
 ```html
 <form id="signup" novalidate="">
   <label for="signup-email">メールアドレス</label>
-  <input
-    required=""
-    id="signup-email"
-    form="signup"
-    type="email"
-    name="email"
-  >
+  <input required="" id="signup-email" form="signup" type="email" name="email" />
 
   <label for="signup-password">パスワード</label>
   <input
@@ -150,7 +144,7 @@ return (
     minlength="8"
     type="password"
     name="password"
-  >
+  />
 </form>
 ```
 
@@ -167,14 +161,14 @@ Conformが `formId-fieldName` の規則で自動生成している。`label` の
 
 `type` だけは自動で判断できないため、第2引数で指定する。
 
-| 第2引数 | 用途 |
-|---|---|
-| `{ type: "text" }` | 一般的なテキスト入力 |
-| `{ type: "email" }` | メールアドレス入力 |
-| `{ type: "password" }` | パスワード入力 |
-| `{ type: "number" }` | 数値入力 |
-| `{ type: "checkbox" }` | チェックボックス |
-| `{ type: "hidden" }` | 隠しフィールド |
+| 第2引数                | 用途                 |
+| ---------------------- | -------------------- |
+| `{ type: "text" }`     | 一般的なテキスト入力 |
+| `{ type: "email" }`    | メールアドレス入力   |
+| `{ type: "password" }` | パスワード入力       |
+| `{ type: "number" }`   | 数値入力             |
+| `{ type: "checkbox" }` | チェックボックス     |
+| `{ type: "hidden" }`   | 隠しフィールド       |
 
 #### `constraint` で `required: true` にしたのに、HTMLでは `required=""` になっている？
 
@@ -188,7 +182,6 @@ HTMLの[論理属性](https://developer.mozilla.org/ja/docs/Glossary/Boolean/HTM
 
 **Zodなしの状態でsubmitボタンを押すと、クライアント側では何もチェックされずフォームがそのまま送信される。**
 
-
 ## defaultValueとlastResult
 
 `getInputProps` は `value` ではなく `defaultValue` を返す。入力値はReactのstateではなく[DOMからFormData経由で取得する](https://conform.guide/)設計だ。
@@ -200,11 +193,7 @@ HTMLの[論理属性](https://developer.mozilla.org/ja/docs/Glossary/Boolean/HTM
 
 ```tsx
 // src/components/form-metadata.tsx
-import {
-  useForm,
-  getFormProps,
-  getInputProps,
-} from "@conform-to/react";
+import { useForm, getFormProps, getInputProps } from "@conform-to/react";
 import type { SubmissionResult } from "@conform-to/dom";
 
 interface ProfileSchema {
@@ -231,21 +220,15 @@ export function ProfileForm({ lastResult }: ProfileFormProps) {
     <form {...getFormProps(form)}>
       <div>
         <label htmlFor={fields.username.id}>ユーザー名</label>
-        <input
-          {...getInputProps(fields.username, { type: "text" })}
-        />
+        <input {...getInputProps(fields.username, { type: "text" })} />
       </div>
       <div>
         <label htmlFor={fields.bio.id}>自己紹介</label>
-        <input
-          {...getInputProps(fields.bio, { type: "text" })}
-        />
+        <input {...getInputProps(fields.bio, { type: "text" })} />
       </div>
 
       {/* form.statusは "success" | "error" | undefined */}
-      <output data-testid="form-status">
-        {form.status ?? "未送信"}
-      </output>
+      <output data-testid="form-status">{form.status ?? "未送信"}</output>
 
       <button type="submit">保存</button>
     </form>
@@ -267,26 +250,21 @@ describe("ProfileForm - defaultValueとlastResult", () => {
   it("defaultValueが初期値としてinputに反映される", () => {
     render(<ProfileForm />);
 
-    const usernameInput = screen.getByLabelText(
-      "ユーザー名"
-    ) as HTMLInputElement;
+    const usernameInput = screen.getByLabelText("ユーザー名") as HTMLInputElement;
     expect(usernameInput).toHaveValue("ゲスト");
   });
 
   it("defaultValueが空文字のフィールドは空で表示される", () => {
     render(<ProfileForm />);
 
-    const bioInput = screen.getByLabelText(
-      "自己紹介"
-    ) as HTMLInputElement;
+    const bioInput = screen.getByLabelText("自己紹介") as HTMLInputElement;
     expect(bioInput).toHaveValue("");
   });
 
   it("lastResultなしの場合statusは未定義", () => {
     render(<ProfileForm />);
 
-    expect(screen.getByTestId("form-status"))
-      .toHaveTextContent("未送信");
+    expect(screen.getByTestId("form-status")).toHaveTextContent("未送信");
   });
 
   it("lastResultでstatus='success'の場合成功状態が反映される", () => {
@@ -299,8 +277,7 @@ describe("ProfileForm - defaultValueとlastResult", () => {
 
     render(<ProfileForm lastResult={lastResult} />);
 
-    expect(screen.getByTestId("form-status"))
-      .toHaveTextContent("success");
+    expect(screen.getByTestId("form-status")).toHaveTextContent("success");
   });
 
   it("lastResultでstatus='error'の場合エラー状態が反映される", () => {
@@ -314,16 +291,13 @@ describe("ProfileForm - defaultValueとlastResult", () => {
 
     render(<ProfileForm lastResult={lastResult} />);
 
-    expect(screen.getByTestId("form-status"))
-      .toHaveTextContent("error");
+    expect(screen.getByTestId("form-status")).toHaveTextContent("error");
   });
 
   it("getInputPropsがdefaultValueを返す（valueではない＝uncontrolled）", () => {
     render(<ProfileForm />);
 
-    const usernameInput = screen.getByLabelText(
-      "ユーザー名"
-    ) as HTMLInputElement;
+    const usernameInput = screen.getByLabelText("ユーザー名") as HTMLInputElement;
 
     // HTMLInputElementのdefaultValueプロパティで確認
     expect(usernameInput.defaultValue).toBe("ゲスト");
@@ -390,12 +364,7 @@ Conformはエラーをフィールドエラー（`fields.*.errors`）とフォ�
 
 ```tsx
 // src/components/error-structure.tsx
-import {
-  useForm,
-  getFormProps,
-  getInputProps,
-  getTextareaProps,
-} from "@conform-to/react";
+import { useForm, getFormProps, getInputProps, getTextareaProps } from "@conform-to/react";
 import type { SubmissionResult } from "@conform-to/dom";
 
 interface ContactSchema {
@@ -432,9 +401,7 @@ export function ContactForm({ lastResult }: ContactFormProps) {
 
       <div>
         <label htmlFor={fields.name.id}>名前</label>
-        <input
-          {...getInputProps(fields.name, { type: "text" })}
-        />
+        <input {...getInputProps(fields.name, { type: "text" })} />
         {/* フィールドレベルエラー */}
         {fields.name.errors && (
           <div id={fields.name.errorId} role="alert">
@@ -447,9 +414,7 @@ export function ContactForm({ lastResult }: ContactFormProps) {
 
       <div>
         <label htmlFor={fields.email.id}>メールアドレス</label>
-        <input
-          {...getInputProps(fields.email, { type: "email" })}
-        />
+        <input {...getInputProps(fields.email, { type: "email" })} />
         {fields.email.errors && (
           <div id={fields.email.errorId} role="alert">
             {fields.email.errors.map((error, i) => (
@@ -504,12 +469,8 @@ describe("ContactForm - フィールドエラーとフォームエラー", () =>
 
     render(<ContactForm lastResult={lastResult} />);
 
-    expect(
-      screen.getByText("メールアドレスの形式が正しくありません")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("メッセージは10文字以上必要です")
-    ).toBeInTheDocument();
+    expect(screen.getByText("メールアドレスの形式が正しくありません")).toBeInTheDocument();
+    expect(screen.getByText("メッセージは10文字以上必要です")).toBeInTheDocument();
   });
 
   it("フォームエラーが表示される", () => {
@@ -528,9 +489,7 @@ describe("ContactForm - フィールドエラーとフォームエラー", () =>
     render(<ContactForm lastResult={lastResult} />);
 
     expect(
-      screen.getByText(
-        "送信に失敗しました。時間をおいて再度お試しください"
-      )
+      screen.getByText("送信に失敗しました。時間をおいて再度お試しください"),
     ).toBeInTheDocument();
   });
 
@@ -551,13 +510,11 @@ describe("ContactForm - フィールドエラーとフォームエラー", () =>
     render(<ContactForm lastResult={lastResult} />);
 
     const emailInput = screen.getByLabelText("メールアドレス");
-    expect(emailInput)
-      .toHaveAttribute("aria-invalid", "true");
+    expect(emailInput).toHaveAttribute("aria-invalid", "true");
 
     // エラーのないフィールドにはaria-invalid="true"がない
     const nameInput = screen.getByLabelText("名前");
-    expect(nameInput)
-      .not.toHaveAttribute("aria-invalid", "true");
+    expect(nameInput).not.toHaveAttribute("aria-invalid", "true");
   });
 
   // aria-describedby: inputとエラーメッセージ要素を紐づけ、スクリーンリーダーがエラー内容を読み上げられるようにする
@@ -573,29 +530,24 @@ describe("ContactForm - フィールドエラーとフォームエラー", () =>
     render(<ContactForm lastResult={lastResult} />);
 
     const emailInput = screen.getByLabelText("メールアドレス");
-    const ariaDescribedBy = emailInput
-      .getAttribute("aria-describedby");
+    const ariaDescribedBy = emailInput.getAttribute("aria-describedby");
     expect(ariaDescribedBy).toBeTruthy();
 
     // aria-describedbyで参照されるエラー要素が存在する
-    const errorElement = document.getElementById(
-      ariaDescribedBy!.split(" ")[0]
-    );
+    const errorElement = document.getElementById(ariaDescribedBy!.split(" ")[0]);
     expect(errorElement).not.toBeNull();
   });
 
   it("エラーなしの場合エラー要素が表示されない", () => {
     render(<ContactForm />);
 
-    expect(screen.queryByRole("alert"))
-      .not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
 ```
 
 </div>
 </div>
-
 
 ## まとめ
 

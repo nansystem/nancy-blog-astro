@@ -8,21 +8,22 @@ permalink: /python-loop-tuple-namedtuple-dict-list
 published: true
 ---
 
-
-
 ループさせる方法が型によって微妙に違うので、tuple、namedtuple、list、dict、自作オブジェクトのループの仕方をまとめた。
 
 ## tuple
-### tupleの値をループする
-そのまま`for 変数 in タプル`とすればループできる。  
 
-``` py
+### tupleの値をループする
+
+そのまま`for 変数 in タプル`とすればループできる。
+
+```py
 tpl = ('hoge', 'fuga', 'piyo')
 for t in tpl:
     print(t)
 ```
 
-実行結果  
+実行結果
+
 ```
 hoge
 fuga
@@ -30,16 +31,18 @@ piyo
 ```
 
 ### tupleの値をインデックス付きでループする
-`enumerate`関数でインデックス付きにしてループする。  
 
-``` py
+`enumerate`関数でインデックス付きにしてループする。
+
+```py
 tpl = ('hoge', 'fuga', 'piyo')
 for index, t in enumerate(tpl):
     print(index, t)
 ```
 
 実行結果
-``` py
+
+```py
 0 hoge
 1 fuga
 2 piyo
@@ -48,74 +51,83 @@ for index, t in enumerate(tpl):
 ## dict
 
 ### dictのプロパティ名をループする
-そのまま`for 変数 in 辞書`とすると、プロパティ名だけループされる。  
 
-``` py
+そのまま`for 変数 in 辞書`とすると、プロパティ名だけループされる。
+
+```py
 dic = {'name': 'aya', 'age': 20, 'score': 56}
 for d in dic:
     print(d)
 ```
 
 実行結果
-``` py
+
+```py
 name
 age
 score
 ```
 
 ### dictの値をループする
+
 `values()`メソッドで値の一覧をループすることができる。
 
-``` py
+```py
 dic = {'name': 'aya', 'age': 20, 'score': 56}
 for d in dic.values():
     print(d)
 ```
 
 実行結果
-``` py
+
+```py
 aya
 20
 56
 ```
 
 ### dictのプロパティ名と値をループする
+
 プロパティ名とともに値も一緒にループしたい場合、`items()`メソッドを使ってループする。
 
-``` py
+```py
 dic = {'name': 'aya', 'age': 20, 'score': 56}
 for name, value in dic.items():
     print(name, value)
 ```
 
 実行結果
-``` py
+
+```py
 name aya
 age 20
 score 56
 ```
 
 ### dictのプロパティ名をインデックス付きでループする
-`dict`の`items()`メソッドによりプロパティ名と値の一覧を取得した上で、`enumerate`関数によりインデックスをつけてループする。  
 
-``` py
+`dict`の`items()`メソッドによりプロパティ名と値の一覧を取得した上で、`enumerate`関数によりインデックスをつけてループする。
+
+```py
 dic = {'name': 'aya', 'age': 20, 'score': 56}
 for index, (name, value) in enumerate(dic.items()):
     print(index, name, value)
 ```
 
 実行結果
-``` py
+
+```py
 0 name aya
 1 age 20
 2 score 56
 ```
 
 ## namedtupleで生成したオブジェクトのプロパティと値をループする
+
 namedtupleで生成したオブジェクトのプロパティと値をforでループするには、`_asdict()`メソッドで`collections.OrderedDict`に変換したうえで、`items()`メソッドによりプロパティ名と値を取得する。  
 なお、`dict`の取得は自作のオブジェクトと違い`vars()`関数が`vars() argument must have __dict__ attribute`とエラーになり使えない。
 
-``` py
+```py
 from collections import namedtuple
 
 Person = namedtuple('Person', 'name age score')
@@ -124,17 +136,19 @@ or name, value in nancy._asdict().items():
     print(name, value)
 ```
 
-実行結果  
-``` py
+実行結果
+
+```py
 name nancy
 age 18
 score 89
 ```
 
 ## 自作のオブジェクトのプロパティと値をループする
+
 `vars()`関数で`dict`に変換してから`items`メソッドでループする。
 
-``` py
+```py
 class Todo:
     def __init__(self, name:str, done:bool):
       self.name = name
@@ -147,7 +161,8 @@ for name, value in vars(t).items():
 ```
 
 実行結果
-``` py
+
+```py
 name 牛乳を買う
 done False
 ```
@@ -155,9 +170,10 @@ done False
 ## list
 
 ### オブジェクトのlistをループする
-そのまま`for 変数 in リスト`とすればループできる。  
 
-``` py
+そのまま`for 変数 in リスト`とすればループできる。
+
+```py
 class Todo:
     def __init__(self, name:str, done:bool):
       self.name = name
@@ -170,16 +186,18 @@ for t in todos:
 ```
 
 実行結果
-``` py
+
+```py
 牛乳を買う False
 洗濯をする True
 ご飯をつくる False
 ```
 
 ### オブジェクトのlistをインデックス付きでループする
-`enumerate`関数でインデックス付きにしてループする。  
 
-``` py
+`enumerate`関数でインデックス付きにしてループする。
+
+```py
 class Todo:
     def __init__(self, name:str, done:bool):
       self.name = name
@@ -192,13 +210,15 @@ for index, t in enumerate(todos):
 ```
 
 ## まとめ
+
 - tupleとlistは何も考えずに`for 変数 in tupleかlist`でループできる
 - dictはそのままループするとプロパティ名のみ、`values`メソッドで値のみ、`items`メソッドでプロパティと値をループできる
 - index付きでループしたい場合は`enumerate`関数を使う
 - namedtupleは`_asdict`メソッドでdictに変換してループする
 - 自作のオブジェクトは`vars`関数でdictに変換してループする
 
-## 参考  
+## 参考
+
 https://stackoverflow.com/questions/33984333/looping-over-elements-of-named-tuple-in-python
-  
-https://stackoverflow.com/questions/36244380/enumerate-for-dictionary-in-python  
+
+https://stackoverflow.com/questions/36244380/enumerate-for-dictionary-in-python

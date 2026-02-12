@@ -8,15 +8,14 @@ permalink: /flask-render_template
 published: true
 ---
 
-
-
-
 ## HTMLを返す
-Flask1.0.2からHTMLを返せるようにする。  
-`flask`モジュールを読み込むファイルを用意し、`templates`ディレクトリの下にHTMLを配置する。  
 
-ディレクトリ構成は次の通り。  
-``` bash
+Flask1.0.2からHTMLを返せるようにする。  
+`flask`モジュールを読み込むファイルを用意し、`templates`ディレクトリの下にHTMLを配置する。
+
+ディレクトリ構成は次の通り。
+
+```bash
 .
 ├── Pipfile
 ├── Pipfile.lock
@@ -26,12 +25,13 @@ Flask1.0.2からHTMLを返せるようにする。
 ```
 
 `application.py`(ファイル名は任意)で`flask`を読み込みルーティング設定を行う。  
-`return`で`render_template()`関数の第一引数にHTML名を指定する。  
+`return`で`render_template()`関数の第一引数にHTML名を指定する。
 
-`templates`(ディレクトリ名はこの通りにする)ディレクトリの下に`render_template()`関数で指定したHTML名のファイルを配置しておく。  
+`templates`(ディレクトリ名はこの通りにする)ディレクトリの下に`render_template()`関数で指定したHTML名のファイルを配置しておく。
 
 `application.py`
-``` py
+
+```py
 from flask import Flask, render_template
 app = Flask(__name__)
 
@@ -41,23 +41,24 @@ def index():
 ```
 
 `index.html`
-``` html
+
+```html
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>タイトル</title>
-</head>
-<body>
-<h1>こんにちは</h1>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>タイトル</title>
+  </head>
+  <body>
+    <h1>こんにちは</h1>
+  </body>
 </html>
 ```
 
-`FLASK_APP`変数に`flask`を読み込んでいるファイル名を指定してエクポートし、`flask run`コマンドでサーバーを立ち上げる。  
+`FLASK_APP`変数に`flask`を読み込んでいるファイル名を指定してエクポートし、`flask run`コマンドでサーバーを立ち上げる。
 
-``` bash
+```bash
 $ export FLASK_APP=application.py
 $ flask run
 ```
@@ -66,16 +67,19 @@ $ flask run
 ![Flaskからindex.htmlが返される](/images/20190506-index.png)
 
 ## Jinja2
-Flaskは[Jinja2](http://jinja.pocoo.org/)テンプレートエンジンによりHTMLを生成しており、変数を埋め込んだり、分岐や繰り返し処理、ファイルの分割ができるようになっている。  
+
+Flaskは[Jinja2](http://jinja.pocoo.org/)テンプレートエンジンによりHTMLを生成しており、変数を埋め込んだり、分岐や繰り返し処理、ファイルの分割ができるようになっている。
 
 ### 変数を埋め込む
-まずは変数が埋め込めることを確認する。  
+
+まずは変数が埋め込めることを確認する。
 
 `render_template`関数の第2引数以降に`HTMLで使う変数名 = 値`のように指定する。  
 変数は複数指定することができる。
 
 `application.py`抜粋
-``` py
+
+```py
 @app.route('/')
 def index():
     title = 'トップページ'
@@ -85,7 +89,8 @@ def index():
 
 HTMLでは`{{}}`の間に変数名を指定することで、変数を展開できる。  
 `index.html`抜粋
-``` html
+
+```html
 <h1>{{ title }}</h1>
 {{ todos }}
 ```
@@ -94,13 +99,15 @@ HTMLでは`{{}}`の間に変数名を指定することで、変数を展開で�
 ![HTMLに変数を表示できる](/images/20190506-index-variables.png)
 
 ### 分岐 if
-`{% if 変数名 %}`、`{% else %}`、`{% endif %}`を使うことにより分岐を表現できる。  
+
+`{% if 変数名 %}`、`{% else %}`、`{% endif %}`を使うことにより分岐を表現できる。
 
 URLのパスの有無で、HTMLの表示を切り替える処理を追加して分岐を試す。  
-`application.py`で`@app.router`を2つつけることで、パスがある場合、ない場合いずれも同じ関数を通るようにする。パスは`<>`で囲んだ名前を、関数の引数で受け取れる。  
+`application.py`で`@app.router`を2つつけることで、パスがある場合、ない場合いずれも同じ関数を通るようにする。パスは`<>`で囲んだ名前を、関数の引数で受け取れる。
 
 `application.py`
-``` py
+
+```py
 @app.route('/')
 @app.route('/<name>')
 def index(name=None):
@@ -108,7 +115,8 @@ def index(name=None):
 ```
 
 `index.html`
-``` html
+
+```html
 {% if name %}
 <h1>こんにちは {{ name }}さん</h1>
 {% else %}
@@ -123,11 +131,13 @@ def index(name=None):
 ![パスあり](/images/20190506-use-path.png)
 
 ### 繰り返し for
-`{% for 1件の変数名 in 変数名 %}`、`{% elsefor %}`を使うことにより繰り返しを表現できる。  
+
+`{% for 1件の変数名 in 変数名 %}`、`{% elsefor %}`を使うことにより繰り返しを表現できる。
 
 サーバで複数のディクショナリを要素としてもつリストを用意しておく。  
 `application.py`抜粋
-``` py
+
+```py
 @app.route('/')
 def index():
     todos = [
@@ -138,27 +148,30 @@ def index():
     return render_template('index.html', todos = todos)
 ```
 
-各要素は`todo.title`や`todo.status`のような形でアクセスできる。  
+各要素は`todo.title`や`todo.status`のような形でアクセスできる。
 
 `index.html`抜粋
-``` html
+
+```html
 <ul>
-{% for todo in todos %}
+  {% for todo in todos %}
   <li>{{ todo.title }} : {{todo.status}}</li>
-{% endfor %}
+  {% endfor %}
 </ul>
 ```
 
 ![forで表示する例](/images/20190506-for-example.png)
 
 ### HTMLを分割する
-HTMLをヘッダーやフッター、あるいは意味ある単位でコンポーネントに分割したいことがあるので、ファイルの分割方法を見ていく。  
+
+HTMLをヘッダーやフッター、あるいは意味ある単位でコンポーネントに分割したいことがあるので、ファイルの分割方法を見ていく。
 
 各ページで共通に利用するレイアウトの元になるHTMLを`templates`ディレクトリ下の`layout`ディレクトリ下に用意する(ディレクトリ場所は任意)。  
 また、レイアウトを読み込んで、ヘッダーやフッター、コンテンツを指定するファイルを用意する。
 
 ディレクトリ構成
-``` sh{5-8}
+
+```sh{5-8}
 .
 ├── Pipfile
 ├── Pipfile.lock
@@ -172,16 +185,13 @@ HTMLをヘッダーやフッター、あるいは意味ある単位でコンポ�
 各ページのHTMLでは、`extends レイアウトHTMLへのパス`のように`extends`に続けて、レイアウトのHTMLへのパスを指定する。  
 そして、`block ブロック名`でレイアウトHTMLで指定されているブロック名を指定して、各ページの内容を設定していく。  
 `super()`を使うことで、レイアウトで指定されているコンテンツを表示した上で、さらに各ページで表示したい内容を追加することができる。  
-また、各ページのHTMLでブロックを指定しない場合(このHTMLの場合は`footer`を指定していない)、レイアウトHTMLでのフォールバックの内容が表示される。  
+また、各ページのHTMLでブロックを指定しない場合(このHTMLの場合は`footer`を指定していない)、レイアウトHTMLでのフォールバックの内容が表示される。
 
 `index.html`
-``` html
-{% extends "./layout/default.html" %}
-{% block header %}
-  {{ super() }}
-  ヘッダーさらに追加
-{% endblock %}
-{% block content %}
+
+```html
+{% extends "./layout/default.html" %} {% block header %} {{ super() }} ヘッダーさらに追加 {%
+endblock %} {% block content %}
 <ul>
   {% for todo in todos %}
   <li>{{ todo.title }} : {{todo.status}}</li>
@@ -192,34 +202,35 @@ HTMLをヘッダーやフッター、あるいは意味ある単位でコンポ�
 
 レイアウトになるHTMLは`{% block ブロック名 %}`でブロックを宣言する。  
 `{% block ブロック名 %}{% endblock %}`で囲まれた内容はフォールバックとして機能する。  
-つまり、`extends`するファイルでブロック名を指定しない場合、レイアウトHTMLのブロックで囲まれた内容がそのまま表示される。  
+つまり、`extends`するファイルでブロック名を指定しない場合、レイアウトHTMLのブロックで囲まれた内容がそのまま表示される。
 
 `default.html`
-``` html
+
+```html
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-<body>
-<header>
-{% block header %}ここの表示は必ず表示した上で拡張することもできる{% endblock %}
-</header>
-{% block content %}{% endblock %}
-<footer>
-{% block footer %}
-もしfooterが設定されなければ、フォールバックとしてここに記載されている内容が表示される。
-{% endblock %}
-</footer>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <header>
+      {% block header %}ここの表示は必ず表示した上で拡張することもできる{% endblock %}
+    </header>
+    {% block content %}{% endblock %}
+    <footer>
+      {% block footer %}
+      もしfooterが設定されなければ、フォールバックとしてここに記載されている内容が表示される。 {%
+      endblock %}
+    </footer>
+  </body>
 </html>
 ```
 
-サーバを立ち上げてHTMLの表示を確認すると、`header`は`default.html`の内容に加えて、`index.html`の`header`の内容が追加されており、`content`は`index.html`で指定した内容がそのまま反映され、`footer`は`index.html`で指定していないので、フォールバックとして指定していた`default.html`の`footer`の内容が表示されている。  
+サーバを立ち上げてHTMLの表示を確認すると、`header`は`default.html`の内容に加えて、`index.html`の`header`の内容が追加されており、`content`は`index.html`で指定した内容がそのまま反映され、`footer`は`index.html`で指定していないので、フォールバックとして指定していた`default.html`の`footer`の内容が表示されている。
 
 ![extendでファイルを分割](/images/20190506-layout-extend.png)
 
 ・参考  
-https://a2c.bitbucket.io/flask/patterns/templateinheritance.html?highlight=super  
+https://a2c.bitbucket.io/flask/patterns/templateinheritance.html?highlight=super

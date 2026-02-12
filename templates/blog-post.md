@@ -7,4 +7,3 @@ categories:
 permalink: /<% tp.file.title %>
 published: false
 ---
-

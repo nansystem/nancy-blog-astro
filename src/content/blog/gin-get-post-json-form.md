@@ -8,20 +8,21 @@ permalink: /gin-get-post-json-form
 published: true
 ---
 
-
 [Go言語はじめた](/hello-go)でMacにGoが動く環境を作ったので、今日はGoのwebフレームワークである[gin](https://github.com/gin-gonic/gin)をさわる。  
-フォーム、JSONのリクエストから取得できる値をたしかめていく。  
+フォーム、JSONのリクエストから取得できる値をたしかめていく。
 
 ## ginをインストールして動かす
-まずは`gin`のインストールから始める。  
-`go mod init`でモジュールの初期化をする。  
 
-``` sh 
+まずは`gin`のインストールから始める。  
+`go mod init`でモジュールの初期化をする。
+
+```sh
 $ go mod init github.com/nansystem/gin-sample
 ```
 
-`main.go`を作成し、`go run`でwebサーバーをたちあげる。  
-``` go
+`main.go`を作成し、`go run`でwebサーバーをたちあげる。
+
+```go
 package main
 
 import "github.com/gin-gonic/gin"
@@ -37,23 +38,25 @@ func main() {
 }
 ```
 
-``` sh
-$ go run main.go 
+```sh
+$ go run main.go
 ```
 
 `curl`でアクセスすると、JSONでレスポンスが返ってきた。  
-これで`gin`の起動確認ができた。  
-``` sh
+これで`gin`の起動確認ができた。
+
+```sh
 $ curl http://localhost:8080/ping \
   -H 'Content-Type:application/json'
 {"message":"pong"}
 ```
 
 ## URLクエリ文字列の取得
-`c.Query`でURLクエリ文字列を取得できる。取得できる値の型は`string`である。  
-`c.DefaultQuery`の第二引数でデフォルト値を設定できる。  
 
-``` go
+`c.Query`でURLクエリ文字列を取得できる。取得できる値の型は`string`である。  
+`c.DefaultQuery`の第二引数でデフォルト値を設定できる。
+
+```go
 	r.GET("/get", func(c *gin.Context) {
 		s := c.Query("str")
 		n := c.Query("num")
@@ -67,7 +70,7 @@ $ curl http://localhost:8080/ping \
 `curl`のオプション`--get`で後続の値をクエリ文字列とし、`--data-urlencode`でURLエンコーディングしてリクエストする。  
 `GET /get?str=%E6%96%87%E5%AD%97%E5%88%97&num=123&bool=true HTTP/1.1`
 
-``` sh
+```sh
 $ curl http://localhost:8080/get \
   --get \
   --data-urlencode 'str=文字列' \
@@ -77,10 +80,11 @@ s: 文字列, n: 123, b: true, l: 10
 ```
 
 ## URLパスの取得
-`:name`のようにコロンに続けてパス名を指定することで`c.Param("name")`で値を取得する。  
-`*action`のようにアスタリスクに続けてパス名を指定すると、`c.Param("action")`で残りの全てのパスを取得する。  
 
-``` go
+`:name`のようにコロンに続けてパス名を指定することで`c.Param("name")`で値を取得する。  
+`*action`のようにアスタリスクに続けてパス名を指定すると、`c.Param("action")`で残りの全てのパスを取得する。
+
+```go
 	r.GET("/path/:name/*action", func(c *gin.Context) {
 		name := c.Param("name")
 		action := c.Param("action")
@@ -89,16 +93,17 @@ s: 文字列, n: 123, b: true, l: 10
 	})
 ```
 
-``` sh
+```sh
 $ curl http://localhost:8080/path/hoge/fuga/piyo/
 hoge is /fuga/piyo/
 ```
 
 ## フォームのPOST
-`c.PostForm`でフォームの値を取得できる。取得できる値の型は`string`である。  
-`c.DefaultPostForm`の第二引数でデフォルト値を設定できる。  
 
-``` go
+`c.PostForm`でフォームの値を取得できる。取得できる値の型は`string`である。  
+`c.DefaultPostForm`の第二引数でデフォルト値を設定できる。
+
+```go
 	r.POST("/post", func(c *gin.Context) {
 		s := c.PostForm("str")
 		n := c.PostForm("num")
@@ -109,7 +114,7 @@ hoge is /fuga/piyo/
 	})
 ```
 
-``` sh
+```sh
 $ curl -X POST http://localhost:8080/post \
   --data-urlencode 'str=文字列P'  \
   --data-urlencode 'num=1234'  \
@@ -120,8 +125,9 @@ s: 文字列P, n: 1234, b: false, l: 20
 
 ## JSONのPOST
 
-`struct`を用意する。  
-``` go
+`struct`を用意する。
+
+```go
 type JsonRequest struct {
 	FieldStr  string `json:"field_str"`
 	FieldInt  int    `json:"field_int"`
@@ -134,13 +140,13 @@ JSONから`struct`へ値をマッピングするのは`BindJSON`か`ShouldBindJS
 `application/json`でレスポンスを返したいから、`ShouldBindJSON`を使う。  
 `gin.H`は`map[string]interface{}`のショートカット。
 
-> This sets the response status code to 400 and the Content-Type header is set to text/plain; charset=utf-8. 
-https://github.com/gin-gonic/gin#model-binding-and-validation
+> This sets the response status code to 400 and the Content-Type header is set to text/plain; charset=utf-8.
+> https://github.com/gin-gonic/gin#model-binding-and-validation
 
 > gin.H is a shortcut for map[string]interface{}  
-https://github.com/gin-gonic/gin#xml-json-yaml-and-protobuf-rendering
+> https://github.com/gin-gonic/gin#xml-json-yaml-and-protobuf-rendering
 
-``` go
+```go
 	r.POST("/postjson", func(c *gin.Context) {
 		var json JsonRequest
 		if err := c.ShouldBindJSON(&json); err != nil {
@@ -151,32 +157,36 @@ https://github.com/gin-gonic/gin#xml-json-yaml-and-protobuf-rendering
 	})
 ```
 
-空のJSONを渡してもエラーにならない。  
-``` sh
+空のJSONを渡してもエラーにならない。
+
+```sh
 $ curl -X POST http://localhost:8080/postjson \
   -H 'content-type: application/json' \
 	-d '{}'
 {"bool":false,"int":0,"str":""}
 ```
 
-`struct`に存在していないフィールドを渡しても無視されてエラーにはならない。  
-``` sh
+`struct`に存在していないフィールドを渡しても無視されてエラーにはならない。
+
+```sh
 $ curl -X POST http://localhost:8080/postjson \
   -H 'content-type: application/json' \
 	-d '{ "hoge": 1 }'
 {"bool":false,"int":0,"str":""}
 ```
 
-型が違えばエラーになる。  
-``` sh
+型が違えばエラーになる。
+
+```sh
  $ curl -X POST http://localhost:8080/postjson \
   -H 'content-type: application/json' \
   -d '{ "field_str": 1 }'
 {"error":"json: cannot unmarshal number into Go struct field JsonRequest.field_str of type string"}
 ```
 
-型があっていれば`struct`に値が無事マッピングされる。  
-``` sh
+型があっていれば`struct`に値が無事マッピングされる。
+
+```sh
 $ curl -X POST http://localhost:8080/postjson \
   -H 'content-type: application/json' \
   -d '{ "field_str": "文字だ", "field_int": 12, "field_bool": true }'

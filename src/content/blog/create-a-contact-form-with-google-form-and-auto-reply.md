@@ -8,7 +8,6 @@ permalink: /create-a-contact-form-with-google-form-and-auto-reply
 published: true
 ---
 
-
 静的サイトにお問い合わせフォームを設定したい。  
 その場合、AWS lambdaやGoogle Cloud Functionsでお問い合わせがあったことを知らせるアプリケーションを作成するか、
 他サービスのフォームを埋め込むことになる。  
@@ -16,6 +15,7 @@ published: true
 また、お問い合わせいただいた方に、問い合わせが行われたことを通知するための自動返信を行う。
 
 ## お問い合わせフォームの作成
+
 Google フォームでお問い合わせフォームを作成し、お問い合わせ内容を保存しておくスプレッドシート作成する。
 そして、お問い合わせがあったことを自分にメール通知する設定をする。  
 まずはお問い合わせフォームの作成から始める。
@@ -31,15 +31,17 @@ Google フォーム(https://docs.google.com/forms/u/0/)にアクセスする。
 
 ![Google フォーム](/images/20190220-2.jpg)
 
-今回はブログの意見をいただけるようにするためにお問い合わせフォームを設置するので、項目は次の3つにした。  
+今回はブログの意見をいただけるようにするためにお問い合わせフォームを設置するので、項目は次の3つにした。
+
 1. お名前(ニックネーム、匿名可)(任意)
 2. メールアドレス(任意)
 3. お問い合わせ・ご意見・ご感想(必須)
-すべて入力し終わると次のような画面になる。
+   すべて入力し終わると次のような画面になる。
 
 ![Google フォーム入力済み](/images/20190220-3.jpg)
 
 ### テーマをカスタマイズ
+
 お問い合わせフォームの見た目を変更することができる。  
 テーマをカスタマイズボタンを押すと、右サイドにテーマオプションが表示される。  
 ヘッダーの画像やテーマの色を選択できるので、サイトのテーマと合わせて設定する。  
@@ -50,6 +52,7 @@ Google フォーム(https://docs.google.com/forms/u/0/)にアクセスする。
 ![プレビュー](/images/20190220-5.jpg)
 
 ### お問い合わせ内容を保存しておくスプレッドシート作成
+
 次は回答タブを押して、スプレッドシートの作成ボタンを押す。
 ![スプレッドシート](/images/20190220-6.jpg)
 
@@ -62,6 +65,7 @@ Google フォーム(https://docs.google.com/forms/u/0/)にアクセスする。
 ![スプレッドシート](/images/20190220-8.jpg)
 
 ### お問い合わせがあったことを自分にメール通知する
+
 回答タブから縦の3点リーダボタンを押す。
 
 ![縦の3点リーダ](/images/20190220-9.jpg)
@@ -69,22 +73,23 @@ Google フォーム(https://docs.google.com/forms/u/0/)にアクセスする。
 左下に「メール通知は有効になっています」という通知が一瞬表示されればOK。
 ![新しい回答についてのメール通知を受け取る](/images/20190220-10.jpg)
 
-
 ### フォーム送信後の表示設定
+
 設定ボタンを押して、プレゼンテーションタブを開く。  
 「別の回答を送信するためのリンクを表示」は回答後に不要なのでチェックを外し、  
 確認メッセージにお問い合わせ後に表示される文言を入力する。
 ![設定](/images/20190220-12.jpg)
-
 
 ![フォーム送信後の表示設定](/images/20190220-11.jpg)
 
 これでお問い合わせフォームが作成できた。
 
 ## 自動返信
+
 Google Apps Scriptを使うことで、お問い合わせに対して自動返信メールを送ることができる。
 
 ### Google Apps Scriptを動かしてみる
+
 まずは試しにGoogle Apps Scriptを動かしてみる。  
 お問い合わせフォームの右上にある縦の3点リーダボタンを押し、スクリプトエディタを選択する。
 
@@ -94,7 +99,8 @@ Google Apps Scriptを使うことで、お問い合わせに対して自動返�
 
 ![プロジェクト名](/images/20190220-15.jpg)
 コード.gsに次のようなfunctionを定義する。
-``` js
+
+```js
 function onSubmit() {
   Logger.log("お問い合わせがありました");
 }
@@ -106,11 +112,13 @@ function onSubmit() {
 
 そして、表示、ログを選択する。  
 すると、次のようなログが表示される。これでfunctionが動いていることを確認できた。
+
 ```
 [19-02-19 03:12:17:618 PST] お問い合わせがありました
 ```
 
 ### functionをお問い合わせフォームが送信されたタイミングで実行する
+
 お問い合わせがあったタイミングでメールが送信できるよう、トリガーを設定する。  
 編集、現在のプロジェクトのトリガーを選択する。
 ![トリガー](/images/20190220-17.jpg)
@@ -123,21 +131,23 @@ G Suite Developer Hubが表示されるので、右下にあるトリガーを�
 アクセス権を求めらるので承認する。
 
 ![トリガーの設定](/images/20190220-19.jpg)
+
 ### フォームの内容を取得する
+
 スクリプトエディタでフォームの内容を確認できるよう、次のようなLogger.logを追加する。  
 引数の`e`でフォームのイベント情報を取得し、`e.response.getItemResonses()`で各フォームの項目の配列を取得する。
 各フォームの値は`item.getItem().getTitle()`でフォームのタイトルを、`item.getResonse()`でフォームの内容を取得できる。
 
-``` js
+```js
 // フォームのイベントを取得するために必要
 FormApp.getActiveForm();
 
 function onSubmit(e) {
   Logger.log("お問い合わせがありました");
   const items = e.response.getItemResponses();
-  items.forEach(function(item) {
-      Logger.log(item.getItem().getTitle());
-      Logger.log(item.getResponse());
+  items.forEach(function (item) {
+    Logger.log(item.getItem().getTitle());
+    Logger.log(item.getResponse());
   });
 }
 ```
@@ -157,12 +167,14 @@ function onSubmit(e) {
 ```
 
 ### メールを送信する
+
 メールは`GmailApp.sendEmail(email, subject, body);`により送信することができる。
 初回に承認が必要ですというモーダルが表示されるので、許可を確認ボタンを押すし、アカウントを選択する。
 
-``` js
-GmailApp.sendEmail('[送信先のメールアドレス]', 'メールタイトル', 'メール本文');
+```js
+GmailApp.sendEmail("[送信先のメールアドレス]", "メールタイトル", "メール本文");
 ```
+
 ![メール送信](/images/20190220-21.jpg)
 このアプリは確認されていませんと表示されるので、詳細を押し、自動返信(安全でないページ)に移動のリンクを押す。
 
@@ -174,66 +186,70 @@ GmailApp.sendEmail('[送信先のメールアドレス]', 'メールタイトル
 ![安全でないページ](/images/20190220-23.jpg)
 
 ### メール本文にフォームの内容を記載する
+
 `email`に送信先のメールアドレス、`subject`にメールタイトル、`body`にメール内容を指定する。
 メール内の改行は`\n`と記載すればよいので、次のようにすればよい。
 
-``` js
+```js
 FormApp.getActiveForm();
 
 function onSubmit(e) {
   // フォームのメールアドレスとお名前の項目名
-  const emailTitle = 'メールアドレス';
-  const nameTitle = 'お名前(ニックネーム、匿名可)';
+  const emailTitle = "メールアドレス";
+  const nameTitle = "お名前(ニックネーム、匿名可)";
 
   // メールで使う定数
-  const subject = 'お問い合わせを受け付けました';
-  const newLine = '\n';
-  
+  const subject = "お問い合わせを受け付けました";
+  const newLine = "\n";
+
   // フォームの内容一覧を取得する
   const items = e.response.getItemResponses();
-  
+
   // 自動返信するお問い合わせのあったメールアドレスを取得する
   const email = getValueByTitle(items, emailTitle);
 
   // お名前を取得する
   const name = getValueByTitle(items, nameTitle);
-  
+
   // メールアドレスがない場合は何もしない
-  if(email === '') {
-    Logger.log('メールアドレスが入力されていませんでした');
+  if (email === "") {
+    Logger.log("メールアドレスが入力されていませんでした");
     return;
-  }    
-    
-  // 本文を作成する
-  var body = '';
-  if(name !== '') { 
-    body += name + '様' + newLine + newLine;
   }
-  body += 'お問い合わせいただきありがとうございます。' + newLine;
-  body += '以下の内容でお問い合わせを受け付けました。' + newLine + newLine;
-  items.forEach(function(item) {
-    body += '【' + item.getItem().getTitle() + '】' + newLine;
+
+  // 本文を作成する
+  var body = "";
+  if (name !== "") {
+    body += name + "様" + newLine + newLine;
+  }
+  body += "お問い合わせいただきありがとうございます。" + newLine;
+  body += "以下の内容でお問い合わせを受け付けました。" + newLine + newLine;
+  items.forEach(function (item) {
+    body += "【" + item.getItem().getTitle() + "】" + newLine;
     body += item.getResponse() + newLine + newLine;
   });
   body += newLine + newLine;
   // 必要であれば、メールに心あたりがない方への導線を作成しておく。
-  body += '※このメールに心あたりがない場合には、下記のページよりお問い合わせください。' + newLine;
-  body += 'https://docs.google.com/forms/d/e/1FAIpQLSf_AdtSMzeKa6enG6tQAc_yoKDTpTM1D5DaDhkM1O4cxP4Zgg/viewform?fbzx=7126809378701652779';
+  body += "※このメールに心あたりがない場合には、下記のページよりお問い合わせください。" + newLine;
+  body +=
+    "https://docs.google.com/forms/d/e/1FAIpQLSf_AdtSMzeKa6enG6tQAc_yoKDTpTM1D5DaDhkM1O4cxP4Zgg/viewform?fbzx=7126809378701652779";
 
   Logger.log(email);
   Logger.log(body);
-  
+
   // メールを送信する
   GmailApp.sendEmail(email, subject, body);
 }
 
 /**
-* itemsからtitleの値を取得する
-*/
+ * itemsからtitleの値を取得する
+ */
 function getValueByTitle(items, title) {
-  return items.filter(function(item) {
-    return item.getItem().getTitle() === title;
-  })[0].getResponse();
+  return items
+    .filter(function (item) {
+      return item.getItem().getTitle() === title;
+    })[0]
+    .getResponse();
 }
 ```
 
@@ -246,9 +262,7 @@ function getValueByTitle(items, title) {
 
 ![受信メール](/images/20190220-25.jpg)
 
-
-以上で、Google フォームでお問い合わせフォームを作成し、自動返信できるようになった。    
-
+以上で、Google フォームでお問い合わせフォームを作成し、自動返信できるようになった。
 
 ・参考サイト  
 [【GAS入門】Googleフォームの回答があったらメール通知するスクリプトを作ってみよう](https://takakisan.com/gas-form-send-email-tutorial/)  

@@ -8,14 +8,13 @@ permalink: /use-gibo-to-access-to-gitignore-boilerplates
 published: true
 ---
 
-
-
 ローカル環境でちょっとしたことを試すために`Git`を使うことがある。毎回手でコミットしないファイルを`.gitignore`に書くのは面倒なので、`gibo`でGitHubが公開している.gitignoreのテンプレートをもとに、自分用の`.gitignore`ファイルを用意する。
 
 ## giboのインストール
+
 OS XではHomebrewを使って、`gibo`をインストールできる。
 
-``` sh
+```sh
 $ brew install gibo
 $ gibo -v
 gibo 2.1.2 by Simon Whitaker <sw@netcetera.org>
@@ -39,7 +38,8 @@ Commands:
 ```
 
 ## giboの使い方
-``` sh
+
+```sh
 gibo dump [gitignoreのテンプレート名] >> .gitignore
 ```
 
@@ -49,15 +49,14 @@ gibo dump [gitignoreのテンプレート名] >> .gitignore
 https://github.com/simonwhitaker/gibo/commit/b0327a2edf64f5cbcc3f09eb852da508274a8624#diff-04c6e90faac2675aa89e2176d2eec7d8
 
 gitignoreのテンプレートは[gitignore](https://github.com/github/gitignore)に公開されている。
-テンプレート名は大文字、小文字どちらで指定してもよく、複数指定できる。  
+テンプレート名は大文字、小文字どちらで指定してもよく、複数指定できる。
 
 MacでVisual Studio Codeをエディタとして使い、JavaScriptの開発をしている場合は、下記のコマンドで簡単に`.gitignore`を生成できる。
-``` sh
+
+```sh
 gibo dump Node VisualStudioCode macOS >> .gitignore
 ```
 
-
-
 ・参考  
 https://github.com/simonwhitaker/gibo  
-https://github.com/github/gitignore  
+https://github.com/github/gitignore
