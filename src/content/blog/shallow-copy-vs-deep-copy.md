@@ -1,6 +1,6 @@
 ---
 title: シャローコピー(shallow copy)とディープコピー(deep copy)の違い
-description: ""
+description: "JavaScriptのシャローコピーとディープコピーの違いをObject.assign、JSON.parse(JSON.stringify())、lodashのcloneDeepで比較する。"
 date: 2019-04-13
 categories:
   - JavaScript

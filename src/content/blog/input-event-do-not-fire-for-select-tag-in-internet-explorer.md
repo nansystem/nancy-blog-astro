@@ -1,6 +1,6 @@
 ---
 title: Vue.jsのinputイベントがselectタグで発火しない(Internet Explorer 11)原因と対応
-description: selectタグを使うときは@inputの代わりに@changeを使う
+description: Internet Explorer 11でVue.jsのinputイベントがselectタグで発火しない原因と、@changeイベントで代替する対応方法を解説する。
 date: 2019-04-24
 categories:
   - Vue.js

@@ -1,6 +1,6 @@
 ---
 title: Pythonからシェルを実行するsubprocessモジュールのcall、check_output、run、popenの違い
-description: ""
+description: "Pythonのsubprocessモジュールのcall、check_output、run、Popenの違いを比較する。Python3.6以上ならrunを使い、非同期実行にはPopenを使う。"
 date: 2019-08-01
 categories:
   - Python

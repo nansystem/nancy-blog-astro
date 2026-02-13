@@ -45,7 +45,7 @@ gibo dump [gitignoreのテンプレート名] >> .gitignore
 
 `dump`なしで紹介されていることが多いが、v2より`gibo`コマンド実行時に`dump`が必要になったようだ。
 
-![gibo readme](/images/20190302-gibo-readme.png)
+![gibo readme](../../assets/images/20190302-gibo-readme.png)
 https://github.com/simonwhitaker/gibo/commit/b0327a2edf64f5cbcc3f09eb852da508274a8624#diff-04c6e90faac2675aa89e2176d2eec7d8
 
 gitignoreのテンプレートは[gitignore](https://github.com/github/gitignore)に公開されている。

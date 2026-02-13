@@ -51,11 +51,11 @@ hoge
 
 Visual Studio Codeを使っていればもっと詳細にデバッグできる。  
 コード中に赤いデバッグポイントをおく。  
-![visual studio codeのデバッグポイント](/images/20190504-visual-studio-code-debug-point.png)
+![visual studio codeのデバッグポイント](../../assets/images/20190504-visual-studio-code-debug-point.png)
 
 ナビゲーションから「デバッグ」>「デバッグの開始」を選択する。  
 「Python File」のようにファイルを指定したり、「Django」や「Flask」のようにフレームワークを指定してデバッグすることができる。
-![デバッグするファイル種別を指定する](/images/20190504-select-debug-config.png)
+![デバッグするファイル種別を指定する](../../assets/images/20190504-select-debug-config.png)
 
 ## 変数と代入
 

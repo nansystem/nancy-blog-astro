@@ -1,6 +1,6 @@
 ---
 title: CSS opacity:0、visibility:hidden、display:noneどれをアニメーションで使うべきか
-description: opacity:0、visibility:hidden、display:noneどれをアニメーションで使うべきか
+description: CSSで要素を非表示にするopacity:0、visibility:hidden、display:noneの違いを、レンダリング、イベント発火、CSS Transition/Animationの観点から比較する。
 date: 2019-04-08
 categories:
   - CSS
@@ -79,7 +79,7 @@ style.css
 `opacity: 0`、`visibility: hidden`ともにブラウザにレンダリングされる。ただし、コンテンツや背景色は設定されないため、何も表示されないブロックができる。一方で、`display:none`は何もレンダリングされない。
 
 ブラウザでの表示  
-![表示の確認](/images/20190408-dom-rendering.png)
+![表示の確認](../../assets/images/20190408-dom-rendering.png)
 
 ## イベントを発火するか
 
@@ -113,7 +113,7 @@ Array.from(boxes).forEach((element) => {
 何も表示されないブロックをクリックすると、通常のブロックだけでなく、`opacity:0`をクリックしたときにもイベントが発生している。一方で、`visibility:hidden`はブロックとしては存在するが、クリックしてもイベントは発生しない。また、`display:none`はブロックが表示されないためクリックもできない。
 
 ブラウザでの表示
-![イベント確認](/images/20190408-event.gif)
+![イベント確認](../../assets/images/20190408-event.gif)
 
 ## height:0時にコンテンツをクリックできるか
 
@@ -167,7 +167,7 @@ p {
 `opacity:0`の場合のみ、子要素にあるリンクは表示されていないものの、クリックできてしまう。つまり、`opacity:0`と`height:0`を組み合わせて非表示にしたつもりでも、ユーザーはコンテンツをさわれてしまうので注意する🤓
 
 ブラウザでの表示
-![opacityはheight:0でもクリックできてしまう](/images/20190408-opacity-clickable.png)
+![opacityはheight:0でもクリックできてしまう](../../assets/images/20190408-opacity-clickable.png)
 
 ## CSS Transitionでアニメーションするか
 
@@ -281,7 +281,7 @@ boxNoneBtn.addEventListener("click", toggle("box-none"), false);
 `display`は表示、非表示だけでなく、`height`についてもアニメーションされない。
 
 ブラウザでの表示
-![アコーディオン](/images/20190408-accordion.gif)
+![アコーディオン](../../assets/images/20190408-accordion.gif)
 
 ## CSS Animationでアニメーションするか
 
@@ -365,4 +365,4 @@ p {
 表示から非表示はアニメーションせず即時に非表示になってしまった。
 
 ブラウザでの表示
-![animation](/images/20190408-css-animation.gif)
+![animation](../../assets/images/20190408-css-animation.gif)

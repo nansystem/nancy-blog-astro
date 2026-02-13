@@ -92,7 +92,7 @@ INFO     2019-05-13 11:41:48,946 instance_factory.py:71] Detected Python 3.7.3
 
 ローカルサーバーが立ち上がり、`handlers`で指定していた静的ファイルを表示できることを確認できる。
 
-![ローカルで静的ファイルを確認する](/images/20190513-dev-static.png)
+![ローカルで静的ファイルを確認する](../../assets/images/20190513-dev-static.png)
 
 ・参考  
 https://stackoverflow.com/questions/52999747/python-3-7-local-development-server-options-for-new-app-engine-apps  

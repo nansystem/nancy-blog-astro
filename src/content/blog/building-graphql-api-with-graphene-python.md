@@ -122,8 +122,7 @@ schema = Schema(query=Query)
 このクラスの属性はフィールドをあらわし、型を表すクラスを代入することで型を定義する。
 型を表すクラスとしてInt、Float、String、Boolean、IDのようなスカラー型やEnum、Listなどが用意されている。  
 **`resolve_クラスの属性名`はリゾルバ関数**をあらわす。  
-リゾルバ関数の引数の説明はこちら。  
-https://docs.graphene-python.org/en/latest/types/objecttypes/#resolvers
+リゾルバ関数の引数の説明は[GrapheneのObjectTypesドキュメントのResolvers](https://docs.graphene-python.org/en/latest/types/objecttypes/#resolvers)に記載されている。
 
 つまり、`hello`はフィールドで`String`型であり、`resolve_hello`は`hello`フィールドのリゾルバ関数である。  
 作成した`ObjectType`を継承したクラスは`Schema`クラスに`query=`の形で渡す。これでルートにQueryタイプを定義したことになる。
@@ -196,9 +195,9 @@ $ python app.py
 
 `http://127.0.0.1:5000/graphql`を開くとGraphQLをGUIで操作できるGraphiQLが表示される。  
 左の窓に`{ hello }`と入力して、実行ボタンを押すと、右側の窓に結果が返ってくる！  
-![引数なしの結果](/images/20190620-hello.png)
+![引数なしの結果](../../assets/images/20190620-hello.png)
 `hello (name: "なんしー")`と引数付きで実行すると、それに対応した値が返ってくる。  
-![引数ありの結果](/images/20190620-nancy.png)
+![引数ありの結果](../../assets/images/20190620-nancy.png)
 
 ### Mutationの実装
 
@@ -267,7 +266,7 @@ mutation {
 }
 ```
 
-![mutate](/images/20190620-mutate.png)
+![mutate](../../assets/images/20190620-mutate.png)
 
 参考  
 https://graphql.org/  

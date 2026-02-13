@@ -193,7 +193,7 @@ npx markdown-it test.md -o test.html
 ```
 
 ブラウザでの表示
-![出力されたHTML](/images/20190308-markdown-html.png)
+![出力されたHTML](../../assets/images/20190308-markdown-html.png)
 
 ヘッダーやリスト、テキストの装飾、名前付きリンク、画像はHTMLに変換できている。  
 また、テーブルや引用、コードはスタイルが当たっていないだけで以下のようにHTMLは変換できている。
@@ -410,7 +410,7 @@ test.html
 ```
 
 ブラウザでの表示  
-![twemoji](/images/20190308-twemoji.png)
+![twemoji](../../assets/images/20190308-twemoji.png)
 
 ## markdown-it-footnoteで注釈を変換する
 
@@ -464,7 +464,7 @@ test.md
 注釈はMarkdownで書いた位置に表示されるのではなく、一番下に水平線が引かれ、その下に表示される。
 
 ブラウザでの表示  
-![footnote](/images/20190308-footnote.png)
+![footnote](../../assets/images/20190308-footnote.png)
 
 ## markdown-it-markでテキストのハイライトを変換する
 
@@ -504,7 +504,7 @@ test.md
 ```
 
 ブラウザでの表示  
-![mark](/images/20190308-mark.png)
+![mark](../../assets/images/20190308-mark.png)
 
 ## markdown-it-deflistで説明リストを変換する
 
@@ -551,7 +551,7 @@ test.md
 ```
 
 ブラウザでの表示  
-![deflist](/images/20190308-deflist.png)
+![deflist](../../assets/images/20190308-deflist.png)
 
 ````sh
 npm install markdown-it-container --save

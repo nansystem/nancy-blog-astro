@@ -1,6 +1,6 @@
 ---
 title: JavaScript axiosをasync、awaitとtry、catch、finallyで制御する
-description: ""
+description: "axiosを使ったHTTP通信をasync/awaitで制御する方法を解説。Babel7とwebpackとjson-serverの環境構築から、try/catch/finallyによるエラーハンドリングまで実装する。"
 date: 2019-03-31
 categories:
   - JavaScript
@@ -170,10 +170,10 @@ npm run dev
 ```
 
 ブラウザでを開き3000ポートで`index.html`にアクセスできることを確認する。　　
-![webpack-dev-serverの起動確認](/images/20190331-init-browser.png)
+![webpack-dev-serverの起動確認](../../assets/images/20190331-init-browser.png)
 
 また、3001ポートで`/posts`にアクセスするとJSONが返ってきている。  
-![json-serverの起動確認](/images/20190331-init-json-server.png)
+![json-serverの起動確認](../../assets/images/20190331-init-json-server.png)
 
 これで環境構築の確認ができた。
 
@@ -221,7 +221,7 @@ axios
 ブラウザのコンソールを確認する。  
 `axios`呼び出し前に「ローディング表示開始」」と出力され、APIを呼び出してJSONが取得できており、最後に「ローディング表示終了」が出力されている。
 
-![axiosをthen、catch、finallyで成功時のコンソール](/images/20190331-promise-success.png)
+![axiosをthen、catch、finallyで成功時のコンソール](../../assets/images/20190331-promise-success.png)
 
 <br>
 
@@ -238,7 +238,7 @@ index.js
 APIは存在しないため404エラーになる。  
 HTTPリクエストが成功する場合と同様に、`GET`前は「ローディング表示開始」と表示される。しかし、`then`は通らなくなるため「成功です」と出力されず、`catch`に書かれている「失敗です」が出力される。そして、HTTPリクエストの成功、失敗に関わらず`finally`が実行される。`finally`は必ず実行されるため、API実行前に表示しておいたローディングを非表示にする処理などで使われる。
 
-![axiosをthen、catch、finallyで失敗時のコンソール](/images/20190331-promise-error.png)
+![axiosをthen、catch、finallyで失敗時のコンソール](../../assets/images/20190331-promise-error.png)
 
 ## axiosをasync、awaitとtry、catch、finallyで制御
 
@@ -276,7 +276,7 @@ const getPosts = async () => {
 ブラウザのコンソールで確認すると、非同期でAPIの呼び出しを行う`getPosts`関数の処理が終わってから「API呼び出し後」が出力されていることがわかる。  
 そして、`try`と`finally`のコードが実行されている。
 
-![async、awaitで成功](/images/20190331-async-success.png)
+![async、awaitで成功](../../assets/images/20190331-async-success.png)
 
 ### HTTPリクエストが失敗する場合
 
@@ -290,4 +290,4 @@ HTTPリクエストが成功した場合と同様、非同期処理が終わっ�
 `catch`と`finally`が実行される。  
 これで`then`、`catch`で扱っていたときと同様に`async`、`await`でもHTTP通信を制御できることがわかった。
 
-![async、awaitで失敗](/images/20190331-async-error.png)
+![async、awaitで失敗](../../assets/images/20190331-async-error.png)

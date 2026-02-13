@@ -1,6 +1,6 @@
 ---
 title: PythonでJSON文字列をdictに変換する
-description: PythonでJSON文字列をdictに変換する
+description: Python標準ライブラリのjson.loadsを使い、JSON文字列をdictに変換する方法を解説する。ヒアドキュメントでの宣言から型変換の確認まで。
 date: 2019-08-02
 categories:
   - Python

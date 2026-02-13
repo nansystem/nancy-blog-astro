@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="ページが見つかりません - nansystem" description="お探しのページは見つかりませんでした。URLが正しいかご確認ください。">
+	<div class="not-found">
+		<h1>404</h1>
+		<p>お探しのページは見つかりませんでした。</p>
+		<p>URLが変更されたか、ページが削除された可能性があります。</p>
+		<a href="/">トップページへ戻る</a>
+	</div>
+</BaseLayout>
+
+<style>
+	.not-found {
+		text-align: center;
+		padding: 4em 1em;
+	}
+	h1 {
+		font-size: 4em;
+		margin: 0;
+		color: rgb(var(--gray));
+	}
+	p {
+		color: rgb(var(--gray));
+		margin: 0.5em 0;
+	}
+	a {
+		display: inline-block;
+		margin-top: 2em;
+		color: var(--accent);
+	}
+</style>

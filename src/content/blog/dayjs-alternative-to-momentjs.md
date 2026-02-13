@@ -293,8 +293,7 @@ console.info(dayjs("2012-01-25T00:00:00+0900").toISOString()); // 2019-01-24T15:
 console.info(dayjs("2012-01-25T00:00:00+0900").toJSON()); // 2019-01-24T15:00:00.000Z
 ```
 
-利用できるフォーマットの一覧はこちら  
-https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#list-of-all-available-formats
+利用できるフォーマットの一覧は[dayjsのAPIリファレンス - フォーマット一覧](https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#list-of-all-available-formats)を参照。
 
 ## 差分 - 経過時間、経過日数、残り時間、残り日数(カウントダウン)
 
@@ -397,8 +396,7 @@ console.info(specifiedDate.subtract(11, "M").from(referenceDate)); // 1年前
 console.info(specifiedDate.subtract(18, "M").from(referenceDate)); // 2年前
 ```
 
-相対日時の範囲はこちら　　
-https://github.com/iamkun/dayjs/blob/dev/docs/en/Plugin.md#relativetime
+相対日時の範囲は[dayjsのRelativeTimeプラグインのドキュメント](https://github.com/iamkun/dayjs/blob/dev/docs/en/Plugin.md#relativetime)を参照。
 
 <!-- 月の日数 -->
 

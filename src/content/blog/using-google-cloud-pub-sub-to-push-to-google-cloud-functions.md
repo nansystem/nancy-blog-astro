@@ -10,7 +10,7 @@ published: true
 
 Cloud Pub/Subのサブスクリプションの配信タイプをpushにして、配信先にGoogle Cloud Functionsを使ってみる。
 
-なお、Cloud Pub/Subのサブスクリプションの基本的な説明と、配信タイプpullについては[こちらの記事](/using-google-cloud-pub-sub-pull-with-gcloud-tool)に書いている。
+なお、Cloud Pub/Subのサブスクリプションの基本的な説明と、配信タイプpullについては[Cloud Pub/Subのpullサブスクリプションをgcloudツールで試す](/using-google-cloud-pub-sub-pull-with-gcloud-tool)記事に書いている。
 
 ## 配信タイプpullとpushの設定の違い
 
@@ -89,9 +89,9 @@ Deploying function (may take a while - up to 2 minutes)...done.
 ```
 
 上記のコマンドを実行すると、Google Cloud Functionだけでなく、**Cloud Pub/Subのトピック、サブスクリプションも合わせて生成**される。
-![生成されたfunction](/images/20190526-function.png)
-![生成されたtopic](/images/20190526-topic.png)
-![生成されたsubscription](/images/20190526-subscription.png)
+![生成されたfunction](../../assets/images/20190526-function.png)
+![生成されたtopic](../../assets/images/20190526-topic.png)
+![生成されたsubscription](../../assets/images/20190526-subscription.png)
 
 ### 関数単体での挙動を確認する
 

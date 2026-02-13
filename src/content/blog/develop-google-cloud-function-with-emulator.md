@@ -1,6 +1,6 @@
 ---
 title: Google Cloud Functionsをローカル環境でエミュレータを使い開発、デバッグする
-description: ""
+description: "Google Cloud Functionsのエミュレータをローカルにインストールし、関数の開発とVisual Studio Codeでのデバッグ環境を構築する手順を解説する。"
 date: 2019-04-25
 categories:
   - Google Cloud
@@ -83,11 +83,11 @@ Debugger for helloGET listening on port 9229.
 ```
 
 Visual Studio Codeを開き、`index.js`の行をダブルクリックしてデバッグポイントを追加しておく。
-![デバッグポイントを追加する](/images/20190425-add-debug-point.jpg)
+![デバッグポイントを追加する](../../assets/images/20190425-add-debug-point.jpg)
 
 次にデバッグの設定をしていく。  
 「デバッグ」から「構成を開く」をクリックする。  
-![構成の追加を選択](/images/20190425-select-config.png)
+![構成の追加を選択](../../assets/images/20190425-select-config.png)
 
 `launch.json`が開かれるので、次のような値を設定する。
 
@@ -115,16 +115,16 @@ launch.json
 ```
 
 サイドナビからデバッグアイコンをクリックする。  
-![デバッグアイコン](/images/20190425-debug.jpg)
+![デバッグアイコン](../../assets/images/20190425-debug.jpg)
 
 デバッグ構成に先ほど追加した「Inspect Function」を選択し、緑色の実行ボタンをクリックする。
-![追加したデバッグ構成を選択する](/images/20190425-debug-using-config.jpg)
+![追加したデバッグ構成を選択する](../../assets/images/20190425-debug-using-config.jpg)
 
 デバッグが始まるとVisual Studio Codeの下の方がオレンジ色になり、デバッグ中であることがわかるようになる。  
-![デバッグモード](/images/20190425-debug-mode.jpg)
+![デバッグモード](../../assets/images/20190425-debug-mode.jpg)
 
 `curl`で関数を実行すると、次のようにデバッグポイントで処理が止まり、ローカルのGoogle Cloud Functionsをデバッグすることができる。  
-![デバッグモードでストップしている状態](/images/20190425-debug-stop.jpg)
+![デバッグモードでストップしている状態](../../assets/images/20190425-debug-stop.jpg)
 
 ・参考  
 https://cloud.google.com/functions/docs/emulator?hl=ja  

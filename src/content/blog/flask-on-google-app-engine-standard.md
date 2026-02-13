@@ -98,9 +98,9 @@ gunicorn -b 127.0.0.1:8000 main:app
 ```
 
 HTML、JSONが想定通り返ってきている。  
-![gunicornで起動してHTMLの表示を確認](/images/20190512-gunicorn-html.png)
+![gunicornで起動してHTMLの表示を確認](../../assets/images/20190512-gunicorn-html.png)
 
-![gunicornで起動してJSONを確認](/images/20190512-gunicorn-json.png)
+![gunicornで起動してJSONを確認](../../assets/images/20190512-gunicorn-json.png)
 
 なお、`dev_appserver.py`を使わないと`app.yaml`の内容が確認できないため、[dev_appserver.pyを使ってPython3.7を動かす](/run-google-app-engine-standard-python-with-local-dev-appserver/)方法を別記事にしている。
 
@@ -127,7 +127,7 @@ Pythonのバージョンやオートスケールの設定、静的ファイル�
 
 最低限pythonのバージョン3.7を使うこと、そして`gunicorn`を使うことを`app.yaml`に記載する。
 `$PORT`は実行時に設定される環境変数で、HTTP リクエストを受信するポートだ。  
-その他の環境変数は、[こちら](https://cloud.google.com/appengine/docs/standard/python3/runtime#environment_variables)で確認できる。
+その他の環境変数は、[App Engine Python3ランタイムの環境変数一覧](https://cloud.google.com/appengine/docs/standard/python3/runtime#environment_variables)で確認できる。
 
 `app.yaml`
 
@@ -266,7 +266,7 @@ ERROR: (gcloud.app.deploy) Error Response: [7] Access Not Configured. Cloud Buil
 エラーメッセージのURLをクリックし、Google Cloudのコンソールを開く。  
 Cloud Build APIの「有効にする」ボタンをクリックすると、課金が必要ですというモーダルが表示される。「課金を有効にする」ボタンをクリックして、APIを有効にする。
 
-![Google Cloudの画面でdeployを許可する](/images/20190512-cloud-build-api.png)
+![Google Cloudの画面でdeployを許可する](../../assets/images/20190512-cloud-build-api.png)
 
 さて、Cloud Build APIを有効にしたら、再度デプロイコマンドを実行する。  
 今度はデプロイできた！
@@ -279,8 +279,8 @@ Deployed service [default] to [https://gae-flask-app.appspot.com]
 
 HTMLへのアクセス、APIへのアクセスともに成功している。感動。
 
-![GAEでHTMLが表示できる](/images/20190512-gae-flask-html.png)
-![GAEでJSONが返ってくる](/images/20190512-gae-flask-json.png)
+![GAEでHTMLが表示できる](../../assets/images/20190512-gae-flask-html.png)
+![GAEでJSONが返ってくる](../../assets/images/20190512-gae-flask-json.png)
 
 ### プロジェクトの削除
 

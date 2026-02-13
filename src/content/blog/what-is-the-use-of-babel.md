@@ -280,7 +280,7 @@ Babelでは`.browserslistrc`で設定することが推奨されている。
 アロー関数で`browserslist`の挙動を確かめてみる。  
 Chromeはバージョン44までは未対応、バージョン45からは対応している。つまり、バージョン44ならアロー関数は`function`の形に変換されるし、バージョン45なら`()=>{}`のままのはずだが...
 
-![arrow functionのブラウザ対応状況](/images/20190320-caniuse-arrow-function.png)
+![arrow functionのブラウザ対応状況](../../assets/images/20190320-caniuse-arrow-function.png)
 
 index.js
 

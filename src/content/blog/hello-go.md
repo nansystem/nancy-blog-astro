@@ -104,6 +104,6 @@ $ go mod init github.com/nansystem/sample-go
 
 Visual Studio CodeでHello World書いて、デバッグポイントをおく。  
 「実行」>「デバッグの開始」から動かす。  
-![Hello World](/images/20200328-helloworld.jpg)
+![Hello World](../../assets/images/20200328-helloworld.jpg)
 
 "Hello World"表示されてる！

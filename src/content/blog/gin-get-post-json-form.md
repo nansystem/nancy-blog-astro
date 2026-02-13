@@ -1,6 +1,6 @@
 ---
 title: ginでフォーム、JSONのリクエストを受け取る
-description: ginでフォーム、JSONのリクエストを受け取る
+description: GoのWebフレームワークginでGET/POSTリクエストを受け取り、クエリパラメータ、フォーム、JSONボディからの値取得方法をコード付きで確認する。
 date: 2020-04-18
 categories:
   - Go
