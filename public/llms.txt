@@ -1,0 +1,20 @@
+# nansystem
+
+> なんしーが書く技術ブログです。JavaScript、CSS、Vue.js、React、Python、Google Cloudについて書いています。
+
+nansystem はフロントエンド・バックエンド両方の実務経験に基づいた技術記事を公開しています。一次情報（実際の検証結果、具体的な手順、遭遇したエラーと解決策）を重視しています。
+
+## 主なカテゴリ
+
+- [React](https://nansystem.com/category/react): React、Next.js、関連ライブラリ（Conform、nuqs など）の実践記事
+- [Vue.js](https://nansystem.com/category/vue.js): Vue.js のコンポーネント設計、状態管理、実装パターン
+- [JavaScript](https://nansystem.com/category/javascript): JavaScript の基礎から応用、ブラウザ API、ツールチェーン
+- [Python](https://nansystem.com/category/python): Python の Web 開発、データ処理、ツール作成
+- [Google Cloud](https://nansystem.com/category/google%20cloud): Cloud Functions、Cloud Run、Firestore などの実践
+- [CSS](https://nansystem.com/category/css): CSS レイアウト、アニメーション、モダン CSS テクニック
+
+## 主要ページ
+
+- [トップページ](https://nansystem.com/): 最新記事一覧
+- [RSS フィード](https://nansystem.com/rss.xml): 記事の更新情報
+- [サイトマップ](https://nansystem.com/sitemap-index.xml): 全公開ページの一覧
