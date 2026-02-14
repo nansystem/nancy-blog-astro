@@ -3,7 +3,11 @@ import { type CollectionEntry, getCollection, render } from 'astro:content';
 import BlogPost from '../layouts/BlogPost.astro';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('blog', ({ data }) => data.published !== false);
+	const posts = await getCollection('blog', ({ data }) => {
+		// 開発環境では未公開記事も表示
+		if (import.meta.env.DEV) return true;
+		return data.published !== false;
+	});
 	return posts.map((post) => ({
 		params: { slug: post.data.permalink.replace(/^\//, '') },
 		props: post,

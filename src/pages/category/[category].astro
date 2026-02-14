@@ -5,7 +5,11 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_DESCRIPTION } from '../../consts';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('blog', ({ data }) => data.published !== false);
+	const posts = await getCollection('blog', ({ data }) => {
+		// 開発環境では未公開記事も表示
+		if (import.meta.env.DEV) return true;
+		return data.published !== false;
+	});
 	const categories = [...new Set(posts.flatMap((post) => post.data.categories))];
 	return categories.map((category) => ({
 		params: { category: category.toLowerCase() },

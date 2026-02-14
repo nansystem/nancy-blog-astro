@@ -3,7 +3,11 @@ import rss from '@astrojs/rss';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 export async function GET(context) {
-	const posts = await getCollection('blog', ({ data }) => data.published !== false);
+	const posts = await getCollection('blog', ({ data }) => {
+		// 開発環境では未公開記事も表示
+		if (import.meta.env.DEV) return true;
+		return data.published !== false;
+	});
 	return rss({
 		title: SITE_TITLE,
 		description: SITE_DESCRIPTION,
