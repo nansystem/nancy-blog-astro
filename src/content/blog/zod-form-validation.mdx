@@ -1,0 +1,422 @@
+---
+title: "Zodでフォームバリデーションを組み立てる — coerce・型推論・superRefine"
+description: "Zod v4でフォームバリデーションを学ぶ。coerceでFormData変換、z.inferで型推論、superRefineでフィールド間バリデーションまで。"
+date: 2026-02-14T17:00:00+09:00
+categories:
+  - React
+permalink: /zod-form-validation
+published: true
+---
+
+## なぜZodを単体で確認するのか
+
+サーバーサイド出身の自分が、AIコーディングの発達でフロントエンドも見る機会が増えた。Next.jsのServer Action周辺を読み解こうとすると、Zod・Conform・Server Actionsが複雑に絡み合っていて、どこからどこまでがどのライブラリの仕事なのかわからなくなる。
+
+AIに「このフォームにバリデーションを追加して」と頼めばConform + Zodのコードが一瞬で出てくる時代だが、出力されたコードの意味がわからないと修正もレビューもできない。だから遠回りに見えても、まずZod単体で何ができるのかを確認したかった。
+
+[React 19 Form Actionsだけでフォーム送信からエラー表示まで作る](/react-form-actions)では手動バリデーションを書き、[ConformがZodなしでやってくれること](/conform-without-zod)ではConformの責務を分離した。この記事ではZodの責務を単体で理解する。
+
+この記事で確認するのは以下の機能だ。
+
+- **`z.object()`** — フォーム全体のスキーマを1つのオブジェクトとして定義する
+- **`z.coerce`** — FormDataの文字列を数値や真偽値に自動変換する
+- **`z.infer`** — スキーマからTypeScript型を推論し、型定義の二重管理をなくす
+- **`superRefine`** — パスワード一致や条件付き必須など、フィールド間のバリデーション
+- **カスタムエラーメッセージ** — 日本語メッセージの設定と `z.flattenError()` によるフィールド別エラー取得
+
+## 検証環境
+
+```bash
+npm create vite@latest zod-basics -- --template react-ts
+cd zod-basics
+npm install zod@4.3.6
+npm install
+```
+
+Zod 4.3.6、TypeScript 5.9で検証した。
+
+## parse と safeParse — 2つのエラーハンドリング
+
+Zodでバリデーションする方法は2つある。`parse()` は失敗時に例外を投げ、`safeParse()` は結果オブジェクトを返す。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="parse() — 例外を投げる">
+
+```ts
+import { z, ZodError } from "zod";
+
+const schema = z.string();
+
+// ① 成功時はパースした値を返す
+const value = schema.parse("hello");
+console.log(value); // "hello"
+
+// ② 失敗時はZodErrorをthrowする
+try {
+  schema.parse(123);
+} catch (e) {
+  if (e instanceof ZodError) {
+    console.log(e.issues);
+  }
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="safeParse() — 結果オブジェクトを返す">
+
+```ts
+import { z } from "zod";
+
+const schema = z.string();
+
+// ① 成功時は { success: true, data: 値 }
+const ok = schema.safeParse("hello");
+if (ok.success) {
+  console.log(ok.data); // "hello"
+}
+
+// ② 失敗時は { success: false, error: ZodError }
+const ng = schema.safeParse(123);
+if (!ng.success) {
+  console.log(ng.error.issues);
+}
+// try/catch が不要
+```
+
+</div>
+</div>
+
+フォームバリデーションでは `safeParse()` を使う。フォーム入力の不正は「例外」ではなく「想定内の失敗」なので、try/catchよりも結果オブジェクトで分岐するほうが自然だ。
+
+## z.object() — フォーム全体を1つのスキーマにする
+
+フォームのフィールドが増えると、手動バリデーションのif文はすぐに膨らむ。[React 19 Form Actionsで手動バリデーションを書いた記事](/react-form-actions)がまさにそうだった。
+
+```tsx
+const errors: Record<string, string[]> = {};
+if (username.length < 3) {
+  errors.username = ["3文字以上で入力してください。"];
+}
+if (!email.includes("@")) {
+  errors.email = ["メールアドレスの形式が正しくありません。"];
+}
+```
+
+フィールドが2つなら読めるが、10個になると見通しが悪い。Zodでは `z.object()` でフォーム全体のバリデーションルールを1箇所にまとめられる。
+
+```ts
+const UserSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  age: z.number().int().min(0).max(150),
+});
+
+// 正しいオブジェクト
+UserSchema.parse({ name: "太郎", email: "taro@example.com", age: 30 });
+// → { name: "太郎", email: "taro@example.com", age: 30 }
+
+// フィールドの型が違うとエラー
+UserSchema.parse({ name: 123, age: "thirty", email: "bad" });
+// → ZodError
+```
+
+ここで重要なのは、**フォームの全フィールドを1つのオブジェクトとして定義し、`safeParse()` 一発でまとめてバリデーションできる**という構造だ。手動でフィールドごとにif文を書く必要がなくなる。
+
+未知のキーはデフォルトで除去される。`{ name: "太郎", age: 30, email: "taro@example.com", extra: "ignored" }` を渡しても、`extra` は結果に含まれない。意図しないフィールドが紛れ込まないので安心できる。
+
+## coerce — FormDataの文字列を適切な型に変換する
+
+coerce（コアース）は「強制的に変換する」という意味の英語だ。Zodでは、入力値をバリデーション前にJavaScriptの型変換関数（`Number()`, `Boolean()` など）で強制的に目的の型に変換する機能を指す。
+
+FormDataから取得した値は**全て文字列**になる。つまり `z.number()` にそのまま渡すとエラーになる。
+
+```ts
+z.number().parse("25"); // → ZodError（文字列は数値ではない）
+```
+
+手動バリデーションでは `Number()` で変換して `isNaN` でチェックして、さらに範囲を個別にif文で確認していた。
+
+```ts
+const age = formData.get("age") as string;
+const ageNum = Number(age);
+if (isNaN(ageNum) || ageNum < 0) {
+  return { success: false, message: "年齢は0以上の数値を入力してください。" };
+}
+if (ageNum > 150) {
+  return { success: false, message: "年齢が大きすぎます。" };
+}
+```
+
+`z.coerce` を使うと、バリデーション前にJavaScriptの型変換（`Number()`, `Boolean()` など）を自動で挟んでくれる。
+
+```ts
+// Number("25") → 25 に変換してからバリデーション
+z.coerce.number().parse("25"); // → 25
+
+// 変換後にバリデーションをチェインできる
+z.coerce.number().int().min(0).max(150).parse("25"); // → 25
+
+// 数値に変換できない文字列はエラー
+z.coerce.number().safeParse("abc").success; // → false
+```
+
+変換・型チェック・範囲チェックが1行で宣言的に書ける。手動で3段階に分けていた処理がなくなるのは大きい。
+
+### z.coerce.boolean() — チェックボックスの値を変換する
+
+HTMLのチェックボックスはチェックされると `"on"` を送信し、チェックされていないとフィールド自体が送信されない。`z.coerce.boolean()` はJavaScriptの `Boolean()` で変換するため、truthyな値は `true`、falsyな値は `false` になる。
+
+```ts
+const schema = z.coerce.boolean();
+
+// truthy な値 → true
+schema.parse("on");       // → true（チェックボックスのデフォルト値）
+schema.parse("true");     // → true
+schema.parse("1");        // → true
+
+// falsy な値 → false
+schema.parse("");         // → false
+schema.parse(0);          // → false
+schema.parse(undefined);  // → false
+```
+
+### フォームデータ全体をcoerceでパースする
+
+`z.object()` と `z.coerce` を組み合わせると、FormDataの値をそのままZodに渡せる。
+
+```ts
+const FormSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  age: z.coerce.number().int().min(0).max(150),
+  agreeToTerms: z.coerce.boolean(),
+});
+
+// FormDataの値は全て文字列だが、coerceが変換してくれる
+FormSchema.parse({
+  name: "太郎",
+  email: "taro@example.com",
+  age: "25",            // → 25（数値に変換）
+  agreeToTerms: "on",   // → true（真偽値に変換）
+});
+```
+
+サーバーサイドに慣れている身からすると、フォームの値が全部文字列で飛んでくること自体が盲点だった。`z.coerce` を知らずにいきなりConform + Zodのコードを読んでいたら、なぜ `z.number()` ではなく `z.coerce.number()` を使っているのか理解できなかったと思う。
+
+## z.infer — スキーマからTypeScript型を推論する
+
+`z.infer<typeof Schema>` を使うと、スキーマ定義から自動でTypeScript型を生成できる。
+
+```ts
+const UserSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+  email: z.string().email(),
+});
+
+// スキーマから型を推論
+type User = z.infer<typeof UserSchema>;
+// → { name: string; age: number; email: string }
+
+// コード補完が効く
+const user: User = {
+  name: "太郎",
+  age: 30,
+  email: "taro@example.com",
+};
+```
+
+サーバーサイドだと「スキーマ定義」と「型定義」は別々に書くことが多い。たとえばGoならstructを定義して、バリデーションタグを付ける。Zodでは**スキーマ定義が型定義を兼ねる**ので、フィールドを追加したときに型を更新し忘れるリスクがなくなる。
+
+### coerceを使ったスキーマの型推論
+
+`z.coerce.number()` を含むスキーマでも、`z.infer` は**出力側の型**を推論する。
+
+```ts
+const FormSchema = z.object({
+  name: z.string(),
+  age: z.coerce.number(),  // 入力は文字列でもOKだが
+});
+
+type FormOutput = z.infer<typeof FormSchema>;
+// → { name: string; age: number }  ← 出力型はnumber
+```
+
+入力は `"25"` のような文字列を受け付けるが、`parse()` 後の出力は `number` 型になる。`z.infer` はこの出力型を返す。
+
+## refine / superRefine — フィールド間バリデーション
+
+`min()` や `email()` は単一フィールドのチェックだが、実際のフォームでは「パスワードと確認用パスワードが一致するか」「連絡方法でメールを選んだらメールアドレスが必須」のように、複数フィールドにまたがるバリデーションが必要になる。
+
+`refine` は単純なカスタムチェック、`superRefine` は複数のエラーを追加したりエラーの表示先フィールドを指定したりできる。フォームでは `superRefine` のほうが使う場面が多い。
+
+### パスワード確認の一致チェック
+
+`superRefine` の `path` でエラーの表示先を `confirmPassword` フィールドに向ける。こうしないとエラーがフォーム全体のエラー（`formErrors`）に入ってしまい、どのフィールドを直せばいいのかユーザーに伝わらない。
+
+```ts
+const SignupSchema = z
+  .object({
+    password: z.string().min(8, "8文字以上入力してください"),
+    confirmPassword: z.string().min(1, "確認用パスワードを入力してください"),
+  })
+  // data: パース済みのオブジェクト、ctx: エラーを追加するためのコンテキスト
+  .superRefine((data, ctx) => {
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: "custom",
+        message: "パスワードが一致しません",
+        path: ["confirmPassword"], // ← このフィールドにエラーを表示
+      });
+    }
+  });
+
+// 一致する場合 → OK
+SignupSchema.safeParse({
+  password: "MyPassword1",
+  confirmPassword: "MyPassword1",
+}).success; // → true
+
+// 一致しない場合 → confirmPasswordにエラー
+const result = SignupSchema.safeParse({
+  password: "MyPassword1",
+  confirmPassword: "Different",
+});
+if (!result.success) {
+  const flat = z.flattenError(result.error);
+  flat.fieldErrors.confirmPassword;
+  // → ["パスワードが一致しません"]
+}
+```
+
+### 条件付き必須フィールド
+
+「連絡方法」の選択によって、必須になるフィールドが変わるパターン。
+
+```ts
+const ContactSchema = z
+  .object({
+    contactMethod: z.enum(["email", "phone"]),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.contactMethod === "email" && !data.email) {
+      ctx.addIssue({
+        code: "custom",
+        message: "メールアドレスを入力してください",
+        path: ["email"],
+      });
+    }
+    if (data.contactMethod === "phone" && !data.phone) {
+      ctx.addIssue({
+        code: "custom",
+        message: "電話番号を入力してください",
+        path: ["phone"],
+      });
+    }
+  });
+
+// emailを選んだのにemail未入力 → emailフィールドにエラー
+ContactSchema.safeParse({
+  contactMethod: "email",
+  phone: "090-1234-5678",
+}).success; // → false
+
+// emailを選んでemail入力済み → OK
+ContactSchema.safeParse({
+  contactMethod: "email",
+  email: "user@example.com",
+}).success; // → true
+```
+
+`optional()` でスキーマ上は任意にしておき、`superRefine` で条件付きの必須チェックを追加する。この組み合わせはフォームでよく出てくるパターンだ。
+
+## カスタムエラーメッセージ — 日本語メッセージを設定する
+
+Zodのデフォルトエラーメッセージは英語だ。日本語のフォームでは、ユーザーに表示するメッセージも日本語にしたい。
+
+### error パラメータの書き方
+
+メッセージの設定方法は2種類ある。`z.string()` や `z.number()` のスキーマ生成関数では `{ error: "..." }` のオブジェクト形式しか使えないが、`min()` や `email()` などのバリデータでは文字列を直接渡すショートハンドも使える。
+
+```ts
+z.string("...")              // NG — スキーマ生成関数は文字列を受け付けない
+z.string({ error: "..." })   // OK
+
+z.string().min(3, "...")             // OK — バリデータはどちらでもよい
+z.string().min(3, { error: "..." })  // OK
+```
+
+フォーム全体のスキーマに日本語メッセージを設定すると以下のようになる。バリデータにはショートハンドを使い、スキーマ生成関数には `{ error: "..." }` を使っている。
+
+```ts
+const ContactSchema = z.object({
+  name: z
+    .string({ error: "名前は文字列で入力してください" })
+    .min(1, "名前を入力してください")
+    .max(50, "名前は50文字以内にしてください"),
+  email: z
+    .string({ error: "メールアドレスは文字列で入力してください" })
+    .min(1, "メールアドレスを入力してください")
+    .email({ error: "正しいメールアドレスを入力してください" }),
+  age: z
+    .number({ error: "年齢は数値で入力してください" })
+    .int({ error: "年齢は整数で入力してください" })
+    .min(0, "年齢は0以上にしてください")
+    .max(150, "年齢は150以下にしてください"),
+});
+```
+
+### z.flattenError() — フィールドごとのエラーを取り出す
+
+`z.flattenError()` はZodErrorを `fieldErrors`（フィールドごとのメッセージ配列）と `formErrors`（スキーマ全体のエラー）に分離する。
+
+```ts
+const result = ContactSchema.safeParse({
+  name: "",
+  email: "bad",
+  age: -1,
+});
+
+if (!result.success) {
+  const flat = z.flattenError(result.error);
+
+  // フィールドごとのエラー
+  flat.fieldErrors.name;
+  // → ["名前を入力してください"]
+
+  flat.fieldErrors.email;
+  // → ["正しいメールアドレスを入力してください"]
+
+  flat.fieldErrors.age;
+  // → ["年齢は0以上にしてください"]
+
+  // スキーマ全体のエラー（フィールドに紐づかないエラー）
+  flat.formErrors;
+  // → []
+}
+```
+
+この `fieldErrors` の構造は、[React 19 Form Actionsで手動構築した `errors: Record<string, string[]>`](/react-form-actions) と同じ形式だ。Zodがこの構造を自動で生成してくれる。
+
+## まとめ
+
+Zodを単体で確認して、フォームバリデーションにおけるZodの役割が整理できた。
+
+| やりたいこと | Zodの機能 | 手動だと |
+|---|---|---|
+| フォーム全体のバリデーション | `z.object()` + `safeParse()` | フィールドごとにif文 |
+| 文字列→数値/真偽値の変換 | `z.coerce.number()`, `z.coerce.boolean()` | `Number()` + `isNaN` チェック |
+| スキーマから型を生成 | `z.infer<typeof Schema>` | 型定義を手書きで二重管理 |
+| フィールド間バリデーション | `superRefine()` + `path` | if文のネストと手動のエラー振り分け |
+| フィールド別エラーメッセージ | `z.flattenError()` + `{ error: "..." }` | `errors[field] = [msg]` を手動構築 |
+
+`min()` や `email()` のようなバリデータは他のライブラリにもある一般的な機能で、Zodの公式ドキュメントを見れば一覧できる。一方で `z.coerce`、`z.infer`、`superRefine` はZodとTypeScriptの連携やフォーム特有のパターンに特化した機能で、ここを理解していないとConform + Zodのコードが読めない。
+
+これでZod単体の責務は整理できた。次の記事ではConformとZodを組み合わせて、スキーマ定義からフォームのHTML属性生成・エラー振り分けまでをまとめて扱う。
+
+## 参考リンク
+
+- [Zod 公式ドキュメント](https://zod.dev/) — スキーマ定義、バリデータ、エラーハンドリングの詳細
+- [Zod v4 リリースノート](https://github.com/colinhacks/zod/releases/tag/v4.0.0) — v4で追加された `error` パラメータ、`z.flattenError()` などの変更点
