@@ -1,0 +1,401 @@
+---
+title: "React 19 Form Actionsでフォーム送信から結果表示までを組み立てる"
+description: "React 19のForm Actionsを使い、フォーム送信→状態管理→pending表示→エラー表示を段階的に組み立てる。Conform・Zod・Next.jsなし、React単体での実装。"
+date: 2026-02-14T16:00:00+09:00
+categories:
+  - React
+permalink: /react-form-actions
+published: true
+---
+
+## React 19より前のフォーム送信
+
+HTMLの `<form>` には `action` 属性がある。本来はフォームデータの送信先URLを指定するもので、送信するとそのURLへページ遷移する。
+
+```html
+<form action="/submit" method="post">
+  <input name="email" type="text" />
+  <button type="submit">送信</button>
+</form>
+```
+
+Reactは画面遷移なしでUIを更新するSPAを作るためのライブラリなので、フォーム送信でページ遷移されると画面の状態が全部消えてしまう。React 18以前は `onSubmit` でイベントを受け取り、`preventDefault()` でページ遷移を止めてから手動でデータを取り出していた。
+
+```tsx
+function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault(); // ページ遷移を止める
+  const formData = new FormData(e.currentTarget);
+  const email = formData.get("email");
+}
+
+<form onSubmit={handleSubmit}>
+```
+
+React 19ではこの `action` 属性にURLの代わりに関数を渡せるようになった。Reactがページ遷移なしで関数を呼び出してくれるので、`onSubmit` も `preventDefault()` も不要になる。
+
+`action` に渡した関数はクライアント側で実行される。`'use server'` を付けてサーバーで実行するにはNext.jsなどのフレームワークが必要で、React本体にはサーバー実行のランタイムがない（[React公式 - Server Components](https://react.dev/reference/rsc/server-components)）。
+
+## この記事でやること
+
+この記事では、Conform・Zod・Next.jsを使わず、React 19のForm Actionsだけで以下の流れを段階的に組み立てる。
+
+![React 19 Form Actionsのデータフロー](../../assets/images/react-form-actions-flow.svg)
+
+`useActionState` に `action` 関数を渡すと、Reactが state 更新や isPending の管理を足した `formAction` を返す。これを `<form action={formAction}>` に渡すと、送信時に `FormData` が `action` に届き、戻り値が `state` に反映されて画面が更新される。`useFormStatus` は同じ送信中状態（`isPending`）を、子コンポーネントから親 `<form>` 経由で読み取る。
+
+## 検証環境
+
+```bash
+npm create vite@latest react-form-actions -- --template react-ts
+cd react-form-actions
+npm install
+```
+
+React 19.2.4、Vite 7.2.4で検証した。
+
+## form action — FormDataを受け取る
+
+`<form action={fn}>` に関数を渡すと、送信時にその関数がFormDataを受け取る。`onSubmit` と `preventDefault` は不要。
+
+```tsx
+export function FormAction() {
+  function handleSubmit(formData: FormData) {
+    const name = formData.get("name");
+    console.log({ name });
+    alert(`送信されました: ${name}`);
+  }
+
+  return (
+    <form action={handleSubmit}>
+      <label htmlFor="name">名前: </label>
+      <input id="name" name="name" type="text" required />
+      <button type="submit">送信</button>
+    </form>
+  );
+}
+```
+
+注意点として、送信後にフォームの入力値は自動でリセットされる。
+
+## useActionState — 送信結果をstateで管理する
+
+前のセクションの `<form action={fn}>` だけだと、actionの結果を画面に反映する手段がない。React 19より前なら `useState` で状態を持ち、`onSubmit` の中で `setState` していた。同じメール送信フォームを両方で書くと違いがわかる。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="React 18以前 — useState + onSubmit">
+
+```tsx
+import { useState } from "react";
+
+type State = { message: string } | null;
+
+export function WithUseState() {
+  // ① 結果と送信中を別々のstateで管理
+  const [state, setState] = useState<State>(null);
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>,
+  ) {
+    // ② ページ遷移を手動で止める
+    e.preventDefault();
+    // ③ 送信中フラグを手動でON
+    setIsPending(true);
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+
+    await new Promise((r) => setTimeout(r, 1000));
+
+    if (!email.includes("@")) {
+      // ④ 結果をsetStateで手動更新
+      setState({
+        message:
+          "メールアドレスの形式が正しくありません。",
+      });
+    } else {
+      setState({
+        message: `${email} で登録しました！`,
+      });
+    }
+    // ⑤ 送信中フラグを手動でOFF
+    setIsPending(false);
+  }
+
+  return (
+    // ⑥ onSubmitでイベントを受け取る
+    <form onSubmit={handleSubmit}>
+      <label htmlFor="email">メール: </label>
+      <input
+        id="email"
+        name="email"
+        type="text"
+        required
+      />
+      <button type="submit" disabled={isPending}>
+        {isPending ? "送信中..." : "送信"}
+      </button>
+      {state && <p>{state.message}</p>}
+    </form>
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="React 19 — useActionState">
+
+```tsx
+import { useActionState } from "react";
+
+type State = { message: string } | null;
+
+// ④ 戻り値が次のstateになる（setState不要）
+async function submitAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  const email = formData.get("email") as string;
+
+  await new Promise((r) => setTimeout(r, 1000));
+
+  if (!email.includes("@")) {
+    return {
+      message:
+        "メールアドレスの形式が正しくありません。",
+    };
+  }
+  return {
+    message: `${email} で登録しました！`,
+  };
+}
+
+export function WithUseActionState() {
+  // ① ③ state, isPendingが戻り値にまとまっている
+  const [state, formAction, isPending] =
+    useActionState(submitAction, null);
+
+  return (
+    // ② ⑥ action={fn}でpreventDefaultもonSubmitも不要
+    <form action={formAction}>
+      <label htmlFor="email">メール: </label>
+      <input
+        id="email"
+        name="email"
+        type="text"
+        required
+      />
+      <button type="submit" disabled={isPending}>
+        {isPending ? "送信中..." : "送信"}
+      </button>
+      {state && <p>{state.message}</p>}
+    </form>
+  );
+}
+```
+
+</div>
+</div>
+
+ポイントは3つ。
+
+- `useState` 版で `setState`、`setIsPending`、`preventDefault` を自分で書いていた部分が、`useActionState` では戻り値と `isPending` に集約されている
+- action関数の戻り値が次のstateになる
+- 第3の戻り値 `isPending` で送信中かどうかを判定できる
+
+action関数の引数は `(previousState, formData)` の順で、前回の戻り値が第1引数に来る。今回の例では使っていないが、たとえば前回エラーだったときにメッセージを変えるといった用途で使える。
+
+## useFormStatus — 子コンポーネントでpending状態を取得する
+
+`useFormStatus` は `<form>` の**子コンポーネント**で使う。form自体のコンポーネントでは動作しない。
+
+```tsx
+// SubmitButton.tsx
+import { useFormStatus } from "react-dom";
+
+export function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" disabled={pending}>
+      {pending ? "送信中..." : "送信"}
+    </button>
+  );
+}
+```
+
+```tsx
+// UseFormStatusDemo.tsx
+import { useActionState } from "react";
+import { SubmitButton } from "./SubmitButton";
+
+type State = { message: string } | null;
+
+async function submitAction(
+  _prev: State,
+  formData: FormData,
+): Promise<State> {
+  const comment = formData.get("comment") as string;
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  return { message: `コメント「${comment}」を受け付けました。` };
+}
+
+export function UseFormStatusDemo() {
+  // 第2引数はstateの初期値。送信前は結果がないのでnull
+  const [state, formAction] = useActionState(submitAction, null);
+
+  return (
+    <form action={formAction}>
+      <label htmlFor="comment">コメント: </label>
+      <input id="comment" name="comment" type="text" required />
+      <SubmitButton />
+      {state && <p>{state.message}</p>}
+    </form>
+  );
+}
+```
+
+`useActionState` の `isPending` との違いは、`useFormStatus` は親の `<form>` を自動検出する点。propsで渡さなくても、自分が配置された `<form>` の送信状態を取得できる（[useFormStatus – React公式リファレンス](https://react.dev/reference/react-dom/hooks/useFormStatus)）。送信ボタンのような汎用コンポーネントを作るときに使う。
+
+## 構造化された戻り値 — 成功/失敗を分ける
+
+ここからはReactの機能ではなく、action関数の戻り値を自分で設計するパターンの話になる。実務では成功・失敗を判定して表示を切り替えることが多いので、戻り値を `{ success, message }` にする。これはResult型と呼ばれるパターンで、成功と失敗を型で区別する考え方にもとづいている。
+
+```tsx
+import { useActionState } from "react";
+
+type ActionResult = {
+  success: boolean;
+  message: string;
+} | null;
+
+async function submitAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const age = formData.get("age") as string;
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const ageNum = Number(age);
+  if (isNaN(ageNum) || ageNum < 0) {
+    return { success: false, message: "年齢は0以上の数値を入力してください。" };
+  }
+  if (ageNum > 150) {
+    return { success: false, message: "年齢が大きすぎます。" };
+  }
+  return { success: true, message: `年齢 ${ageNum} 歳で登録しました。` };
+}
+
+export function StructuredReturn() {
+  const [state, formAction, isPending] = useActionState(submitAction, null);
+
+  return (
+    <form action={formAction}>
+      <label htmlFor="age">年齢: </label>
+      <input id="age" name="age" type="text" required />
+      <button type="submit" disabled={isPending}>
+        {isPending ? "送信中..." : "送信"}
+      </button>
+      {state && (
+        <p style={{ color: state.success ? "green" : "red" }}>
+          {state.message}
+        </p>
+      )}
+    </form>
+  );
+}
+```
+
+この `{ success, message }` のパターンは、フォームライブラリのConformが内部で使っている構造と同じ考え方で作っている。
+
+## フィールドごとのエラー表示
+
+フィールドが複数になると、どのフィールドにエラーがあるのかを伝える必要がある。戻り値に `errors: { フィールド名: string[] }` を持たせる。
+
+```tsx
+import { useActionState } from "react";
+
+// errorsのキーは<input>のname属性と対応させる
+type ActionResult = {
+  success: boolean;
+  message: string;
+  errors: Record<string, string[]>;
+} | null;
+
+async function submitAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const username = (formData.get("username") as string).trim();
+  const email = (formData.get("email") as string).trim();
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const errors: Record<string, string[]> = {};
+  if (username.length < 3) {
+    errors.username = ["3文字以上で入力してください。"];
+  }
+  if (!email.includes("@")) {
+    errors.email = ["メールアドレスの形式が正しくありません。"];
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { success: false, message: "入力内容に問題があります。", errors };
+  }
+  return { success: true, message: `${username} さんの登録が完了しました！`, errors: {} };
+}
+
+export function FieldErrors() {
+  const [state, formAction, isPending] = useActionState(submitAction, null);
+
+  return (
+    <form action={formAction}>
+      <div>
+        <label htmlFor="username">ユーザー名: </label>
+        <input id="username" name="username" type="text" />
+        {state?.errors.username?.map((msg, i) => (
+          <p key={i} style={{ color: "red" }}>{msg}</p>
+        ))}
+      </div>
+      <div>
+        <label htmlFor="email">メール: </label>
+        <input id="email" name="email" type="text" />
+        {state?.errors.email?.map((msg, i) => (
+          <p key={i} style={{ color: "red" }}>{msg}</p>
+        ))}
+      </div>
+      <button type="submit" disabled={isPending}>
+        {isPending ? "送信中..." : "登録"}
+      </button>
+    </form>
+  );
+}
+```
+
+`errors.username` は `name="username"` のフィールドのエラーを意味する。
+
+## まとめ
+
+React 19のForm Actionsで、フォーム送信からエラー表示まで段階的に組み立てた。
+
+| ステップ | 使うもの | できること |
+|---|---|---|
+| FormDataを受け取る | `<form action={fn}>` | onSubmit + preventDefault不要 |
+| 送信結果をstateで管理 | `useActionState` | 戻り値をstateとして保持、isPending |
+| 子コンポーネントでpending取得 | `useFormStatus` | 汎用的な送信ボタン |
+
+ここから下はReactの機能ではなく、戻り値の設計パターン。
+
+| ステップ | 戻り値の構造 | できること |
+|---|---|---|
+| 成功/失敗の切り替え | `{ success, message }` | 構造化された戻り値 |
+| フィールドごとのエラー | `{ errors: { field: string[] } }` | どのフィールドにエラーがあるか明示 |
+
+この最後の `{ success, errors }` の構造は、自分で毎回書くと手間がかかる。[ConformがZodなしでやってくれること](/conform-without-zod)で扱った `parse()` + `reply()` は、このバリデーション → エラー返却の部分を定型化してくれる。
+
+普段Next.jsで実装していると、`'use server'` を付ければサーバーで動く、`useActionState` を使えば状態が返ってくる、という結果だけ見て使っている。今回フレームワークなしで一から組み立ててみて、action関数がクライアント実行であることや、`useActionState` が従来の `useState` + `onSubmit` 内の `setState` を1つにまとめたものだという前提を改めて意識した。
+
+## 参考リンク
+
+- [React 19 リリースブログ](https://react.dev/blog/2024/12/05/react-19) — Form Actions、useActionState、useFormStatusの導入が記載されている公式アナウンス
+- [&lt;form&gt; – React公式リファレンス](https://react.dev/reference/react-dom/components/form) — `action` に関数を渡す場合の仕様
+- [useActionState – React公式リファレンス](https://react.dev/reference/react/useActionState) — 引数の順序や戻り値の詳細
+- [useFormStatus – React公式リファレンス](https://react.dev/reference/react-dom/hooks/useFormStatus) — 親formの自動検出の仕組み

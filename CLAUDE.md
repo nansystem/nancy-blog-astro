@@ -117,9 +117,6 @@ description: 記事の要約（120文字程度）
 date: YYYY-MM-DD
 categories:
   - カテゴリ名
-tags:
-  - タグ1
-  - タグ2
 permalink: /url-slug
 published: false
 ---

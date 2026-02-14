@@ -1,0 +1,55 @@
+useActionState: {
+  label: "useActionState\n[state, formAction, isPending]"
+  style: {
+    stroke: "#3574f0"
+    fill: "#eff6ff"
+    font-color: "#1a4fc9"
+  }
+}
+
+form: {
+  label: "<form action={formAction}>\nユーザーが送信ボタンを押す"
+  style: {
+    stroke: "#16a34a"
+    fill: "#f0fdf4"
+    font-color: "#15803d"
+  }
+}
+
+action: {
+  label: "action(prevState, formData)\nバリデーション → 結果を返す"
+  style: {
+    stroke: "#db2777"
+    fill: "#fdf2f8"
+    font-color: "#be185d"
+  }
+}
+
+view: {
+  label: "画面に結果を表示\n{ success, message, errors }"
+  style: {
+    stroke: "#ca8a04"
+    fill: "#fefce8"
+    font-color: "#a16207"
+  }
+}
+
+useFormStatus: {
+  label: "useFormStatus\n子コンポーネントから親<form>のpendingを自動検出"
+  style: {
+    stroke: "#7c3aed"
+    fill: "#f5f3ff"
+    font-color: "#6d28d9"
+  }
+}
+
+useActionState -> form: formAction
+useActionState -> view: "state / isPending"
+form -> action: FormData
+action -> useActionState: "return State"
+useFormStatus -> form: pendingを読み取り {
+  style: {
+    stroke: "#7c3aed"
+    stroke-dash: 5
+  }
+}
