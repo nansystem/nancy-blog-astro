@@ -1,0 +1,547 @@
+---
+title: "Conform + Zod統合で手動バリデーションを置き換える — parseWithZod・getZodConstraint"
+description: "Conform + Zodでフォームバリデーションを自動化。parseWithZodで手動resolve()を削除、getZodConstraintでHTML属性を自動生成、superRefineでフィールド間検証まで。"
+date: 2026-02-15T12:00:00+09:00
+categories:
+  - React
+permalink: /conform-with-zod
+published: false
+---
+
+## なぜConformとZodを統合するのか
+
+ここまで3つの記事で、フォームバリデーションの各要素を個別に見てきた。
+
+- [React 19 Form Actionsだけでフォーム送信からエラー表示まで作る](/react-form-actions) — 手動バリデーション（if文の羅列、`errors: Record<string, string[]>` の手動構築）
+- [ConformがZodなしでやってくれること](/conform-without-zod) — HTML属性の自動生成、状態管理、エラーの振り分け（ただしresolve()内のバリデーションは手動）
+- [Zodでフォームバリデーションを組み立てる](/zod-form-validation) — スキーマ定義、safeParse()、superRefine（ただしConformとの連携なし）
+
+ConformとZodを統合すると、3つのメリットがある。
+
+1. **コード削減**: resolve()内のif文がスキーマ定義に置き換わる
+2. **型安全性**: スキーマから型推論、constraintの自動生成でミスを防ぐ
+3. **メンテナンス性**: バリデーションルールが1箇所に集約される
+
+サーバーサイド出身の自分が業務でConform + Zodのコードを初めて見たとき、「どこからどこまでがConformの仕事で、どこからがZodの仕事なのか」がわからなかった。3つの記事で個別に理解した今なら、統合のコードが読めるようになっているはずだ。
+
+## 検証環境
+
+```bash
+npm create vite@latest conform-with-zod -- --template react-ts
+cd conform-with-zod
+npm install @conform-to/react@1.17.0 @conform-to/dom@1.17.0 @conform-to/zod@1.17.0 zod@4.3.6
+npm install
+```
+
+## この記事でやること
+
+- parseWithZodで手動resolve()を自動化
+- getZodConstraintでHTML制約属性を自動生成
+- useFormでConform + Zodを統合
+- z.coerce不要の自動型変換
+- superRefineでフィールド間バリデーション
+
+前提知識:
+- [React 19 Form Actionsで手動バリデーションを書いた記事](/react-form-actions)
+- [ConformがZodなしでやってくれること](/conform-without-zod)
+- [Zodでフォームバリデーションを組み立てる](/zod-form-validation)
+
+## parseWithZod — resolve()を自動化する
+
+[ConformがZodなしでやってくれること](/conform-without-zod)では、`parse()` の `resolve()` 内にif文を書いてバリデーションしていた。`parseWithZod` を使うと、Zodスキーマが `resolve()` を丸ごと置き換える。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="Conform単体（手動resolve）">
+
+```tsx
+const submission = parse(formData, {
+  resolve(payload) {
+    const error: Record<string, string[]> = {};
+    if (!payload.username || payload.username.length < 3) {
+      error.username = ["3文字以上"];
+    }
+    if (!payload.email?.includes("@")) {
+      error.email = ["正しいメールアドレス"];
+    }
+    if (Object.keys(error).length > 0) {
+      return { error };
+    }
+    return { value: payload };
+  },
+});
+```
+
+</div>
+<div class="side-by-side-panel" data-label="Conform + Zod（自動resolve）">
+
+```tsx
+import { parseWithZod } from "@conform-to/zod/v4";
+import { z } from "zod";
+
+const SignupSchema = z.object({
+  username: z.string().min(3, "3文字以上"),
+  email: z.string().email("正しいメールアドレス"),
+});
+
+const submission = parseWithZod(formData, {
+  schema: SignupSchema,
+});
+```
+
+</div>
+</div>
+
+resolve()内のif文が `z.object()` のスキーマ定義に置き換わっている。`parseWithZod` が内部でZodの `safeParse()` を呼び、結果をConformのSubmission形式に変換する。エラーメッセージもスキーマに埋め込めるので、バリデーションロジックが1箇所に集約される。
+
+### submission.status と submission.reply()
+
+`parseWithZod` の戻り値は、[ConformがZodなしでやってくれること](/conform-without-zod)で見た `parse()` と同じSubmission形式だ。`status` で成功/失敗を判定し、`reply()` で `useForm` の `lastResult` に渡せる形式に変換する。
+
+```tsx
+const formData = new FormData();
+formData.set("username", "太郎太郎");
+formData.set("email", "taro@example.com");
+
+const submission = parseWithZod(formData, { schema: SignupSchema });
+
+submission.status; // → "success"
+if (submission.status === "success") {
+  submission.value;
+  // → { username: "太郎太郎", email: "taro@example.com" }
+  // 型安全: submission.value は z.infer<typeof SignupSchema> 型
+}
+```
+
+バリデーションが失敗した場合は `reply()` でエラー情報を取得する。
+
+```tsx
+const formData = new FormData();
+formData.set("username", "ab");
+formData.set("email", "invalid");
+
+const submission = parseWithZod(formData, { schema: SignupSchema });
+const result = submission.reply();
+
+result.status; // → "error"
+result.error;
+// → { username: ["3文字以上"], email: ["正しいメールアドレス"] }
+result.initialValue;
+// → { username: "ab", email: "invalid" }
+```
+
+`reply()` が返す `initialValue` には送信時の入力値が入る。Conformはこの値を使って、エラー時にフォームの入力値を再表示する。
+
+### 空文字→undefinedへのConform変換が鍵
+
+ブラウザのフォームでは、何も入力せずに送信すると空文字 `""` が送られる。Conformは空文字を `undefined` に変換してからZodに渡す。そのため `z.string()` だけで必須チェックができる（`.min(1)` 不要）。
+
+```tsx
+const schema = z.object({
+  username: z.string({ error: "ユーザー名は必須です" }),
+});
+
+const formData = new FormData();
+formData.set("username", ""); // ブラウザでは空文字として送信される
+
+// Conformは空文字をundefinedに変換してからZodに渡す
+const submission = parseWithZod(formData, { schema });
+const result = submission.reply();
+
+result.error?.username;
+// → ["ユーザー名は必須です"]
+```
+
+[Zodでフォームバリデーションを組み立てる](/zod-form-validation)では `z.string().min(1, "必須")` と書いていたが、Conform経由なら `z.string({ error: "必須" })` で十分だ。Conformが空文字→undefinedの変換を担ってくれるおかげで、Zodのスキーマがシンプルになる。
+
+## getZodConstraint — HTML属性を自動生成する
+
+[ConformがZodなしでやってくれること](/conform-without-zod)では、`useForm` の `constraint` に手動でHTML制約属性を書いていた。
+
+```tsx
+const [form, fields] = useForm({
+  constraint: {
+    email: { required: true },
+    password: { required: true, minLength: 8 },
+  },
+});
+```
+
+`getZodConstraint` を使うと、Zodスキーマからこの制約情報を自動生成できる。
+
+### string().min().max() → minLength, maxLength
+
+```tsx
+import { getZodConstraint } from "@conform-to/zod/v4";
+
+const schema = z.object({
+  username: z.string().min(3).max(20),
+});
+
+const constraint = getZodConstraint(schema);
+constraint.username;
+// → { minLength: 3, maxLength: 20, required: true }
+```
+
+`z.string().min(3)` が `minLength: 3` に、`.max(20)` が `maxLength: 20` に変換される。`z.string()` は必須なので `required: true` も自動で付く。
+
+### number().min().max() → min, max
+
+```tsx
+const schema = z.object({
+  age: z.number().min(0).max(150),
+});
+
+const constraint = getZodConstraint(schema);
+constraint.age;
+// → { min: 0, max: 150, required: true }
+```
+
+数値フィールドでは `minLength` / `maxLength` ではなく `min` / `max` が生成される。
+
+### optional()でrequiredがfalseになる
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="必須フィールド">
+
+```tsx
+const schema = z.object({
+  bio: z.string(),
+});
+
+const constraint = getZodConstraint(schema);
+constraint.bio;
+// → { required: true }
+```
+
+</div>
+<div class="side-by-side-panel" data-label="任意フィールド">
+
+```tsx
+const schema = z.object({
+  nickname: z.string().optional(),
+});
+
+const constraint = getZodConstraint(schema);
+constraint.nickname;
+// → { required: false }
+```
+
+</div>
+</div>
+
+`optional()` を付けると `required: false` になり、HTML側の `required` 属性が付かなくなる。
+
+## useFormでConform + Zodを統合する
+
+ここまで `parseWithZod` と `getZodConstraint` を個別に見てきた。実際のコンポーネントではこの2つを `useForm` に渡して統合する。
+
+```tsx
+import { useForm, getFormProps, getInputProps } from "@conform-to/react";
+import { parseWithZod, getZodConstraint } from "@conform-to/zod/v4";
+import { z } from "zod";
+
+// ① スキーマ定義にバリデーションルールを集約
+export const SignupSchema = z.object({
+  email: z.string().email("正しいメールアドレスを入力してください"),
+  password: z.string().min(8, "8文字以上入力してください"),
+});
+
+export function SignupFormWithZod() {
+  const [form, fields] = useForm({
+    id: "signup-zod",
+    // ② スキーマからHTML制約属性を自動生成
+    constraint: getZodConstraint(SignupSchema),
+    // ③ クライアント側バリデーション
+    onValidate({ formData }) {
+      return parseWithZod(formData, { schema: SignupSchema });
+    },
+    shouldValidate: "onBlur",
+    shouldRevalidate: "onInput",
+  });
+
+  return (
+    <form {...getFormProps(form)}>
+      <div>
+        <label htmlFor={fields.email.id}>メールアドレス</label>
+        <input {...getInputProps(fields.email, { type: "email" })} />
+        {fields.email.errors && <p role="alert">{fields.email.errors[0]}</p>}
+      </div>
+      <div>
+        <label htmlFor={fields.password.id}>パスワード</label>
+        <input {...getInputProps(fields.password, { type: "password" })} />
+        {fields.password.errors && (
+          <p role="alert">{fields.password.errors[0]}</p>
+        )}
+      </div>
+      <button type="submit">登録</button>
+    </form>
+  );
+}
+```
+
+### 役割分担
+
+| 処理 | 担当 | コード箇所 |
+|---|---|---|
+| HTML属性生成 | Conform | `getInputProps()`, `getFormProps()` |
+| 制約情報の抽出 | Conform + Zod | `getZodConstraint(schema)` |
+| クライアント側バリデーション | Conform + Zod | `onValidate` + `parseWithZod` |
+| エラーの振り分け | Conform | `fields.email.errors` |
+| バリデーションルール定義 | Zod | `z.object({ ... })` |
+
+業務でConform + Zodのコードを見たとき、この表のどの行が何をしているのかがわからなかった。ConformとZodを個別に学んでから統合のコードを見ると、各行の役割が見えてくる。
+
+### constraintとonValidateの役割の違い
+
+```tsx
+{
+  // constraint: HTMLに埋め込む制約情報（支援技術向け）
+  constraint: getZodConstraint(SignupSchema),
+
+  // onValidate: 実際のバリデーション実行（JavaScript側）
+  onValidate({ formData }) {
+    return parseWithZod(formData, { schema: SignupSchema });
+  },
+}
+```
+
+- `constraint` はHTML属性として埋め込まれる（`minlength="8"` など）。JS読み込み前のブラウザ標準バリデーションのフォールバックや、スクリーンリーダーへの情報提供に使われる
+- `onValidate` はJavaScriptで実際に検証を実行する。フォーカスアウトや入力時のリアルタイムバリデーションはこちらが担当する
+- 両方に同じスキーマを渡すことで、HTMLとJavaScriptのバリデーションが一致する
+
+## z.coerce不要の自動型変換
+
+[Zodでフォームバリデーションを組み立てる](/zod-form-validation)では、FormDataの文字列を数値に変換するために `z.coerce.number()` を使った。しかしConformと組み合わせると、`z.number()` だけで自動変換される。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="Zod単体 — coerce必須">
+
+```tsx
+// Zod単体: z.coerce.number()を使う
+const zodSchema = z.object({
+  age: z.coerce.number().min(0),
+});
+zodSchema.safeParse({ age: "25" });
+// → { success: true, data: { age: 25 } }
+
+// z.number() だけだとエラーになる
+z.number().parse("25");
+// → ZodError（文字列は数値ではない）
+```
+
+</div>
+<div class="side-by-side-panel" data-label="Conform + Zod — coerce不要">
+
+```tsx
+// Conform + Zod: z.number()だけでOK
+const schema = z.object({
+  age: z.number().min(0),
+});
+
+const formData = new FormData();
+formData.set("age", "25");
+
+const submission = parseWithZod(formData, { schema });
+
+submission.status; // → "success"
+if (submission.status === "success") {
+  submission.value.age; // → 25（number型）
+}
+```
+
+</div>
+</div>
+
+これは自分がConform + Zodのコードを読んでいて驚いた点だった。Zod単体の記事で `z.coerce.number()` を学んだのに、Conform + Zodのコードには `z.coerce` がない。バグかと思ったが、Conformが自動で型変換を担当していた。
+
+### z.number(), z.boolean(), z.date()が自動変換される
+
+```tsx
+// ① z.number() — "25" → 25
+const schema1 = z.object({ age: z.number() });
+const fd1 = new FormData();
+fd1.set("age", "25");
+parseWithZod(fd1, { schema: schema1 });
+// → { status: "success", value: { age: 25 } }
+
+// ② z.boolean() — "on" → true
+const schema2 = z.object({ agree: z.boolean() });
+const fd2 = new FormData();
+fd2.set("agree", "on"); // checkboxのデフォルト値
+parseWithZod(fd2, { schema: schema2 });
+// → { status: "success", value: { agree: true } }
+
+// ③ z.date() — "2000-01-15" → Date object
+const schema3 = z.object({ birthday: z.date() });
+const fd3 = new FormData();
+fd3.set("birthday", "2000-01-15");
+parseWithZod(fd3, { schema: schema3 });
+// → { status: "success", value: { birthday: Date(2000-01-15) } }
+```
+
+FormDataは全てを文字列として扱う。Zodのスキーマ型（`z.number()`, `z.boolean()`, `z.date()`）を見て、Conformが自動で型変換してからZodに渡す。フォームライブラリ側で型変換を担当するほうが、スキーマをシンプルに保てる。
+
+### 複数の型を同時に変換する
+
+```tsx
+const schema = z.object({
+  name: z.string().min(1),
+  age: z.number().int().min(0),
+  agree: z.boolean(),
+});
+
+const formData = new FormData();
+formData.set("name", "太郎");
+formData.set("age", "30");     // → number型に変換
+formData.set("agree", "on");   // → boolean型に変換
+
+const submission = parseWithZod(formData, { schema });
+
+if (submission.status === "success") {
+  submission.value;
+  // → { name: "太郎", age: 30, agree: true }
+}
+```
+
+### disableAutoCoercionで無効化できる
+
+自動型変換はデフォルトの挙動だが、`disableAutoCoercion: true` で無効化できる。
+
+```tsx
+const schema = z.object({
+  age: z.number(),
+});
+
+const formData = new FormData();
+formData.set("age", "25");
+
+parseWithZod(formData, { schema, disableAutoCoercion: true });
+// → error（文字列"25"がz.number()にそのまま渡されてエラーになる）
+```
+
+通常は無効化する必要はないが、Conform以外の経路でバリデーションするケースなど、自動変換の挙動を明示的に制御したい場面で使える。
+
+## superRefine + parseWithZod — フィールド間バリデーション
+
+[Zodでフォームバリデーションを組み立てる](/zod-form-validation)で扱った `superRefine` は、Conform + Zodでもそのまま使える。`ctx.addIssue({ path: ["fieldName"] })` で指定したフィールドに、Conformがエラーを自動で振り分ける。
+
+### パスワード一致検証
+
+```tsx
+const PasswordSchema = z
+  .object({
+    password: z.string().min(8, "8文字以上入力してください"),
+    confirmPassword: z.string(),
+  })
+  .superRefine((data, ctx) => {
+    // ① 2つのフィールドを比較
+    if (data.password !== data.confirmPassword) {
+      // ② ctx.addIssue() でエラーを追加
+      ctx.addIssue({
+        code: "custom",
+        path: ["confirmPassword"], // ← どのフィールドのエラーか指定
+        message: "パスワードが一致しません",
+      });
+    }
+  });
+```
+
+`parseWithZod` に渡すと、`path` を見てConformが `fields.confirmPassword.errors` に振り分ける。
+
+```tsx
+const formData = new FormData();
+formData.set("password", "mypassword123");
+formData.set("confirmPassword", "different");
+
+const submission = parseWithZod(formData, { schema: PasswordSchema });
+const result = submission.reply();
+
+result.error?.confirmPassword;
+// → ["パスワードが一致しません"]
+result.error?.password;
+// → undefined（passwordにはエラーがない）
+```
+
+`password` が短い場合は、`min(8)` のエラーと `superRefine` の不一致エラーが同時に出る。
+
+```tsx
+const formData = new FormData();
+formData.set("password", "short");
+formData.set("confirmPassword", "different");
+
+const submission = parseWithZod(formData, { schema: PasswordSchema });
+const result = submission.reply();
+
+result.error?.password;
+// → ["8文字以上入力してください"]
+result.error?.confirmPassword;
+// → ["パスワードが一致しません"]
+```
+
+### 条件付き必須フィールド
+
+業務でよくある「他のフィールドの値に応じて検証ルールが変わる」パターンも、`superRefine` で対応できる。
+
+```tsx
+const ContactSchema = z
+  .object({
+    contactMethod: z.enum(["email", "phone"]),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.contactMethod === "email" && !data.email) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["email"],
+        message: "メールアドレスを入力してください",
+      });
+    }
+    if (data.contactMethod === "phone" && !data.phone) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["phone"],
+        message: "電話番号を入力してください",
+      });
+    }
+  });
+```
+
+`optional()` でスキーマ上は任意にしておき、`superRefine` で条件付きの必須チェックを追加する。エラーは選択した連絡方法に対応するフィールドだけに表示される。
+
+```tsx
+const formData = new FormData();
+formData.set("contactMethod", "email");
+// emailは未入力
+
+const submission = parseWithZod(formData, { schema: ContactSchema });
+const result = submission.reply();
+
+result.error?.email;
+// → ["メールアドレスを入力してください"]
+result.error?.phone;
+// → undefined（phone側にはエラーがない）
+```
+
+## まとめ
+
+| やりたいこと | Conform単体 | Conform + Zod |
+|---|---|---|
+| バリデーションルール定義 | resolve()内にif文 | z.object()でスキーマ定義 |
+| HTML制約属性 | `constraint: { password: { minLength: 8 } }` | `getZodConstraint(schema)` |
+| フィールド間バリデーション | resolve()内で手動比較 | `superRefine()` + `ctx.addIssue()` |
+| 型変換（文字列→数値） | resolve()内で手動変換 | 自動変換（z.coerceも不要） |
+| エラーメッセージ | resolve()内で手動構築 | スキーマに埋め込み、自動振り分け |
+| TypeScript型 | interfaceを手書き | `z.infer<typeof Schema>` |
+
+Conform + Zodの統合により、バリデーションロジックがスキーマ定義1箇所に集約される。手動で書いていたresolve()、constraint、型定義が全て自動化される。自動型変換（coerce不要）はConform固有の機能で、Zod単体では得られない。
+
+この記事ではクライアント側（ブラウザ内）でのConform + Zod統合を確認した。次の記事では、このスキーマをサーバー側（Next.js Server Actions）でも使い、クライアント・サーバー両方で同じバリデーションルールを適用する方法を見ていく。
+
+## 参考リンク
+
+- [Conform 公式ドキュメント](https://conform.guide/) — parseWithZod、getZodConstraintのAPIリファレンス
+- [Zod 公式ドキュメント](https://zod.dev/) — スキーマ定義、superRefineの詳細
+- [React 19 Form Actionsだけでフォーム送信からエラー表示まで作る](/react-form-actions) — 手動バリデーションの原型
+- [ConformがZodなしでやってくれること](/conform-without-zod) — Conformの責務（HTML属性生成、状態管理、エラー振り分け）
+- [Zodでフォームバリデーションを組み立てる](/zod-form-validation) — Zodの責務（coerce、型推論、superRefine）
