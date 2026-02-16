@@ -1,0 +1,566 @@
+---
+title: "ReactのContainer/Presenterパターンでテストしやすいコンポーネントを作る"
+description: "ロジックとUIが混在したコンポーネントはテストで非同期処理が必須になる。Container/Presenterに分離すれば、Presenterは同期的にテストでき、ContainerはDIでモックを注入できる。Vitestで実証する。"
+date: 2026-02-13T12:00:00+09:00
+categories:
+  - React
+permalink: /container-presenter-testing
+published: false
+---
+
+## この記事でやること
+
+Container/Presenterパターンは、2015年にDan Abramovが広めたReactの設計パターンだ。Containerがデータ取得と状態管理を担い、PresenterがpropsだけでUIを描画する。
+
+```
+Container（データ取得・状態管理）
+  │
+  │  props: name, email, isLoading, error, onRefresh
+  ▼
+Presenter（UIの描画だけ）
+```
+
+このパターンが採用される理由はテストだけではない。UIとロジックの責務が明確に分かれることで再利用性が上がり、Storybookでpropsを変えるだけで全状態をカタログ化できる。UI担当とロジック担当が並行して作業しやすくなるメリットもある。
+
+ただし、この記事ではテストの観点に絞って検証する。ロジックとUIが混在したコンポーネントのテストがなぜ書きにくいのか、分離するとどう変わるのかを、Vitestのテストコードで実証する。
+
+1. ロジックとUIが混在したコンポーネント（Mixed）のテストの課題を確認する
+2. Container/Presenterに分離して、それぞれのテストを書く
+3. MixedとContainer/Presenterのテストを比較する
+
+なお、Dan Abramov本人は2019年にこのパターンの無条件な推奨を撤回している。Hooksによる代替も含め、記事の最後で触れる。
+
+## 検証環境
+
+```bash
+npm create vite@latest container-presenter-testing -- --template react-ts
+cd container-presenter-testing
+npm install
+npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
+```
+
+`vitest.config.ts` を作成する。
+
+```ts
+// vitest.config.ts
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./src/test-setup.ts",
+  },
+});
+```
+
+```ts
+// src/test-setup.ts
+import "@testing-library/jest-dom/vitest";
+```
+
+## ロジックとUIが混在したコンポーネント
+
+まず、データ取得とUIが1つのコンポーネントにまとまった状態から始める。`fetchUser` をpropsで受け取り、取得結果を自分で描画する。React公式ドキュメントに従い、useEffectには[クリーンアップ（`ignore`フラグ）](https://react.dev/reference/react/useEffect#fetching-data-with-effects)を入れ、再取得は`retryCount`の更新でuseEffectを再実行する。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="コンポーネント">
+
+```tsx
+import { useState, useEffect } from "react";
+
+export type FetchUser = () => Promise<{
+  name: string;
+  email: string;
+}>;
+
+export function UserCardMixed({ fetchUser }: { fetchUser: FetchUser }) {
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+    setIsLoading(true);
+    setError(null);
+
+    fetchUser().then(
+      (data) => {
+        if (!ignore) {
+          setUser(data);
+          setIsLoading(false);
+        }
+      },
+      (e) => {
+        if (!ignore) {
+          setError(e instanceof Error ? e.message : "不明なエラー");
+          setIsLoading(false);
+        }
+      },
+    );
+
+    return () => {
+      ignore = true;
+    };
+  }, [fetchUser, retryCount]);
+
+  if (isLoading) {
+    return <p>読み込み中...</p>;
+  }
+
+  if (error) {
+    return (
+      <div>
+        <p role="alert">{error}</p>
+        <button onClick={() => setRetryCount((c) => c + 1)}>再試行</button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2>{user?.name}</h2>
+      <p>{user?.email}</p>
+      <button onClick={() => setRetryCount((c) => c + 1)}>更新</button>
+    </div>
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="テスト">
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { UserCardMixed } from "./user-card-mixed";
+
+describe("ロジックとUIが混在", () => {
+  it("エラー状態の検証に非同期処理が必要", async () => {
+    const fetchUser = vi.fn().mockRejectedValue(new Error("サーバーエラー"));
+
+    render(<UserCardMixed fetchUser={fetchUser} />);
+
+    // findBy（非同期）で待つ必要がある
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("サーバーエラー");
+  });
+
+  it("ローディング状態にPendingなPromiseが必要", () => {
+    const fetchUser = vi.fn().mockReturnValue(new Promise(() => {}));
+
+    render(<UserCardMixed fetchUser={fetchUser} />);
+
+    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+  });
+});
+```
+
+</div>
+</div>
+
+このテストには2つの課題がある。
+
+**課題1: UIの状態を見たいだけなのに、毎回 `fetchUser` のモックが必要。** エラー画面を確認するには `mockRejectedValue` でPromiseを失敗させ、`findByRole`（非同期）で表示を待たなければならない。
+
+**課題2: ローディング状態のテストがPromiseのタイミングに依存する。** 永遠にresolveしないPromiseを作ることで無理やりローディング状態を固定しているが、テストの意図が読みにくい。
+
+本来、UIの状態テストは「この状態のとき、何が表示されるか」だけを確認したい。データ取得の仕組みは関係ないはずだ。
+
+## Container/Presenterパターンで分離する
+
+### Presenterコンポーネント — propsだけでUIを描画する
+
+Presenterはpropsだけに依存する。`useState` も `useEffect` も持たない。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="コンポーネント">
+
+```tsx
+export type UserCardProps = {
+  name: string;
+  email: string;
+  isLoading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+};
+
+export function UserCardPresenter({ name, email, isLoading, error, onRefresh }: UserCardProps) {
+  if (isLoading) {
+    return <p>読み込み中...</p>;
+  }
+
+  if (error) {
+    return (
+      <div>
+        <p role="alert">{error}</p>
+        <button onClick={onRefresh}>再試行</button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2>{name}</h2>
+      <p>{email}</p>
+      <button onClick={onRefresh}>更新</button>
+    </div>
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="テスト">
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+import { UserCardPresenter } from "./user-card-presenter";
+
+describe("UserCardPresenter", () => {
+  it("成功状態: 名前とメールが表示される", () => {
+    render(
+      <UserCardPresenter
+        name="田中太郎"
+        email="taro@example.com"
+        isLoading={false}
+        error={null}
+        onRefresh={() => {}}
+      />,
+    );
+
+    expect(screen.getByText("田中太郎")).toBeInTheDocument();
+    expect(screen.getByText("taro@example.com")).toBeInTheDocument();
+  });
+
+  it("ローディング状態: 読み込み中が表示される", () => {
+    render(
+      <UserCardPresenter name="" email="" isLoading={true} error={null} onRefresh={() => {}} />,
+    );
+
+    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+  });
+
+  it("エラー状態: エラーメッセージが表示される", () => {
+    render(
+      <UserCardPresenter
+        name=""
+        email=""
+        isLoading={false}
+        error="サーバーに接続できません"
+        onRefresh={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent("サーバーに接続できません");
+  });
+
+  it("更新ボタンでonRefreshが呼ばれる", async () => {
+    const onRefresh = vi.fn();
+
+    render(
+      <UserCardPresenter
+        name="田中太郎"
+        email="taro@example.com"
+        isLoading={false}
+        error={null}
+        onRefresh={onRefresh}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "更新" }));
+
+    expect(onRefresh).toHaveBeenCalledOnce();
+  });
+});
+```
+
+</div>
+</div>
+
+Presenterのテストには `async` / `await` が出てこない（`userEvent.click` を除く）。`findBy` も不要だ。propsを渡して `getBy` で即座に検証できる。
+
+モックも `fetchUser` のような非同期関数ではなく、`onRefresh` のコールバック確認だけで済む。テストの意図が「この状態のとき、何が表示されるか」にそのまま対応している。
+
+### Containerコンポーネント — データ取得をPresenterに委譲する
+
+Containerはデータ取得と状態管理だけを担う。UIの描画はPresenterに任せる。
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="コンポーネント">
+
+```tsx
+import { useState, useEffect } from "react";
+import { UserCardPresenter } from "./user-card-presenter";
+
+export type FetchUser = () => Promise<{
+  name: string;
+  email: string;
+}>;
+
+export function UserCardContainer({ fetchUser }: { fetchUser: FetchUser }) {
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+    setIsLoading(true);
+    setError(null);
+
+    fetchUser().then(
+      (data) => {
+        if (!ignore) {
+          setUser(data);
+          setIsLoading(false);
+        }
+      },
+      (e) => {
+        if (!ignore) {
+          setError(e instanceof Error ? e.message : "不明なエラー");
+          setIsLoading(false);
+        }
+      },
+    );
+
+    return () => {
+      ignore = true;
+    };
+  }, [fetchUser, retryCount]);
+
+  return (
+    <UserCardPresenter
+      name={user?.name ?? ""}
+      email={user?.email ?? ""}
+      isLoading={isLoading}
+      error={error}
+      onRefresh={() => setRetryCount((c) => c + 1)}
+    />
+  );
+}
+```
+
+</div>
+<div class="side-by-side-panel" data-label="テスト">
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+import { UserCardContainer } from "./user-card-container";
+
+describe("UserCardContainer", () => {
+  it("取得成功: データが表示される", async () => {
+    const fetchUser = vi.fn().mockResolvedValue({
+      name: "田中太郎",
+      email: "taro@example.com",
+    });
+
+    render(<UserCardContainer fetchUser={fetchUser} />);
+
+    expect(await screen.findByText("田中太郎")).toBeInTheDocument();
+    expect(screen.getByText("taro@example.com")).toBeInTheDocument();
+    expect(fetchUser).toHaveBeenCalledOnce();
+  });
+
+  it("取得失敗: エラーが表示される", async () => {
+    const fetchUser = vi.fn().mockRejectedValue(new Error("ネットワークエラー"));
+
+    render(<UserCardContainer fetchUser={fetchUser} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("ネットワークエラー");
+  });
+
+  it("再試行: エラー後に再取得できる", async () => {
+    const fetchUser = vi.fn().mockRejectedValueOnce(new Error("失敗")).mockResolvedValue({
+      name: "田中太郎",
+      email: "taro@example.com",
+    });
+
+    render(<UserCardContainer fetchUser={fetchUser} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("失敗");
+
+    await userEvent.click(screen.getByRole("button", { name: "再試行" }));
+
+    expect(await screen.findByText("田中太郎")).toBeInTheDocument();
+    expect(fetchUser).toHaveBeenCalledTimes(2);
+  });
+});
+```
+
+</div>
+</div>
+
+Containerのテストは非同期だが、それはContainerの責務がデータ取得だからだ。UIの見た目テストはPresenterのテストで完了しているので、ここでは「データの流れ」と「状態遷移」だけに集中できる。
+
+`fetchUser` をpropsで受け取る設計（DI）にしているため、テスト時にモックを注入するのも自然だ。
+
+## テストの比較 — Mixed vs Container/Presenter
+
+同じUIを持つコンポーネントのテストが、パターンの違いでどう変わるかを比較する。
+
+| 観点                 | Mixed                           | Container/Presenter          |
+| -------------------- | ------------------------------- | ---------------------------- |
+| UI状態のテスト       | 非同期（`findBy` + モック必須） | Presenterで同期（propsだけ） |
+| `fetchUser` のモック | 全テストで必要                  | Containerのテストだけ        |
+| ローディング状態     | Pendingなpromiseを作る          | `isLoading={true}` を渡す    |
+| テストの安定性       | Promiseのタイミングに依存       | propsベースで確定的          |
+| テストの実行速度     | 非同期待機あり                  | Presenterは同期で即完了      |
+
+Mixedでエラー状態をテストするコードと、Presenterで同じ検証をするコードを並べると、違いが明確になる。
+
+**Mixed** — エラー状態のテスト:
+
+```tsx
+it("エラー状態を検証するのに非同期処理が必要", async () => {
+  const fetchUser = vi.fn().mockRejectedValue(new Error("サーバーエラー"));
+  render(<UserCardMixed fetchUser={fetchUser} />);
+  const alert = await screen.findByRole("alert");
+  expect(alert).toHaveTextContent("サーバーエラー");
+});
+```
+
+**Presenter** — 同じエラー状態のテスト:
+
+```tsx
+it("エラー状態 → propsを渡すだけ", () => {
+  render(
+    <UserCardPresenter
+      name=""
+      email=""
+      isLoading={false}
+      error="サーバーエラー"
+      onRefresh={() => {}}
+    />,
+  );
+  expect(screen.getByRole("alert")).toHaveTextContent("サーバーエラー");
+});
+```
+
+Mixedでは `fetchUser` のモックを組み立ててから `findByRole`（非同期）で待つ必要がある。Presenterでは `error` propsに文字列を渡して `getByRole`（同期）で即座に検証できる。
+
+## Dan Abramovの撤回 — Hooksがパターンを不要にした
+
+Container/Presenterパターンを広めたDan Abramov本人が、2019年に元記事へ以下の追記をしている。
+
+> Update from 2019: I wrote this article a long time ago and my views have since evolved. In particular, I don't suggest splitting your components like this anymore. If you find it natural in your codebase, this pattern can be handy. But I've seen it enforced without any necessity and with almost dogmatic fervor far too many times. The main reason I found it useful was because it let me separate complex stateful logic from other aspects of the component. Hooks let me do the same thing without an arbitrary division.
+
+核心は最後の2文だ。
+
+- パターンが有用だった理由は「複雑なステートフルロジックをコンポーネントの他の側面から分離できること」だった
+- **Hooksを使えば、コンポーネントを2つに分割するという「恣意的な区分」なしに同じことができる**
+
+### React Hooksのリリースと時系列
+
+| 日付       | 出来事                                                     |
+| ---------- | ---------------------------------------------------------- |
+| 2015年3月  | Dan Abramov "Presentational and Container Components" 公開 |
+| 2018年10月 | React Conf 2018でHooks提案                                 |
+| 2019年2月  | React 16.8リリース（Hooks安定版）                          |
+| 2019年     | Dan Abramovが元記事に撤回の追記                            |
+
+Hooksが安定版になった2019年と撤回の時期が一致している。Hooks登場前は、ステートフルなロジックを分離する手段がContainer/Presenterパターン、HOC（Higher-Order Components）、Render Propsなどに限られていた。カスタムHookがこれらの代替になった。
+
+### カスタムHookによる代替
+
+この記事で作ったContainerの役割を、カスタムHookで置き換えるとこうなる。
+
+```tsx
+// useUserCard.ts — ロジックだけを抽出
+import { useState, useEffect } from "react";
+
+type FetchUser = () => Promise<{ name: string; email: string }>;
+
+export function useUserCard(fetchUser: FetchUser) {
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    let ignore = false;
+    setIsLoading(true);
+    setError(null);
+
+    fetchUser().then(
+      (data) => {
+        if (!ignore) {
+          setUser(data);
+          setIsLoading(false);
+        }
+      },
+      (e) => {
+        if (!ignore) {
+          setError(e instanceof Error ? e.message : "不明なエラー");
+          setIsLoading(false);
+        }
+      },
+    );
+
+    return () => {
+      ignore = true;
+    };
+  }, [fetchUser, retryCount]);
+
+  return {
+    name: user?.name ?? "",
+    email: user?.email ?? "",
+    isLoading,
+    error,
+    onRefresh: () => setRetryCount((c) => c + 1),
+  };
+}
+```
+
+```tsx
+// UserCard.tsx — HookからpropsをもらってUIを描画
+import { useUserCard } from "./useUserCard";
+import { UserCardPresenter } from "./user-card-presenter";
+
+export function UserCard({
+  fetchUser,
+}: {
+  fetchUser: () => Promise<{ name: string; email: string }>;
+}) {
+  const props = useUserCard(fetchUser);
+  return <UserCardPresenter {...props} />;
+}
+```
+
+Containerコンポーネントという「ラッパー層」が消え、ロジックはHookに、UIはPresenterにそのまま残る。Presenterのテストは何も変わらない。ロジックのテストは `renderHook` でHook単体をテストできる。
+
+### 教条的な適用への警告
+
+Dan Abramovの追記で特に強い言葉が使われているのはこの部分だ。
+
+> I've seen it enforced without any necessity and with almost dogmatic fervor far too many times.
+
+「必要もないのに、ほとんど教条的な熱意で強制されるのを何度も見てきた」。Kent C. Doddsも同様の立場で、「ロジックとプレゼンテーションが必ずしも別の関心事とは限らない」と指摘している。
+
+パターンを機械的に全コンポーネントに適用するのではなく、複雑さが分離を正当化する場合にだけ使う。この記事のようにデータ取得・状態管理とUIが明確に分かれるケースはパターンが効くが、単純なコンポーネントまで分割する必要はない。
+
+## まとめ
+
+- ロジックとUIが混在すると、UIの状態テストに毎回非同期処理とモックが必要になる
+- Container/Presenterに分離すれば、Presenterはpropsだけで同期的にテストでき、Containerはデータの流れだけに集中できる
+- `fetchUser` のようなデータ取得関数をDIで注入する設計にすると、テスト時のモック差し替えも自然に行える
+- ただし、Dan Abramov本人が2019年に無条件な推奨を撤回している。Containerコンポーネントの代わりにカスタムHookでロジックを分離すれば、ラッパー層なしで同じメリットが得られる。パターンは万能薬ではなく、複雑さが分離を正当化するときに使うものだ
+
+## 参考リンク
+
+- [Presentational and Container Components — Dan Abramov](https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0) — パターンの原典。冒頭に2019年の撤回追記がある
+- [Making Sense of React Hooks — Dan Abramov](https://medium.com/@dan_abramov/making-sense-of-react-hooks-fdbde8803889) — Hooks提案直後に公開された、Hooksが解決する3つの問題（Wrapper Hell・Giant Components・Confusing Classes）の解説
+- [Container/Presentational Pattern — patterns.dev](https://www.patterns.dev/react/presentational-container-pattern/) — パターンの概要とHooksによる代替をコード付きで解説
+- [Realigning Your Model of React After Hooks With Dan Abramov — Chats with Kent](https://kentcdodds.com/chats/01/03/realigning-your-model-of-react-after-hooks-with-dan-abramov) — Kent C. DoddsとDan AbramovがHooks後のReactのメンタルモデルについて議論したポッドキャスト
