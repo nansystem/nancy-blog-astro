@@ -1,0 +1,31 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "b47dade38175",
+  "session_id": "0d68fbfa-1750-4c42-a34c-3cb9fa9b99e6",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-16T00:27:27.092636459Z",
+  "branch": "master",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".agents/financial-teacher-system-survey.md"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "3ae6ad3d-4d94-4102-aae2-4e8d69aa8e45",
+  "token_usage": {
+    "input_tokens": 118,
+    "cache_creation_tokens": 273754,
+    "cache_read_tokens": 7748087,
+    "output_tokens": 11169,
+    "api_call_count": 106
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-16T00:27:26.980418834Z",
+    "agent_lines": 0,
+    "human_added": 417,
+    "human_modified": 388,
+    "human_removed": 0,
+    "total_committed": 804,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-home-nancy-src-github-com-nansystem-nancy-blog-astro/0d68fbfa-1750-4c42-a34c-3cb9fa9b99e6.jsonl"
+}

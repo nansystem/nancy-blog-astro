@@ -1,0 +1,26 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "b47dade38175",
+  "strategy": "manual-commit",
+  "branch": "master",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".agents/financial-teacher-system-survey.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b4/7dade38175/0/metadata.json",
+      "transcript": "/b4/7dade38175/0/full.jsonl",
+      "context": "/b4/7dade38175/0/context.md",
+      "content_hash": "/b4/7dade38175/0/content_hash.txt",
+      "prompt": "/b4/7dade38175/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 118,
+    "cache_creation_tokens": 273754,
+    "cache_read_tokens": 7748087,
+    "output_tokens": 11169,
+    "api_call_count": 106
+  }
+}
