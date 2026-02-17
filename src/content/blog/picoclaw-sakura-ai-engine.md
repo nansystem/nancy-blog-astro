@@ -8,15 +8,17 @@ permalink: /picoclaw-sakura-ai-engine
 published: true
 ---
 
+OpenClawが話題になっていたのは知っていたが、試すタイミングを逃しているうちに超軽量版のPicoClawがリリースされていた。出遅れたおかげで、より手軽に試せるものに出会えたのでよしとしよう。
+
 ## この記事で分かること
 
-PicoClawをLLMにさくらのAI Engineで動かす設定手順を書く。
+PicoClawをさくらのAI Engineで動かす設定手順と、Discord Bot連携までの流れを書く。
 
 PicoClawはファイル読み書きやシェルコマンド実行のツールを内蔵している。`restrict_to_workspace: true` で読み書き先を制限できるが、あくまでLLM向けのガードレール。Docker Composeならコンテナ自体がOSレベルで隔離してくれるので、こちらを選んだ。
 
 ## PicoClawとは
 
-OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェアでも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。2月9日にリリースされ、2月17日時点で14,000スターを超えている。
+OpenClawの軽量版。Goで書かれており、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。2月9日にリリースされ、2月17日時点で14,000スターを超えている。
 
 外部のLLMプロバイダにAPI接続して動く仕組みなので、さくらのAI EngineのようなOpenAI互換APIと組み合わせて使える。
 
@@ -276,3 +278,8 @@ docker compose --profile gateway down
 他のプロバイダはデフォルトのままで問題ない。利用可能なモデルと料金はさくらのAI Engineのコントロールパネルで確認できる。
 
 ここまでだとClaudeやOpenAIと変わらないので、遊んでみようと思う。
+
+## 参考
+
+- [PicoClaw - GitHub](https://github.com/sipeed/picoclaw)
+- [OpenClaw+さくらのAI Engine無料枠でAIエージェントを構築する](https://zenn.dev/yskst/articles/3309f73a813d1a)
