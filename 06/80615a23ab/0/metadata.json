@@ -1,0 +1,37 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "0680615a23ab",
+  "session_id": "unknown",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-17T13:45:50.822184288Z",
+  "branch": "master",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".agents/financial-teacher-system-survey.md",
+    ".claude/settings.json",
+    ".claude/settings.local.json",
+    ".playwright-mcp/console-2026-02-12T00-12-44-898Z.log",
+    ".playwright-mcp/console-2026-02-13T00-31-16-182Z.log",
+    ".playwright-mcp/page-2026-02-12T00-12-48-599Z.png",
+    "src/assets/images/20260217-picoclaw-discord.png",
+    "src/content/blog/picoclaw-sakura-ai-engine.md"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-17T13:45:50.772916909Z",
+    "agent_lines": 203,
+    "human_added": 0,
+    "human_modified": 101,
+    "human_removed": 580,
+    "total_committed": 224,
+    "agent_percentage": 90.625
+  },
+  "transcript_path": ".cursor/projects/home-nancy-src-github-com-nansystem-nancy-blog-astro/agent-transcripts/abdf30e2-ff93-4ad1-8413-cc9c50cf742e.txt"
+}

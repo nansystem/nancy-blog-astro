@@ -1,0 +1,1625 @@
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="2-2">
+     2|title: "PicoClawをさくらのAI Engineで動かすまでにハマった3つのこと"
+</code_selection>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="13-13">
+    13|PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、さくらのAI Engine経由で動かすための設定手順と、実際にハマったポイントを記録する。先行記事とは異なる挙動もあったので、2026年2月17日時点の一次情報として残しておく。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:13 こういうメタなのいらない。
+</user_query>
+
+assistant:
+メタな説明（「先行記事とは…一次情報として残しておく」）を削除します。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、さくらのAI Engine経由で動かすための設定手順と、実際にハマったポイントを記録する。先行記事とは異なる挙動もあったので、2026年2月17日時点の一次情報として残しておく。
+  new_string: PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、さくらのAI Engine経由で動かすための設定手順と、実際にハマったポイントを記録する。
+
+[Tool result] StrReplace
+
+assistant:
+「先行記事とは異なる挙動もあったので、2026年2月17日時点の一次情報として残しておく。」の一文を削除し、記事の内容を説明する一文だけ残しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="13-13">
+    13|PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、さくらのAI Engine経由で動かすための設定手順と、実際にハマったポイントを記録する。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:13 経由ってのが紛らわしい。自分はあたかもさくらのAI EngineがVPSみたいなものかと勘違いした
+</user_query>
+
+assistant:
+記事の冒頭を確認し、さくらのAI Engineの使われ方を把握します。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  limit: 80
+
+[Tool result] Read
+
+assistant:
+PicoClawは自前の環境で動き、LLMとしてさくらのAI EngineのAPIを呼ぶ構成です。「経由」は誤解を招くので、LLMとして使う旨に書き換えます。本文とdescriptionの両方を修正します。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: description: "PicoClaw（OpenClawのGo実装・超軽量AIエージェント）をさくらのAI Engine経由で動かす設定手順と、api_baseのフルパス指定やモデル名プレフィックスなど実際にハマったポイントを記録する。AIエージェント自身に仕組みを聞いたらもっともらしい嘘をつかれた話も。"
+  new_string: description: "PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かす設定手順と、api_baseのフルパス指定やモデル名プレフィックスなど実際にハマったポイントを記録する。AIエージェント自身に仕組みを聞いたらもっともらしい嘘をつかれた話も。"
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、さくらのAI Engine経由で動かすための設定手順と、実際にハマったポイントを記録する。
+  new_string: PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かすための設定手順と、実際にハマったポイントを記録する。
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+assistant:
+次の2箇所を修正しました。
+
+- **description（frontmatter）**: 「さくらのAI Engine経由で動かす」→「LLMにさくらのAI Engineを使って動かす」
+- **本文13行目**: 同じ表現に変更
+
+「経由」をやめて「LLMにさくらのAI Engineを使って動かす」にしたので、PicoClawは自分の環境で動き、LLMのAPI先としてさくらのAI Engineを使う、という意味が伝わるようにしています。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="15-15">
+    15|後半では、動かしたPicoClawに「HEARTBEATはトークンを消費するのか」と聞いたら嘘をつかれた話も書く。AIエージェントの出力を検証するとはどういうことか、具体的な体験として残しておきたい。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:15 この部分はいらない。LLMの性能次第だから。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かすための設定手順と、実際にハマったポイントを記録する。
+
+後半では、動かしたPicoClawに「HEARTBEATはトークンを消費するのか」と聞いたら嘘をつかれた話も書く。AIエージェントの出力を検証するとはどういうことか、具体的な体験として残しておきたい。
+
+## PicoClawとは
+  new_string: PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かすための設定手順と、実際にハマったポイントを記録する。
+
+## PicoClawとは
+
+[Tool result] StrReplace
+
+assistant:
+該当の段落を削除しました。記事後半にHEARTBEATの嘘をつかれた話のセクションがあれば、それも削除しますか？
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="17-17">
+    17|SipeedがリリースしたOpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。2026年2月9日にリリースされ、1週間で12,000スターを獲得している。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:17 誰が出したかはどうでもいい。OpenClawの軽量版が出たことを伝えたい
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: SipeedがリリースしたOpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。2026年2月9日にリリースされ、1週間で12,000スターを獲得している。
+  new_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。2026年2月9日にリリースされ、1週間で12,000スターを獲得している。
+
+[Tool result] StrReplace
+
+assistant:
+「Sipeedがリリースした」を削除し、「OpenClawの軽量版。」で始まる形にしました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="17-17">
+    17|OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。2026年2月9日にリリースされ、1週間で12,000スターを獲得している。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:17 これはいらない。
+</user_query>
+
+assistant:
+リリース日とスター数の記述を削除します。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。2026年2月9日にリリースされ、1週間で12,000スターを獲得している。
+  new_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。
+
+[Tool result] StrReplace
+
+assistant:
+「2026年2月9日にリリースされ、1週間で12,000スターを獲得している。」の一文を削除しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="93-110">
+    93|### ハマり②：モデル名にvllm/プレフィックスをつけて400
+    94|
+    95|先行記事（はてなブログ「地平線まで行ってくる。」2026/2/14）では `vllm/gpt-oss-120b` という指定が紹介されていた。しかし自分の環境ではこれだと400エラーになった。
+    96|
+    97|```json
+    98|// ❌ プレフィックス付き → 400エラー
+    99|"model": "vllm/gpt-oss-120b",
+   100|
+   101|// ✅ プレフィックスなし → 動く
+   102|"model": "gpt-oss-120b",
+   103|```
+   104|
+   105|**エラーメッセージ:**
+   106|
+   107|```
+   108|Status: 400
+   109|Body:   {"error":{"message":"This model is not available."}}
+   110|```
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:93-110 これいらない
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ### ハマり②：モデル名にvllm/プレフィックスをつけて400
+
+先行記事（はてなブログ「地平線まで行ってくる。」2026/2/14）では `vllm/gpt-oss-120b` という指定が紹介されていた。しかし自分の環境ではこれだと400エラーになった。
+
+```json
+// ❌ プレフィックス付き → 400エラー
+"model": "vllm/gpt-oss-120b",
+
+// ✅ プレフィックスなし → 動く
+"model": "gpt-oss-120b",
+```
+
+**エラーメッセージ:**
+
+```
+Status: 400
+Body:   {"error":{"message":"This model is not available."}}
+```
+
+### ハマり③：
+  new_string: ### ハマり②：
+
+[Tool result] StrReplace
+
+assistant:
+直後の見出しを確認しています。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 108
+  limit: 25
+
+[Tool result] Read
+
+assistant:
+ハマり②セクション（93–110）と、その直後のハマり②に関する2段落（111–114）を削除し、続く見出しを「ハマり②」に繰り上げます。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ### ハマり②：モデル名にvllm/プレフィックスをつけて400
+
+先行記事（はてなブログ「地平線まで行ってくる。」2026/2/14）では `vllm/gpt-oss-120b` という指定が紹介されていた。しかし自分の環境ではこれだと400エラーになった。
+
+```json
+// ❌ プレフィックス付き → 400エラー
+"model": "vllm/gpt-oss-120b",
+
+// ✅ プレフィックスなし → 動く
+"model": "gpt-oss-120b",
+```
+
+**エラーメッセージ:**
+
+```
+Status: 400
+Body:   {"error":{"message":"This model is not available."}}
+```
+
+curlでさくらのAPIを直接叩くと正常にレスポンスが返るので、API側の問題ではなくPicoClaw側のモデル名解釈の問題だった。プレフィックス `vllm/` がモデル名に残ったままAPIに送信されている可能性が高い。
+
+先行記事との挙動の違いは、PicoClawの更新頻度が非常に高い（1週間で大量のPRがマージされている）ことが原因かもしれない。日付単位で仕様が変わりうる段階のプロジェクトだということを前提に試す必要がある。
+
+### ハマり③：デフォルトのモデル名 glm-4.7 を変更し忘れ
+  new_string: ### ハマり②：デフォルトのモデル名 glm-4.7 を変更し忘れ
+
+[Tool result] StrReplace
+
+assistant:
+「ハマったポイント3つ」の見出しを「2つ」に合わせて修正します。
+[Tool call] Grep
+  pattern: ハマったポイント
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+
+[Tool result] Grep
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ## ハマったポイント3つ
+  new_string: ## ハマったポイント2つ
+
+[Tool result] StrReplace
+
+assistant:
+作業しました。変更内容は次のとおりです。
+
+- **ハマり②（vllm/プレフィックス）** の見出し・本文・コードブロック・エラーメッセージを削除
+- その直後の「curlでさくらのAPIを…」「先行記事との挙動の違いは…」の2段落も削除（ハマり②の説明だったため）
+- 旧「ハマり③」を **ハマり②** に繰り上げ
+- 大見出しを「ハマったポイント3つ」→「**ハマったポイント2つ**」に変更
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="95-95">
+    95|これは単純な見落とし。`config.example.json` のデフォルトモデルはZhipuの `glm-4.7` なので、さくらのAI Engineには存在しない。変更し忘れると同じく400エラーになる。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:95 文章の前に400エラー書いてないのでは?
+</user_query>
+
+assistant:
+ハマり②（vllm削除後）では400エラーをまだ書いていないため、「同じく」が不自然です。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: これは単純な見落とし。`config.example.json` のデフォルトモデルはZhipuの `glm-4.7` なので、さくらのAI Engineには存在しない。変更し忘れると同じく400エラーになる。
+  new_string: これは単純な見落とし。`config.example.json` のデフォルトモデルはZhipuの `glm-4.7` なので、さくらのAI Engineには存在しない。変更し忘れると400エラーになる。
+
+[Tool result] StrReplace
+
+assistant:
+「同じく」を削除し、「変更し忘れると400エラーになる」だけにしました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="84-84">
+    84|PicoClawが内部で `/chat/completions` を自動的に付加するため、フルパスを書くと `https://api.ai.sakura.ad.jp/v1/chat/completions/chat/completions` にリクエストが飛んで404になる。さくらのコントロールパネルに表示されるエンドポイントをそのままコピペすると踏む罠。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:84 これコード確認して。/home/nancy/src/github.com/sipeed/picoclaw
+</user_query>
+
+assistant:
+PicoClawのコードで api_base と /chat/completions の扱いを確認しています。
+[Tool call] Grep
+  pattern: api_base|chat/completions
+  path: /home/nancy/src/github.com/sipeed/picoclaw
+[Tool call] Grep
+  pattern: completions
+  path: /home/nancy/src/github.com/sipeed/picoclaw
+
+[Tool result] Grep
+
+[Tool result] Grep
+
+assistant:
+該当箇所の前後を確認しています。
+[Tool call] Read
+  path: /home/nancy/src/github.com/sipeed/picoclaw/pkg/providers/http_provider.go
+  offset: 85
+  limit: 35
+
+[Tool result] Read
+
+assistant:
+コードで確認しました。
+
+**`pkg/providers/http_provider.go` 98行目:**
+
+```98:98:pkg/providers/http_provider.go
+	req, err := http.NewRequestWithContext(ctx, "POST", p.apiBase+"/chat/completions", bytes.NewReader(jsonData))
+```
+
+`api_base` の末尾に常に `"/chat/completions"` を付けてリクエストURLを組み立てています。
+
+そのため、`api_base` に `https://api.ai.sakura.ad.jp/v1/chat/completions` のようにフルパスを入れると、
+
+- 実際のURL: `https://api.ai.sakura.ad.jp/v1/chat/completions` + `/chat/completions`  
+→ `https://api.ai.sakura.ad.jp/v1/chat/completions/chat/completions`
+
+となり、記事の説明はコードの挙動と一致しています。修正は不要です。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="147-147">
+   147|Markdownテーブルで整理された回答が返ってきた。`gpt-oss-120b` はFunction Calling対応なので、PicoClawのツール（Web検索、ファイル操作、シェルコマンド実行等）も使える。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:147 これは知らなかったけど確かめてないから書かない方がいいかな?
+</user_query>
+
+assistant:
+未検証の記述は削除します。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: Markdownテーブルで整理された回答が返ってきた。`gpt-oss-120b` はFunction Calling対応なので、PicoClawのツール（Web検索、ファイル操作、シェルコマンド実行等）も使える。
+  new_string: Markdownテーブルで整理された回答が返ってきた。
+
+[Tool result] StrReplace
+
+assistant:
+未検証だった「gpt-oss-120b は Function Calling 対応なので、PicoClaw のツールも使える」の部分を削除し、「Markdownテーブルで整理された回答が返ってきた。」だけ残しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="151-152">
+   151|Telegram、Discord、LINE、Slack等と連携して、チャットアプリ上で会話できる。ここではDiscordとの連携手順を記録する。
+   152|
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:151-152 プライベートなアカウントはまだこわくて使いたくなかったのだけど、Gatewayモード試したかったのでDiscordでサーバー立てて試した。ということを入れて。文章はもっとわかりやすい感じで。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: Telegram、Discord、LINE、Slack等と連携して、チャットアプリ上で会話できる。ここではDiscordとの連携手順を記録する。
+  new_string: Telegram、Discord、LINE、Slackなどと連携して、チャットアプリ上で会話できる。プライベートなアカウントはまだこわくて使いたくなかったが、Gatewayモードは試したかった。そこでDiscordでサーバーを新規に立てて試すことにした。以下、その連携手順を記録する。
+
+[Tool result] StrReplace
+
+assistant:
+次のように追記しました。
+
+「プライベートなアカウントはまだこわくて使いたくなかったが、Gatewayモードは試したかった。そこでDiscordでサーバーを新規に立てて試すことにした。」という流れで、そのあと「以下、その連携手順を記録する。」と続く形にしています。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="151-151">
+   151|Telegram、Discord、LINE、Slackなどと連携して、チャットアプリ上で会話できる。プライベートなアカウントはまだこわくて使いたくなかったが、Gatewayモードは試したかった。そこでDiscordでサーバーを新規に立てて試すことにした。以下、その連携手順を記録する。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:151 telegramはいらない。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: Telegram、Discord、LINE、Slackなどと連携して
+  new_string: Discord、LINE、Slackなどと連携して
+
+[Tool result] StrReplace
+
+assistant:
+Telegram の記述を削除しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="151-151">
+   151|Discord、LINE、Slackなどと連携して、チャットアプリ上で会話できる。プライベートなアカウントはまだこわくて使いたくなかったが、Gatewayモードは試したかった。そこでDiscordでサーバーを新規に立てて試すことにした。以下、その連携手順を記録する。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:151 ちなみに、ちょっと設定めんどくさかったので、Gatewayモード試したいだけなら、もしかしたらSlackとかの方が楽なのかもしれん。試してないので分からん。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: Discord、LINE、Slackなどと連携して、チャットアプリ上で会話できる。プライベートなアカウントはまだこわくて使いたくなかったが、Gatewayモードは試したかった。そこでDiscordでサーバーを新規に立てて試すことにした。以下、その連携手順を記録する。
+  new_string: Discord、LINE、Slackなどと連携して、チャットアプリ上で会話できる。プライベートなアカウントはまだこわくて使いたくなかったが、Gatewayモードは試したかった。そこでDiscordでサーバーを新規に立てて試すことにした。以下、その連携手順を記録する。ちなみに、Discordはちょっと設定がめんどくさかった。Gatewayモードを試したいだけならSlackなどの方が楽かもしれないが、試していないので分からない。
+
+[Tool result] StrReplace
+
+assistant:
+「ちなみに、Discordはちょっと設定がめんどくさかった。Gatewayモードを試したいだけならSlackなどの方が楽かもしれないが、試していないので分からない。」という一文を、そのまま文末に追加しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="151-151">
+   151|Discord、LINE、Slackなどと連携して、チャットアプリ上で会話できる。プライベートなアカウントはまだこわくて使いたくなかったが、Gatewayモードは試したかった。そこでDiscordでサーバーを新規に立てて試すことにした。以下、その連携手順を記録する。ちなみに、Discordはちょっと設定がめんどくさかった。Gatewayモードを試したいだけならSlackなどの方が楽かもしれないが、試していないので分からない。
+</code_selection>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="174-174">
+   174|OAuth2 URL Generatorの「Generated URL」が表示されない場合がある（2026年2月時点のDiscord Developer PortalのUI変更による可能性）。その場合は以下のURLを直接ブラウザで開く。`YOUR_CLIENT_ID` はOAuth2ページに表示されているClient IDに置き換える。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:151 @src/content/blog/picoclaw-sakura-ai-engine.md:174 されない場合がある、というかredirect urlを設定しないとされないのでは。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: OAuth2 URL Generatorの「Generated URL」が表示されない場合がある（2026年2月時点のDiscord Developer PortalのUI変更による可能性）。その場合は以下のURLを直接ブラウザで開く。`YOUR_CLIENT_ID` はOAuth2ページに表示されているClient IDに置き換える。
+  new_string: OAuth2 URL Generatorの「Generated URL」は、Redirect URLを設定しないと表示されない。表示されない場合は先にRedirectを設定してから再度確認するか、以下のURLを直接ブラウザで開く。`YOUR_CLIENT_ID` はOAuth2ページに表示されているClient IDに置き換える。
+
+[Tool result] StrReplace
+
+assistant:
+「表示されない場合がある」という表現をやめて、「Redirect URLを設定しないと表示されない」と原因を明示し、「表示されない場合は先にRedirectを設定してから再度確認するか、以下のURLを直接ブラウザで開く」という対処に書き換えました。
+
+user:
+<user_query>
+permissions=67584はどういう意味?
+</user_query>
+
+assistant:
+Discordの権限はビットフラグの合計値です。67584 を分解します。
+[Tool call] WebSearch
+  search_term: Discord API permission bits 67584 bitfield
+  explanation: Discordの権限ビット 67584 の内訳を確認するため。
+
+[Tool result] WebSearch
+
+assistant:
+67584 は Discord の権限ビットの足し算です。
+
+- **65536** = `READ_MESSAGE_HISTORY`（メッセージ履歴を読む）
+- **2048** = `SEND_MESSAGES`（メッセージを送る）
+
+なので **67584 = 65536 + 2048** は、
+
+- チャンネルのメッセージ履歴を読む  
+- メッセージを送る  
+
+の 2 つだけを要求する値です。  
+（`VIEW_CHANNEL` の 1024 は含まれていません。必要なら 1024 を足して `68608` にすると「チャンネルを見る」も付きます。）
+
+記事に注釈を入れるなら、例えば次のように書けます。
+
+「`permissions=67584` は、メッセージ履歴の閲覧（READ_MESSAGE_HISTORY）とメッセージ送信（SEND_MESSAGES）の 2 つの権限を表すビットフラグの合計値です。」
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="180-180">
+   180|`permissions=67584` は Send Messages + Read Message History に相当する。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:180 @src/content/blog/picoclaw-sakura-ai-engine.md:180 ここに捕捉で簡潔に書いといて。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: `permissions=67584` は Send Messages + Read Message History に相当する。
+  new_string: `permissions=67584` は Send Messages（2048）+ Read Message History（65536）のビットフラグの合計値。
+
+[Tool result] StrReplace
+
+assistant:
+「Send Messages（2048）」「Read Message History（65536）」の数値と、「ビットフラグの合計値」であることを追記しました。
+
+user:
+<user_query>
+もう少し説明が必要。
+</user_query>
+
+assistant:
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 176
+  limit: 15
+
+[Tool result] Read
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: `permissions=67584` は Send Messages（2048）+ Read Message History（65536）のビットフラグの合計値。
+  new_string: Discordでは各権限にビット値が割り当てられており、複数権限はそれらを足した数で指定する。`permissions=67584` は Send Messages（2048）と Read Message History（65536）の合計で、ボットがチャンネルのメッセージを読んで返信するために必要な最小限の権限になる。
+
+[Tool result] StrReplace
+
+assistant:
+次のように説明を足しました。
+
+- Discordでは権限ごとにビット値が決まっており、複数指定するときはその合計値を使うこと
+- `67584` は Send Messages（2048）と Read Message History（65536）の合計であること
+- ボットがチャンネルのメッセージを読んで返信するのに必要な最小限の権限であること
+
+user:
+<user_query>
+根拠となるURLつけて。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: Discordでは各権限にビット値が割り当てられており、複数権限はそれらを足した数で指定する。`permissions=67584` は Send Messages（2048）と Read Message History（65536）の合計で、ボットがチャンネルのメッセージを読んで返信するために必要な最小限の権限になる。
+  new_string: Discordでは各権限にビット値が割り当てられており、複数権限はそれらを足した数で指定する（[Permissions \| Discord Developer Portal](https://discord.com/developers/docs/topics/permissions)）。`permissions=67584` は Send Messages（2048）と Read Message History（65536）の合計で、ボットがチャンネルのメッセージを読んで返信するために必要な最小限の権限になる。
+
+[Tool result] StrReplace
+
+assistant:
+Discord Developer Portal の Permissions の公式ドキュメントへのリンクを追加しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="214-214">
+   214|それでもダメなら、`docker-compose.yml` のvolumes設定でconfig.jsonのマウントパスが正しいか確認する。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:214 これいらない
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: それでもダメなら、`docker-compose.yml` のvolumes設定でconfig.jsonのマウントパスが正しいか確認する。
+
+  new_string: 
+
+[Tool result] StrReplace
+
+assistant:
+該当の1文を削除しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="230-233">
+   230|### ③定期タスク（HEARTBEAT）
+   231|
+   232|会話というより自動実行。`~/.picoclaw/workspace/HEARTBEAT.md` にタスクを書いておくと、設定した間隔（デフォルト30分）で自動実行される。
+   233|
+</code_selection>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="88-88">
+    88|```
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:230-233 @src/content/blog/picoclaw-sakura-ai-engine.md:88 こうなってるところ```bashとかのほうがいいのでは？
+</user_query>
+
+assistant:
+該当箇所の前後を確認しています。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 82
+  limit: 25
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 225
+  limit: 25
+
+[Tool result] Read
+
+[Tool result] Read
+
+assistant:
+プレーンな ``` のコードブロックを検索しています。
+[Tool call] Grep
+  pattern: ^```$
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  -B: 2
+  -A: 5
+
+[Tool result] Grep
+
+assistant:
+冒頭のコードブロックを確認しています。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 28
+  limit: 95
+
+[Tool result] Read
+
+assistant:
+プレーンな ``` のブロックに言語指定を追加します。コマンド出力・エラー・ログは `text`、URLは `text` にします。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 以下のように返ってくれば成功。
+
+```
+🦞 こんにちは！今日はどのようなお手伝いをしましょうか？
+```
+  new_string: 以下のように返ってくれば成功。
+
+```text
+🦞 こんにちは！今日はどのようなお手伝いをしましょうか？
+```
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: **エラーメッセージ:**
+
+```
+Status: 404
+Body:   404 page not found
+```
+  new_string: **エラーメッセージ:**
+
+```text
+Status: 404
+Body:   404 page not found
+```
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 実際に動かすとこうなる。
+
+```
+🦞 Interactive mode (Ctrl+C to exit)
+  new_string: 実際に動かすとこうなる。
+
+```text
+🦞 Interactive mode (Ctrl+C to exit)
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 以下のURLを直接ブラウザで開く。`YOUR_CLIENT_ID` はOAuth2ページに表示されているClient IDに置き換える。
+
+```
+https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=67584&scope=bot
+```
+  new_string: 以下のURLを直接ブラウザで開く。`YOUR_CLIENT_ID` はOAuth2ページに表示されているClient IDに置き換える。
+
+```text
+https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=67584&scope=bot
+```
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 正しく起動できると、ログに `Discord bot connected` と `Channels enabled: [discord]` が表示される。
+
+```
+✓ Channels enabled: [discord]
+  new_string: 正しく起動できると、ログに `Discord bot connected` と `Channels enabled: [discord]` が表示される。
+
+```text
+✓ Channels enabled: [discord]
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: Gatewayモードの起動ログを見ると、答えは明確に出ている。
+
+```
+[INFO] agent: Processing message from cli:cron: ...
+  new_string: Gatewayモードの起動ログを見ると、答えは明確に出ている。
+
+```text
+[INFO] agent: Processing message from cli:cron: ...
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+assistant:
+残りのプレーンな ``` を確認して修正しています。
+[Tool call] Grep
+  pattern: ^```$
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  -B: 3
+  -A: 2
+
+[Tool result] Grep
+
+assistant:
+インタラクティブモードのブロック全体を確認しています。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 120
+  limit: 35
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 293
+  limit: 25
+
+[Tool result] Read
+
+[Tool result] Read
+
+assistant:
+MEMORY.md の内容ブロックに ```markdown を追加しています。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: PicoClawは訂正後、自分のworkspaceのメモリ（`MEMORY.md`）に学習内容を書き込んだ。
+
+```
+## HEARTBEAT トークン消費
+  new_string: PicoClawは訂正後、自分のworkspaceのメモリ（`MEMORY.md`）に学習内容を書き込んだ。
+
+```markdown
+## HEARTBEAT トークン消費
+
+[Tool result] StrReplace
+
+assistant:
+対応しました。プレーンな ``` だったブロックに、次のように言語指定を付けています。
+
+- **コマンドの出力・エラーメッセージ・ログ** → ````text`（6箇所）
+- **MEMORY.md の内容** → ````markdown`（1箇所）
+
+もともとシェルコマンドだったブロックはすでに ````bash`、JSON は ````json` だったのでそのままにしています。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="253-255">
+   253|### 気をつけるべき設定
+   254|
+   255|- HEARTBEATを無効にしておく → `"enabled": false`
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:253-255 docker downしといたら別にいいよね?
+</user_query>
+
+assistant:
+docker down していればコンテナは動かないので HEARTBEAT は実行されません。その旨を補足します。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 248
+  limit: 25
+
+[Tool result] Read
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ### 気をつけるべき設定
+
+- HEARTBEATを無効にしておく → `"enabled": false`
+- Gatewayモードは使うときだけ起動する
+- `restrict_to_workspace: true` は維持する
+
+今の使い方（`-m` で1回ずつ実行）なら、実行のたびにコンテナが立ち上がって終了するので心配は少ない。
+  new_string: ### 気をつけるべき設定
+
+- HEARTBEATを無効にしておく → `"enabled": false`（Gatewayモードで常駐させている場合。`docker compose --profile gateway down` しているなら不要）
+- Gatewayモードは使うときだけ起動する
+- `restrict_to_workspace: true` は維持する
+
+今の使い方（`-m` で1回ずつ実行）なら、実行のたびにコンテナが立ち上がって終了するので心配は少ない。
+
+[Tool result] StrReplace
+
+assistant:
+HEARTBEATの無効化について、「Gatewayモードで常駐させている場合だけ必要で、`docker compose --profile gateway down` しているなら不要」と注釈を入れました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="306-306">
+   306|次回以降のHEARTBEATに関する質問には正しく答えられるかもしれない。ただ、このメモリ自体もプロンプトに含まれるので、メモリが増えるほどトークン消費も増える。AIエージェントの「学習」にもコストがかかるという、なかなか皮肉な構造だ。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:306 これいらない。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 次回以降のHEARTBEATに関する質問には正しく答えられるかもしれない。ただ、このメモリ自体もプロンプトに含まれるので、メモリが増えるほどトークン消費も増える。AIエージェントの「学習」にもコストがかかるという、なかなか皮肉な構造だ。
+
+また、会話の最後に
+  new_string: また、会話の最後に
+
+[Tool result] StrReplace
+
+assistant:
+該当の段落を削除しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="308-308">
+   308|また、会話の最後に `Memory threshold reached. Optimizing conversation history...` というメッセージが出た。会話履歴が長くなってコンテキストを圧縮しているサインで、gpt-oss-120bのコンテキスト長の上限かPicoClawの `max_tokens: 8192` の制限に近づいたと思われる。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:308 これもあいまいな情報いらない
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: また、会話の最後に `Memory threshold reached. Optimizing conversation history...` というメッセージが出た。会話履歴が長くなってコンテキストを圧縮しているサインで、gpt-oss-120bのコンテキスト長の上限かPicoClawの `max_tokens: 8192` の制限に近づいたと思われる。
+
+## 動作確認後のconfig.json（最小構成）
+  new_string: ## 動作確認後のconfig.json（最小構成）
+
+[Tool result] StrReplace
+
+assistant:
+該当の段落を削除しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="310-325">
+   310|```json
+   311|{
+   312|  "agents": {
+   313|    "defaults": {
+   314|      "model": "gpt-oss-120b",
+   315|      "max_tokens": 8192,
+   316|      "temperature": 0.7
+   317|    }
+   318|  },
+   319|  "providers": {
+   320|    "vllm": {
+   321|      "api_key": "あなたのさくらAIトークン",
+   322|      "api_base": "https://api.ai.sakura.ad.jp/v1/"
+   323|    }
+   324|  }
+   325|}
+</code_selection>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="330-340">
+   330|## さくらのAI Engineで使えるモデル一覧（2026年2月時点）
+   331|
+   332|| モデル名 | 用途 | 入力料金 | 出力料金 |
+   333||---|---|---|---|
+   334|| gpt-oss-120b | 汎用 | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+   335|| Qwen3-Coder-30B-A3B-Instruct | コーディング | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+   336|| Qwen3-Coder-480B-A35B-Instruct-FP8 | コーディング（大） | ¥0.30 / 1万トークン | ¥2.50 / 1万トークン |
+   337|| llm-jp-3.1-8x13b-instruct4 | 国産モデル | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+   338|| preview/Phi-4-mini-instruct-cpu | 超軽量（CPU） | ¥0.01 / 1万トークン | ¥0.03 / 1万トークン |
+   339|
+   340|PicoClawのエージェント動作（Function Calling等）との互換性はモデルによって異なる。まず `gpt-oss-120b` で動作確認してから他のモデルを試すのが安全。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:310-325 これじゃdiscordの設定たりねぇだろ。 @src/content/blog/picoclaw-sakura-ai-engine.md:330-340 これこんな詳しくいらない。
+</user_query>
+
+assistant:
+該当箇所の前後を確認しています。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 303
+  limit: 55
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 183
+  limit: 35
+
+[Tool result] Read
+
+[Tool result] Read
+
+assistant:
+config.json に Discord の channels を追加し、モデル一覧を簡略化します。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ## 動作確認後のconfig.json（最小構成）
+
+さくらのAI Engineで動かすために必要な最小限の変更箇所を抜粋する。
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": "gpt-oss-120b",
+      "max_tokens": 8192,
+      "temperature": 0.7
+    }
+  },
+  "providers": {
+    "vllm": {
+      "api_key": "あなたのさくらAIトークン",
+      "api_base": "https://api.ai.sakura.ad.jp/v1/"
+    }
+  }
+}
+```
+
+他のプロバイダやチャネル設定はデフォルトのままで問題ない。
+
+## さくらのAI Engineで使えるモデル一覧（2026年2月時点）
+
+| モデル名 | 用途 | 入力料金 | 出力料金 |
+|---|---|---|---|
+| gpt-oss-120b | 汎用 | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+| Qwen3-Coder-30B-A3B-Instruct | コーディング | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+| Qwen3-Coder-480B-A35B-Instruct-FP8 | コーディング（大） | ¥0.30 / 1万トークン | ¥2.50 / 1万トークン |
+| llm-jp-3.1-8x13b-instruct4 | 国産モデル | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+| preview/Phi-4-mini-instruct-cpu | 超軽量（CPU） | ¥0.01 / 1万トークン | ¥0.03 / 1万トークン |
+
+PicoClawのエージェント動作（Function Calling等）との互換性はモデルによって異なる。まず `gpt-oss-120b` で動作確認してから他のモデルを試すのが安全。
+
+## 所感：確かめたから、決められる
+  new_string: ## 動作確認後のconfig.json（最小構成）
+
+さくらのAI Engine＋Discord連携までやった場合の、変更した箇所の抜粋。
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": "gpt-oss-120b",
+      "max_tokens": 8192,
+      "temperature": 0.7
+    }
+  },
+  "providers": {
+    "vllm": {
+      "api_key": "あなたのさくらAIトークン",
+      "api_base": "https://api.ai.sakura.ad.jp/v1/"
+    }
+  },
+  "channels": {
+    "discord": {
+      "enabled": true,
+      "token": "Botのトークン",
+      "allow_from": []
+    }
+  }
+}
+```
+
+他のプロバイダはデフォルトのままで問題ない。利用可能なモデルと料金はさくらのAI Engineのコントロールパネルで確認できる。
+
+## 所感：確かめたから、決められる
+
+[Tool result] StrReplace
+
+assistant:
+次のように変更しました。
+
+1. **config.json**  
+   - 見出しを「さくらのAI Engine＋Discord連携までやった場合の、変更した箇所の抜粋」に変更。  
+   - `channels.discord` を追加して、Discord 設定を含めた形にした。
+
+2. **モデル一覧**  
+   - モデル一覧の表と「互換性はモデルによって異なる」の説明は削除。  
+   - 「利用可能なモデルと料金はさくらのAI Engineのコントロールパネルで確認できる。」の1文に置き換え、config の節の末尾に置いた。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="342-346">
+   342|## 所感：確かめたから、決められる
+   343|
+   344|PicoClawは2026年2月9日にリリースされたばかりで、1週間で12,000スターを獲得するほどの勢いがある。その分PRも大量にマージされており、3日前の記事に書かれた設定方法がそのまま動かないことが普通にある。
+   345|
+   346|これはKent Beckの言う「Explore mode」そのもので、確立されたベストプラクティスがまだ存在しない段階だ。先行記事を参考にしつつも、自分の手で動かして確認するプロセスを省略できない。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:342-346 これ記事と関係ないからいらない
+</user_query>
+
+assistant:
+所感セクション全体を確認しています。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 338
+  limit: 25
+
+[Tool result] Read
+
+assistant:
+見出しと2段落（342–346）を削除します。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ## 所感：確かめたから、決められる
+
+PicoClawは2026年2月9日にリリースされたばかりで、1週間で12,000スターを獲得するほどの勢いがある。その分PRも大量にマージされており、3日前の記事に書かれた設定方法がそのまま動かないことが普通にある。
+
+これはKent Beckの言う「Explore mode」そのもので、確立されたベストプラクティスがまだ存在しない段階だ。先行記事を参考にしつつも、自分の手で動かして確認するプロセスを省略できない。
+
+今回の体験で得られた判断材料をまとめる。
+  new_string: 今回の体験で得られた判断材料をまとめる。
+
+[Tool result] StrReplace
+
+assistant:
+「所感」の見出しと、リリース日・スター数・Kent Beck の「Explore mode」の2段落を削除し、「今回の体験で得られた判断材料をまとめる。」と箇条書き以降は残してあります。ここも削除したい場合は指示をください。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="343-350">
+   343|今回の体験で得られた判断材料をまとめる。
+   344|
+   345|- **api_baseはベースURLだけを指定する。** PicoClawが内部でパスを付加するので、フルパスを入れると二重になる。curlで直接叩いて切り分けるのが早い。
+   346|- **モデル名のプレフィックスは不要。** 先行記事との差分はPicoClawの更新速度に起因する可能性が高い。日付単位で仕様が変わりうる。
+   347|- **HEARTBEATはトークンを消費する。** AIエージェント自身の説明を鵜呑みにせず、ログで確認すべき。放置すればAPIトークンが無駄に消費される。
+   348|- **AIの嘘を見破るには、AIの外側にある一次情報が必要。** ログ、実際の挙動、ソースコード。これらと突き合わせて初めて検証できる。
+   349|
+   350|AIエージェントが今後どう使われるかはまだ分からない。ただ、こうした超軽量エージェントが国産APIと組み合わせて動かせる環境が整ってきていること自体は、試す価値がある変化だと思う。そして試したからこそ、「HEARTBEATは止めておけ」「プレフィックスは外せ」という具体的な判断ができるようになった。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:343-350 これいらない
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 今回の体験で得られた判断材料をまとめる。
+
+- **api_baseはベースURLだけを指定する。** PicoClawが内部でパスを付加するので、フルパスを入れると二重になる。curlで直接叩いて切り分けるのが早い。
+- **モデル名のプレフィックスは不要。** 先行記事との差分はPicoClawの更新速度に起因する可能性が高い。日付単位で仕様が変わりうる。
+- **HEARTBEATはトークンを消費する。** AIエージェント自身の説明を鵜呑みにせず、ログで確認すべき。放置すればAPIトークンが無駄に消費される。
+- **AIの嘘を見破るには、AIの外側にある一次情報が必要。** ログ、実際の挙動、ソースコード。これらと突き合わせて初めて検証できる。
+
+AIエージェントが今後どう使われるかはまだ分からない。ただ、こうした超軽量エージェントが国産APIと組み合わせて動かせる環境が整ってきていること自体は、試す価値がある変化だと思う。そして試したからこそ、「HEARTBEATは止めておけ」「プレフィックスは外せ」という具体的な判断ができるようになった。
+  new_string: 
+
+[Tool result] StrReplace
+
+assistant:
+該当の「判断材料をまとめる」の一文と箇条書き、および最後の段落を削除しました。記事は「他のプロバイダはデフォルトのままで問題ない。利用可能なモデルと料金はさくらのAI Engineのコントロールパネルで確認できる。」で終わる形になっています。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="337-344">
+   337|今回の体験で得られた判断材料をまとめる。
+   338|
+   339|- **api_baseはベースURLだけを指定する。** PicoClawが内部でパスを付加するので、フルパスを入れると二重になる。curlで直接叩いて切り分けるのが早い。
+   340|- **モデル名のプレフィックスは不要。** 先行記事との差分はPicoClawの更新速度に起因する可能性が高い。日付単位で仕様が変わりうる。
+   341|- **HEARTBEATはトークンを消費する。** AIエージェント自身の説明を鵜呑みにせず、ログで確認すべき。放置すればAPIトークンが無駄に消費される。
+   342|- **AIの嘘を見破るには、AIの外側にある一次情報が必要。** ログ、実際の挙動、ソースコード。これらと突き合わせて初めて検証できる。
+   343|
+   344|AIエージェントが今後どう使われるかはまだ分からない。ただ、こうした超軽量エージェントが国産APIと組み合わせて動かせる環境が整ってきていること自体は、試す価値がある変化だと思う。そして試したからこそ、「HEARTBEATは止めておけ」「プレフィックスは外せ」という具体的な判断ができるようになった。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:337-344 これいらない。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 今回の体験で得られた判断材料をまとめる。
+
+- **api_baseはベースURLだけを指定する。** PicoClawが内部でパスを付加するので、フルパスを入れると二重になる。curlで直接叩いて切り分けるのが早い。
+- **モデル名のプレフィックスは不要。** 先行記事との差分はPicoClawの更新速度に起因する可能性が高い。日付単位で仕様が変わりうる。
+- **HEARTBEATはトークンを消費する。** AIエージェント自身の説明を鵜呑みにせず、ログで確認すべき。放置すればAPIトークンが無駄に消費される。
+- **AIの嘘を見破るには、AIの外側にある一次情報が必要。** ログ、実際の挙動、ソースコード。これらと突き合わせて初めて検証できる。
+
+AIエージェントが今後どう使われるかはまだ分からない。ただ、こうした超軽量エージェントが国産APIと組み合わせて動かせる環境が整ってきていること自体は、試す価値がある変化だと思う。そして試したからこそ、「HEARTBEATは止めておけ」「プレフィックスは外せ」という具体的な判断ができるようになった。
+  new_string: 
+
+[Tool result] StrReplace
+
+assistant:
+ファイル末尾を確認しています。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 318
+  limit: 25
+
+[Tool result] Read
+
+assistant:
+そのブロックはすでに削除済みで、ファイルは 336 行目で終わっています（最後の文は「他のプロバイダはデフォルトのままで問題ない。利用可能なモデルと料金はさくらのAI Engineのコントロールパネルで確認できる。」です）。  
+エディタの表示が古いか、未保存の状態かもしれません。一度ファイルを保存し直すか、該当箇所を開いて確認してみてください。
+
+user:
+<user_query>
+これだけじゃclaudeやopen aiと変わらないので、ローカルのファイルいじらせたりして遊んでみようと思う。というようなのでブログ終わって。
+</user_query>
+
+assistant:
+記事の最後に、ローカルファイル操作で遊ぶ予定だと伝える締めの一文を追加します。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 他のプロバイダはデフォルトのままで問題ない。利用可能なモデルと料金はさくらのAI Engineのコントロールパネルで確認できる。
+  new_string: 他のプロバイダはデフォルトのままで問題ない。利用可能なモデルと料金はさくらのAI Engineのコントロールパネルで確認できる。
+
+ここまでだとClaudeやOpenAIと変わらないので、次はローカルのファイルを触らせたりして遊んでみようと思う。以上。
+
+[Tool result] StrReplace
+
+assistant:
+記事の最後に「ここまでだとClaudeやOpenAIと変わらないので、次はローカルのファイルを触らせたりして遊んでみようと思う。以上。」という締めの一文を追加しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="261-297">
+   261|## AIエージェントに自分の仕組みを聞いたら嘘をつかれた話
+   262|
+   263|Discord連携で動いているPicoClawに「HEARTBEATはトークンを消費するのか」と聞いてみた。返ってきた回答はこうだった。
+   264|
+   265|> HEARTBEAT は内部の接続チェックで、料金やトークン消費に直接関係しません。トークンが消費されるのは、ユーザーの入力とモデルの出力だけです。
+   266|
+   267|もっともらしい。WebSocketのping/pongの一般知識としては正しい。しかし、**PicoClawのHEARTBEATはそういう仕組みではない。**
+   268|
+   269|Gatewayモードの起動ログを見ると、答えは明確に出ている。
+   270|
+   271|```text
+   272|[INFO] agent: Processing message from cli:cron: ...
+   273|[INFO] agent: LLM response without tool calls (direct answer) {iteration=1, content_chars=12}
+   274|[INFO] agent: Response: HEARTBEAT_OK {session_key=heartbeat, iterations=1}
+   275|```
+   276|
+   277|これはLLMにリクエストを送って「HEARTBEAT_OK」というレスポンスを受け取っている。つまり**30分ごとにプロンプト送信＋レスポンス生成が発生し、トークンを消費している。**
+   278|
+   279|PicoClawのHEARTBEATは一般的なWebSocketのpingとは違い、`HEARTBEAT.md` の内容をLLMに送信してタスクを実行させる仕組みだ。今は `HEARTBEAT.md` が空なので短い応答（12文字）で済んでいるが、タスクを書き込めば書き込むほど消費トークンは増える。
+   280|
+   281|### 指摘したら正しく訂正された
+   282|
+   283|PicoClawにログを示して「トークン消費しているのでは」と指摘したら、正確な訂正が返ってきた。HEARTBEATの動作フローを表にまとめ、「HEARTBEAT自体がトークンを消費しないというのは誤りです」と認めた。
+   284|
+   285|訂正はできる。しかし最初から正しい答えは出せなかった。「HEARTBEATとは何か」という一般知識は持っているが、「PicoClawのHEARTBEATが具体的にどう実装されているか」は知らない。知らないのに、知っているかのように答えた。
+   286|
+   287|これはNicole Expressが指摘した「AIのもっともらしい嘘」の構造そのものだ。Phantasy Starの復刻版について、AIが「グラフィック刷新、天候エフェクト追加」と書いたが、実物はただのマスターシステム移植だった。一般的な「復刻版とは」の知識から推測して、もっともらしいが間違った回答を生成した。PicoClawのHEARTBEATの件もまったく同じ構造だ。
+   288|
+   289|### 嘘を見破れたのはログがあったから
+   290|
+   291|もしログを見ていなければ、PicoClawの回答を鵜呑みにしていただろう。「HEARTBEATはトークンを消費しない」と思い込んだまま、Gatewayモードを放置して、気づいたらさくらのAPIトークンを無駄に消費していたかもしれない。
+   292|
+   293|嘘を見破れた理由は単純で、**ログという一次情報を持っていたから**だ。AIの出力を検証するには、AIの外側にある事実（ログ、実際の挙動、ドキュメントのソースコード）と突き合わせるしかない。AIにAI自身の仕組みを聞いても、正しい答えが返ってくる保証はない。
+   294|
+   295|### さらに面白かった点
+   296|
+   297|PicoClawは訂正後、自分のworkspaceのメモリ（`MEMORY.md`）に学習内容を書き込んだ。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:261-297 いらない
+</user_query>
+
+assistant:
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 256
+  limit: 55
+
+[Tool result] Read
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: 今の使い方（`-m` で1回ずつ実行）なら、実行のたびにコンテナが立ち上がって終了するので心配は少ない。
+
+## AIエージェントに自分の仕組みを聞いたら嘘をつかれた話
+
+Discord連携で動いているPicoClawに「HEARTBEATはトークンを消費するのか」と聞いてみた。返ってきた回答はこうだった。
+
+> HEARTBEAT は内部の接続チェックで、料金やトークン消費に直接関係しません。トークンが消費されるのは、ユーザーの入力とモデルの出力だけです。
+
+もっともらしい。WebSocketのping/pongの一般知識としては正しい。しかし、**PicoClawのHEARTBEATはそういう仕組みではない。**
+
+Gatewayモードの起動ログを見ると、答えは明確に出ている。
+
+```text
+[INFO] agent: Processing message from cli:cron: ...
+[INFO] agent: LLM response without tool calls (direct answer) {iteration=1, content_chars=12}
+[INFO] agent: Response: HEARTBEAT_OK {session_key=heartbeat, iterations=1}
+```
+
+これはLLMにリクエストを送って「HEARTBEAT_OK」というレスポンスを受け取っている。つまり**30分ごとにプロンプト送信＋レスポンス生成が発生し、トークンを消費している。**
+
+PicoClawのHEARTBEATは一般的なWebSocketのpingとは違い、`HEARTBEAT.md` の内容をLLMに送信してタスクを実行させる仕組みだ。今は `HEARTBEAT.md` が空なので短い応答（12文字）で済んでいるが、タスクを書き込めば書き込むほど消費トークンは増える。
+
+### 指摘したら正しく訂正された
+
+PicoClawにログを示して「トークン消費しているのでは」と指摘したら、正確な訂正が返ってきた。HEARTBEATの動作フローを表にまとめ、「HEARTBEAT自体がトークンを消費しないというのは誤りです」と認めた。
+
+訂正はできる。しかし最初から正しい答えは出せなかった。「HEARTBEATとは何か」という一般知識は持っているが、「PicoClawのHEARTBEATが具体的にどう実装されているか」は知らない。知らないのに、知っているかのように答えた。
+
+これはNicole Expressが指摘した「AIのもっともらしい嘘」の構造そのものだ。Phantasy Starの復刻版について、AIが「グラフィック刷新、天候エフェクト追加」と書いたが、実物はただのマスターシステム移植だった。一般的な「復刻版とは」の知識から推測して、もっともらしいが間違った回答を生成した。PicoClawのHEARTBEATの件もまったく同じ構造だ。
+
+### 嘘を見破れたのはログがあったから
+
+もしログを見ていなければ、PicoClawの回答を鵜呑みにしていただろう。「HEARTBEATはトークンを消費しない」と思い込んだまま、Gatewayモードを放置して、気づいたらさくらのAPIトークンを無駄に消費していたかもしれない。
+
+嘘を見破れた理由は単純で、**ログという一次情報を持っていたから**だ。AIの出力を検証するには、AIの外側にある事実（ログ、実際の挙動、ドキュメントのソースコード）と突き合わせるしかない。AIにAI自身の仕組みを聞いても、正しい答えが返ってくる保証はない。
+
+### さらに面白かった点
+
+PicoClawは訂正後、自分のworkspaceのメモリ（`MEMORY.md`）に学習内容を書き込んだ。
+
+```markdown
+## HEARTBEAT トークン消費
+- HEARTBEAT.md の内容は毎回 LLM にプロンプトとして送信される。
+- LLM が生成する HEARTBEAT_OK（またはタスク結果）も出力トークンとしてカウントされる。
+- デフォルトでは 30 分ごとに数十トークン程度が消費される。
+```
+
+## 動作確認後のconfig.json
+  new_string: 今の使い方（`-m` で1回ずつ実行）なら、実行のたびにコンテナが立ち上がって終了するので心配は少ない。
+
+## 動作確認後のconfig.json
+
+[Tool result] StrReplace
+
+assistant:
+「AIエージェントに自分の仕組みを聞いたら嘘をつかれた話」の見出しから「さらに面白かった点」のメモリブロックまで、該当セクションをすべて削除しました。記事は「気をつけるべき設定」の直後に「動作確認後のconfig.json」が続く流れになっています。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="17-17">
+    17|OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:17 自分はWSLで動かした。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。
+  new_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。
+
+[Tool result] StrReplace
+
+assistant:
+文末に「自分はWSLで動かした。」を追加しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="76-82">
+    76|```json
+    77|// ❌ これだとダメ
+    78|"api_base": "https://api.ai.sakura.ad.jp/v1/chat/completions"
+    79|
+    80|// ✅ これが正しい
+    81|"api_base": "https://api.ai.sakura.ad.jp/v1/"
+    82|```
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:76-82 絵文字あるとAIぽい
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ```json
+// ❌ これだとダメ
+"api_base": "https://api.ai.sakura.ad.jp/v1/chat/completions"
+
+// ✅ これが正しい
+"api_base": "https://api.ai.sakura.ad.jp/v1/"
+```
+  new_string: ```json
+// NG: フルパスだと404
+"api_base": "https://api.ai.sakura.ad.jp/v1/chat/completions"
+
+// OK
+"api_base": "https://api.ai.sakura.ad.jp/v1/"
+```
+
+[Tool result] StrReplace
+
+assistant:
+❌/✅ をやめて、コメントを「NG: フルパスだと404」と「OK」に変更しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="230-232">
+   230|### ③定期タスク（HEARTBEAT）
+   231|
+   232|会話というより自動実行。`~/.picoclaw/workspace/HEARTBEAT.md` にタスクを書いておくと、設定した間隔（デフォルト30分）で自動実行される。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:230-232 これ特に試してないからいらない
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ### ③定期タスク（HEARTBEAT）
+
+会話というより自動実行。`~/.picoclaw/workspace/HEARTBEAT.md` にタスクを書いておくと、設定した間隔（デフォルト30分）で自動実行される。
+
+## Dockerだから安全なのか
+  new_string: ## Dockerだから安全なのか
+
+[Tool result] StrReplace
+
+assistant:
+「③定期タスク（HEARTBEAT）」の見出しと本文を削除しました。  
+「PicoClawの3つの会話方法」はこのまま①・②だけになります。見出しを「2つ」に変えたい場合は指示してください。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="288-288">
+   288|ここまでだとClaudeやOpenAIと変わらないので、ローカルのファイルを触らせたりして遊んでみようと思う。
+</code_selection>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="249-253">
+   249|### 気をつけるべき設定
+   250|
+   251|- HEARTBEATを無効にしておく → `"enabled": false`（Gatewayモードで常駐させている場合。`docker compose --profile gateway down` しているなら不要）
+   252|- Gatewayモードは使うときだけ起動する
+   253|- `restrict_to_workspace: true` は維持する
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:288 ローカルのファイルを触らせたり @src/content/blog/picoclaw-sakura-ai-engine.md:249-253 これいらない
+</user_query>
+
+assistant:
+両方の修正を行います。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 244
+  limit: 25
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 283
+  limit: 10
+
+[Tool result] Read
+
+[Tool result] Read
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ここまでだとClaudeやOpenAIと変わらないので、ローカルのファイルを触らせたりして遊んでみようと思う。
+  new_string: ここまでだとClaudeやOpenAIと変わらないので、遊んでみようと思う。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ### 気をつけるべき設定
+
+- HEARTBEATを無効にしておく → `"enabled": false`（Gatewayモードで常駐させている場合。`docker compose --profile gateway down` しているなら不要）
+- Gatewayモードは使うときだけ起動する
+- `restrict_to_workspace: true` は維持する
+
+今の使い方（`-m` で1回ずつ実行）なら、実行のたびにコンテナが立ち上がって終了するので心配は少ない。
+
+## 動作確認後のconfig.json
+  new_string: ## 動作確認後のconfig.json
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+assistant:
+次の2点を変更しました。
+
+1. **288行目**：「ローカルのファイルを触らせたりして」を削除し、「ここまでだとClaudeやOpenAIと変わらないので、遊んでみようと思う。」にしました。
+2. **249–255行目**：「気をつけるべき設定」の見出し・箇条書きと「今の使い方…」の段落を削除し、直後に「動作確認後のconfig.json」が続くようにしました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="230-232">
+   230|## Dockerだから安全なのか
+   231|
+   232|Docker内で動くのでホストOSに直接影響はしにくいが、PicoClawにはファイル読み書きやコマンド実行のツールが内蔵されている。`restrict_to_workspace: true` にしているのでworkspaceディレクトリ内に制限されるが、完全に安全というわけではない。
+</code_selection>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="17-17">
+    17|OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:230-232 これ最初の方にもってきたい。 @src/content/blog/picoclaw-sakura-ai-engine.md:17 14000スターの話しは書きたい NEWSには2026-02-16 🎉 PicoClaw hit 12K stars in one week! Thank you all for your support! PicoClaw is growing faster than we ever imagined. Given the high volume of PRs, we urgently need community maintainers. Our volunteer roles and roadmap are officially posted here —we can’t wait to have you on board!と書かれてたけど、今見たら14Kだった
+</user_query>
+
+assistant:
+Dockerの安全説明を冒頭付近へ移動し、スター数（12K→14K）の記述を追加します。
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 1
+  limit: 35
+[Tool call] Read
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  offset: 224
+  limit: 25
+
+[Tool result] Read
+
+[Tool result] Read
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。
+  new_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。1週間で12Kスターを獲得した（[公式NEWS 2026-02-16](https://github.com/sipeed/picoclaw)）。執筆時点では14Kを超えている。
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: - さくらのAI EngineのAPIトークン（コントロールパネルから発行）
+
+## セットアップ手順
+  new_string: - さくらのAI EngineのAPIトークン（コントロールパネルから発行）
+
+## Dockerで動かすにあたって
+
+Docker内で動くのでホストOSに直接影響はしにくいが、PicoClawにはファイル読み書きやコマンド実行のツールが内蔵されている。`restrict_to_workspace: true` にしているのでworkspaceディレクトリ内に制限されるが、完全に安全というわけではない。
+
+## セットアップ手順
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ## Dockerだから安全なのか
+
+Docker内で動くのでホストOSに直接影響はしにくいが、PicoClawにはファイル読み書きやコマンド実行のツールが内蔵されている。`restrict_to_workspace: true` にしているのでworkspaceディレクトリ内に制限されるが、完全に安全というわけではない。
+
+### HEARTBEATが勝手に動く問題
+  new_string: ### HEARTBEATが勝手に動く問題
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+[Tool result] StrReplace
+
+assistant:
+次の3点を変更しました。
+
+1. **17行目**  
+   「1週間で12Kスターを獲得した（[公式NEWS 2026-02-16](https://github.com/sipeed/picoclaw)）。執筆時点では14Kを超えている。」を追加。
+
+2. **Dockerの注意**  
+   「前提環境」の直後に見出し「## Dockerで動かすにあたって」を新設し、Docker内での動作と `restrict_to_workspace` の説明をそこに移動。
+
+3. **後半の重複**  
+   後半にあった「## Dockerだから安全なのか」の見出しとその1段落を削除し、「### HEARTBEATが勝手に動く問題」がそのまま続くようにしました。
+
+公式NEWSのリンクはリポジトリのトップ（https://github.com/sipeed/picoclaw）にしてあります。Discussions や Release の特定URLがあれば、それに差し替えてください。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="17-17">
+    17|OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。1週間で12Kスターを獲得した（[公式NEWS 2026-02-16](https://github.com/sipeed/picoclaw)）。執筆時点では14Kを超えている。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:17 2/9にリリースされ2/17には14000スターを超えている
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。1週間で12Kスターを獲得した（[公式NEWS 2026-02-16](https://github.com/sipeed/picoclaw)）。執筆時点では14Kを超えている。
+  new_string: OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。2月9日にリリースされ、2月17日時点で14,000スターを超えている。
+
+[Tool result] StrReplace
+
+assistant:
+「2月9日にリリースされ、2月17日時点で14,000スターを超えている。」に書き換えました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="27-29">
+    27|## Dockerで動かすにあたって
+    28|
+    29|Docker内で動くのでホストOSに直接影響はしにくいが、PicoClawにはファイル読み書きやコマンド実行のツールが内蔵されている。`restrict_to_workspace: true` にしているのでworkspaceディレクトリ内に制限されるが、完全に安全というわけではない。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:27-29 これいらない。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ## Dockerで動かすにあたって
+
+Docker内で動くのでホストOSに直接影響はしにくいが、PicoClawにはファイル読み書きやコマンド実行のツールが内蔵されている。`restrict_to_workspace: true` にしているのでworkspaceディレクトリ内に制限されるが、完全に安全というわけではない。
+
+## セットアップ手順
+  new_string: ## セットアップ手順
+
+[Tool result] StrReplace
+
+assistant:
+「Dockerで動かすにあたって」の見出しと本文を削除しました。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="11-19">
+    11|## この記事で分かること
+    12|
+    13|PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かすための設定手順と、実際にハマったポイントを記録する。
+    14|
+    15|## PicoClawとは
+    16|
+    17|OpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。2月9日にリリースされ、2月17日時点で14,000スターを超えている。
+    18|
+    19|外部のLLMプロバイダにAPI接続して動く仕組みなので、さくらのAI EngineのようなOpenAI互換APIと組み合わせて使える。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:11-19 文章の上の方に「PicoClawはファイル読み書きやシェルコマンド実行のツールを内蔵している。restrict_to_workspace: true で読み書き先を制限できるが、これはLLM向けのガードレールでありすり抜けるケースがある。Docker Composeならコンテナ自体がOSレベルで隔離してくれるので、こちらを選んだ。」をいれたい。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: ## この記事で分かること
+
+PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かすための設定手順と、実際にハマったポイントを記録する。
+
+## PicoClawとは
+  new_string: ## この記事で分かること
+
+PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かすための設定手順と、実際にハマったポイントを記録する。
+
+PicoClawはファイル読み書きやシェルコマンド実行のツールを内蔵している。`restrict_to_workspace: true` で読み書き先を制限できるが、これはLLM向けのガードレールでありすり抜けるケースがある。Docker Composeならコンテナ自体がOSレベルで隔離してくれるので、こちらを選んだ。
+
+## PicoClawとは
+
+[Tool result] StrReplace
+
+assistant:
+「この記事で分かること」の直後、「PicoClawとは」の前に、指定の段落を入れました。`restrict_to_workspace: true` はコードとして読めるようバッククォートで囲んであります。
+
+user:
+<attached_files>
+
+<code_selection path="\home\nancy\src\github.com\nansystem\nancy-blog-astro\src\content\blog\picoclaw-sakura-ai-engine.md" lines="13-13">
+    13|PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かすための設定手順と、実際にハマったポイントを記録する。
+</code_selection>
+
+</attached_files>
+<user_query>
+@src/content/blog/picoclaw-sakura-ai-engine.md:13 実際にハマったポイントを記録する、がえらそう。もっと簡潔に。
+</user_query>
+
+assistant:
+[Tool call] StrReplace
+  path: /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md
+  old_string: PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、LLMにさくらのAI Engineを使って動かすための設定手順と、実際にハマったポイントを記録する。
+  new_string: PicoClawをLLMにさくらのAI Engineで動かす設定手順と、ハマった点を書く。
+
+[Tool result] StrReplace
+
+assistant:
+「PicoClawをLLMにさくらのAI Engineで動かす設定手順と、ハマった点を書く。」に短くしました。
