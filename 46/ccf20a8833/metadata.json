@@ -1,0 +1,26 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "46ccf20a8833",
+  "strategy": "manual-commit",
+  "branch": "master",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/content/blog/picoclaw-sakura-ai-engine.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/46/ccf20a8833/0/metadata.json",
+      "transcript": "/46/ccf20a8833/0/full.jsonl",
+      "context": "/46/ccf20a8833/0/context.md",
+      "content_hash": "/46/ccf20a8833/0/content_hash.txt",
+      "prompt": "/46/ccf20a8833/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 13,
+    "cache_creation_tokens": 3131,
+    "cache_read_tokens": 724977,
+    "output_tokens": 1124,
+    "api_call_count": 9
+  }
+}
