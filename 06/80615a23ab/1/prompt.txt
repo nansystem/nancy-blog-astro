@@ -1,0 +1,397 @@
+# PicoClawをさくらのAI Engineで動かすまでにハマった3つのこと
+
+## この記事で分かること
+
+PicoClaw（OpenClawのGo実装・超軽量AIエージェント）を、さくらのAI Engine経由で動かすための設定手順と、実際にハマったポイントを記録する。先行記事とは異なる挙動もあったので、2026年2月17日時点の一次情報として残しておく。
+
+## PicoClawとは
+
+SipeedがリリースしたOpenClawの軽量版。Goで書かれており、10MB未満のRAMで動作する。$10のハードウェア（LicheeRV Nano等）でも動くことを売りにしているが、普通のLinuxマシンやDocker上でも問題なく動く。2026年2月9日にリリースされ、1週間で12,000スターを獲得している。
+
+外部のLLMプロバイダにAPI接続して動く仕組みなので、さくらのAI EngineのようなOpenAI互換APIと組み合わせて使える。
+
+## 前提環境
+
+- Docker / Docker Compose が使える環境
+- さくらのAI Engineのアカウント（基盤モデル無償プランでOK）
+- さくらのAI EngineのAPIトークン（コントロールパネルから発行）
+
+## セットアップ手順
+
+### 1. PicoClawのクローンと設定ファイルの準備
+
+```bash
+git clone https://github.com/sipeed/picoclaw.git
+cd picoclaw
+cp config/config.example.json config/config.json
+```
+
+### 2. config.jsonの編集
+
+変更するのは2箇所だけ。
+
+**①モデル名の変更（agents.defaults.model）**
+
+デフォルトは `glm-4.7`（Zhipuのモデル）になっている。さくらのAI Engineのモデルに変更する。
+
+```json
+"agents": {
+    "defaults": {
+      "model": "gpt-oss-120b",
+```
+
+**②vllmプロバイダにさくらのAPIキーとエンドポイントを設定**
+
+```json
+"vllm": {
+    "api_key": "あなたのさくらAIトークン",
+    "api_base": "https://api.ai.sakura.ad.jp/v1/"
+}
+```
+
+### 3. 起動と動作確認
+
+```bash
+docker compose run --rm picoclaw-agent -m "こんにちは"
+```
+
+以下のように返ってくれば成功。
+
+```
+🦞 こんにちは！今日はどのようなお手伝いをしましょうか？
+```
+
+## ハマったポイント3つ
+
+### ハマり①：api_baseにフルパスを入れて404
+
+```json
+// ❌ これだとダメ
+"api_base": "https://api.ai.sakura.ad.jp/v1/chat/completions"
+
+// ✅ これが正しい
+"api_base": "https://api.ai.sakura.ad.jp/v1/"
+```
+
+PicoClawが内部で `/chat/completions` を自動的に付加するため、フルパスを書くと `https://api.ai.sakura.ad.jp/v1/chat/completions/chat/completions` にリクエストが飛んで404になる。さくらのコントロールパネルに表示されるエンドポイントをそのままコピペすると踏む罠。
+
+**エラーメッセージ:**
+
+```
+Status: 404
+Body:   404 page not found
+```
+
+### ハマり②：モデル名にvllm/プレフィックスをつけて400
+
+先行記事（はてなブログ「地平線まで行ってくる。」2026/2/14）では `vllm/gpt-oss-120b` という指定が紹介されていた。しかし自分の環境ではこれだと400エラーになった。
+
+```json
+// ❌ プレフィックス付き → 400エラー
+"model": "vllm/gpt-oss-120b",
+
+// ✅ プレフィックスなし → 動く
+"model": "gpt-oss-120b",
+```
+
+**エラーメッセージ:**
+
+```
+Status: 400
+Body:   {"error":{"message":"This model is not available."}}
+```
+
+curlでさくらのAPIを直接叩くと正常にレスポンスが返るので、API側の問題ではなくPicoClaw側のモデル名解釈の問題だった。プレフィックス `vllm/` がモデル名に残ったままAPIに送信されている可能性が高い。
+
+先行記事との挙動の違いは、PicoClawの更新頻度が非常に高い（1週間で大量のPRがマージされている）ことが原因かもしれない。日付単位で仕様が変わりうる段階のプロジェクトだということを前提に試す必要がある。
+
+### ハマり③：デフォルトのモデル名 glm-4.7 を変更し忘れ
+
+これは単純な見落とし。`config.example.json` のデフォルトモデルはZhipuの `glm-4.7` なので、さくらのAI Engineには存在しない。変更し忘れると同じく400エラーになる。
+
+## 切り分けに使ったcurlコマンド
+
+PicoClawが動かないとき、API側の問題かPicoClaw側の問題かを切り分けるには、curlで直接叩くのが早い。
+
+```bash
+curl -X POST https://api.ai.sakura.ad.jp/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer あなたのAPIトークン" \
+  -d '{"model": "gpt-oss-120b", "messages": [{"role": "user", "content": "hello"}]}'
+```
+
+これでレスポンスが返ればAPI側は正常。PicoClawの設定を疑える。
+
+## 動作確認後のconfig.json（最小構成）
+
+さくらのAI Engineで動かすために必要な最小限の変更箇所を抜粋する。
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "model": "gpt-oss-120b",
+      "max_tokens": 8192,
+      "temperature": 0.7
+    }
+  },
+  "providers": {
+    "vllm": {
+      "api_key": "あなたのさくらAIトークン",
+      "api_base": "https://api.ai.sakura.ad.jp/v1/"
+    }
+  }
+}
+```
+
+他のプロバイダやチャネル設定はデフォルトのままで問題ない。
+
+## さくらのAI Engineで使えるモデル一覧（2026年2月時点）
+
+| モデル名 | 用途 | 入力料金 | 出力料金 |
+|---|---|---|---|
+| gpt-oss-120b | 汎用 | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+| Qwen3-Coder-30B-A3B-Instruct | コーディング | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+| Qwen3-Coder-480B-A35B-Instruct-FP8 | コーディング（大） | ¥0.30 / 1万トークン | ¥2.50 / 1万トークン |
+| llm-jp-3.1-8x13b-instruct4 | 国産モデル | ¥0.15 / 1万トークン | ¥0.75 / 1万トークン |
+| preview/Phi-4-mini-instruct-cpu | 超軽量（CPU） | ¥0.01 / 1万トークン | ¥0.03 / 1万トークン |
+
+PicoClawのエージェント動作（Function Calling等）との互換性はモデルによって異なる。まず `gpt-oss-120b` で動作確認してから他のモデルを試すのが安全。
+
+## 所感：先行記事との差分が出る理由
+
+PicoClawは2026年2月9日にリリースされたばかりで、1週間で12,000スターを獲得するほどの勢いがある。その分PRも大量にマージされており、3日前の記事に書かれた設定方法がそのまま動かないことが普通にある。
+
+これはKent Beckの言う「Explore mode」そのもので、確立されたベストプラクティスがまだ存在しない段階。先行記事を参考にしつつも、自分の手で動かして確認するプロセスを省略できない。API自体はcurlで正常に動いているのにPicoClaw経由だと動かない、という状況で「APIの問題かツールの問題か」を切り分ける判断は、実際に手を動かさないと身につかない。
+
+AIエージェントが今後どう使われるかはまだ分からない。ただ、こうした超軽量エージェントが国産APIと組み合わせて簡単に動かせる環境が整ってきていること自体は、試す価値がある変化だと思う。という記事をpublish:falseで追加して
+
+---
+
+PicoClawには3つの会話方法があります。
+① インタラクティブモード（一番手軽）
+-m を外して起動するだけです。
+bashdocker compose run --rm picoclaw-agent
+これでチャットのように対話が続けられるはずです。
+② Gatewayモード + チャットアプリ連携
+Telegram、Discord、LINE、Slack等と連携して、チャットアプリ上で会話できます。例えばDiscordの場合：
+json"channels": {
+    "discord": {
+      "enabled": true,
+      "token": "YOUR_DISCORD_BOT_TOKEN",
+      "allow_from": []
+    }
+}
+起動は：
+bashdocker compose --profile gateway up -d
+③ 定期タスク（HEARTBEAT）
+会話というより自動実行ですが、~/.picoclaw/workspace/HEARTBEAT.md にタスクを書いておくと、設定した間隔（デフォルト30分）で自動実行されます。の話を追加したい。まず、インタラクティブモードだと　> docker compose run --rm picoclaw-agent
+2026/02/17 10:06:30 [2026-02-17T10:06:30Z] [INFO] agent: Agent initialized {skills_available=6, tools_count=13, skills_total=6}
+🦞 Interactive mode (Ctrl+C to exit)
+
+🦞 You: こんにちは！
+2026/02/17 10:06:38 [2026-02-17T10:06:38Z] [INFO] agent: Processing message from cli:cron: こんにちは！ {channel=cli, chat_id=direct, sender_id=cron, session_key=cli:default}
+2026/02/17 10:06:40 [2026-02-17T10:06:40Z] [INFO] agent: LLM response without tool calls (direct answer) {iteration=1, content_chars=168}
+2026/02/17 10:06:40 [2026-02-17T10:06:40Z] [INFO] agent: Response: こんにちは！今日はどんなことをお手伝いできますか？気になることややりたいことがあれば、遠慮なく教えてくださいね。 {session_key=cli:default, iterations=1, final_length=168}
+
+🦞 こんにちは！今日はどんなことをお手伝いできますか？気になることややりたいことがあれば、遠慮なく教えてくださいね。
+
+🦞 You: picoclawは何ができる?
+2026/02/17 10:06:57 [2026-02-17T10:06:57Z] [INFO] agent: Processing message from cli:cron: picoclawは何ができる? {channel=cli, chat_id=direct, sender_id=cron, session_key=cli:default}
+2026/02/17 10:07:00 [2026-02-17T10:07:00Z] [INFO] agent: LLM response without tool calls (direct answer) {iteration=1, content_chars=2196}
+2026/02/17 10:07:00 [2026-02-17T10:07:00Z] [INFO] agent: Response: ## picoclaw ができること
+
+| カテゴリ | 主な機能 | 具体例 |
+|----------|----------|--------|
+| **情報取得** | Web検索・ページ取得 | 最新ニュース、天気、製品情報、... {session_key=cli:default, iterations=1, final_length=2196}
+
+🦞 ## picoclaw ができること
+
+| カテゴリ | 主な機能 | 具体例 |
+|----------|----------|--------|
+| **情報取得** | Web検索・ページ取得 | 最新ニュース、天気、製品情報、プログラミングドキュメントなどをリアルタイムで取得 |
+| **ファイル操作** | 読み取り・書き込み・編集 | メモ保存、設定ファイルの更新、ログの追記など |
+| **システム操作** | シェルコマンド実行 | ファイル一覧、プロセス確認、簡単なスクリプト実行 |
+| **ハードウェア制御** | I2C / SPI デバイス操作（Sipeed 系ボード） | センサ読み取り、LED 制御、マイコンとの通信 |
+| **マルチチャネル通知** | Telegram・WhatsApp・Feishu などへメッセージ送信 | リマインダー、結果報告、アラート送信 |
+| **スキル拡張** | カスタムスキル (GitHub 操作、要約、tmux 制御、天気取得 など) | `github` スキルで Issue 作成、`summarize` で長文要約、`weather` で天気取得 |
+| **記憶・学習** | 永続メモリ (`MEMORY.md`) に重要情報を保存 | ユーザーの好みや過去の指示を次回以降も利用 |
+| **バックグラウンドタスク** | `subagent` / `spawn` で長時間処理を非同期実行 | 大規模検索や複数ステップのワークフローを裏で走らせる |
+
+### 使い方のイメージ
+
+1. **質問に答える**
+   `web_search` → `web_fetch` → 要点を要約して回答
+2. **リマインダーや通知**
+   `write_file` でメモ保存 → `message` で指定チャネルに送信
+3. **ハードウェアデータ取得**
+   `i2c` → 温度センサの現在値を取得 → 結果をユーザーに報告
+4. **GitHub の操作**
+   `github` スキルで PR 作成や Issue 追跡を自動化
+
+---
+
+### まとめ
+- **軽量** でリソースが限られたデバイスでも動作
+- **ツール駆動** なので実際に行動し、結果を正確に返す
+- **拡張性** が高く、好きなスキルを追加して機能を増やせる
+
+何か試したいことがあれば、遠慮なくリクエストしてください！になった
+
+---
+
+dockerだから安全なの?勝手に動くと思ってたけど、Docker内なのでホストOSに直接影響はしにくいですが、PicoClawにはファイル読み書きやコマンド実行のツールが内蔵されています。restrict_to_workspace: true にしているのでworkspaceディレクトリ内に制限されますが、完全に安全というわけではありません。
+勝手に動く件について
+config.jsonでHEARTBEATが有効になっています。
+json"heartbeat": {
+    "enabled": true,
+    "interval": 30
+}
+これは30分ごとにworkspace内の HEARTBEAT.md を読んでタスクを自動実行する機能です。今は HEARTBEAT.md がないので何も起きませんが、Gatewayモードで起動すると常駐してこの周期で動きます。
+docker compose run --rm picoclaw-agent -m "こんにちは" の場合は、1回応答して終了するので勝手に動き続けることはありません。
+気をつけるなら：
+
+HEARTBEATを無効にしておく → "enabled": false
+Gatewayモードは使うときだけ起動する
+restrict_to_workspace: true は維持する
+
+今の使い方（-m で1回ずつ実行）なら、実行のたびにコンテナが立ち上がって終了するので心配は少ないです。
+
+---
+
+gatewayモード試したかったのでdiscordにアカウント登録した。と思ったらアカウントあった。https://discord.com/developers/applications画面で右上の 「New Application」 をクリック　Nameにpicoclaw-testを入力してCreateボタンを押した
+
+---
+
+なんどもあなたは人間ですか、とポップアップが表示される
+
+---
+
+作成後、左メニューに「Bot」が出てくるのでそこに進みます。「Reset Token」をクリックしてBot Tokenを取得　Reset Bot's Token?
+
+Your bot will stop working until you update the token in your bot's code.と表示されるので「Yes,do it!」ボタンを押す
+
+---
+
+Message Content IntentをONにして、ページ下部の Save Changes を押した
+
+---
+
+次はBotをテスト用サーバーに招待する。次は左メニューの 「OAuth2」 をクリック。OAuth2 URL Generatorがあるので、Scopesで bot にチェック。Bot PermissionsでSend MessagesとRead Message Historyにチェックする。https://discord.com/oauth2/authorize?client_id=1473261982386880605&permissions=67584&scope=botをブラウザで開くCLIENT IDは画面で確認。　先にサーバーが必要だったので、テスト用のDiscordサーバーを作成する(先にサーバー作成する手順にして追記しといて)
+
+---
+
+https://discord.com/channels/@meでログインして、Discordの左サイドバーの一番下にある 「+」ボタン をクリック
+「オリジナルの作成」を選択
+「自分と友達のため」を選択
+サーバー名を適当につける（例：picoclaw-test）でサーバーを作成。
+
+---
+
+[Image: source: /mnt/c/Users/sato1/OneDrive/画像/Screenshots/スクリーンショット 2026-02-17 195451.png]
+
+[Image: source: /mnt/c/Users/sato1/OneDrive/画像/Screenshots/スクリーンショット 2026-02-17 195530.png]
+
+---
+
+次はconfig.jsonのDiscord設定を有効にして、PicoClawを起動します。
+① config.jsonのchannels.discordを編集
+json"discord": {
+    "enabled": true,
+    "token": "BotページでReset Tokenして取得したトークン",
+    "allow_from": []
+} picoclaw on ⎇ main [?] via 🐹 v1.25.7 🅰 personal-admin  ️G prigela took 52s
+> docker compose --profile gateway up -d
+[+] Building 20.0s (18/18) FINISHED                                                                          docker:default
+ => [picoclaw-gateway internal] load build definition from Dockerfile                                                  0.0s
+ => => transferring dockerfile: 969B                                                                                   0.0s
+ => [picoclaw-gateway internal] load metadata for docker.io/library/golang:1.26.0-alpine                               1.7s
+ => [picoclaw-gateway internal] load metadata for docker.io/library/alpine:3.23                                        1.7s
+ => [picoclaw-gateway internal] load .dockerignore                                                                     0.0s
+ => => transferring context: 121B                                                                                      0.0s
+ => [picoclaw-gateway builder 1/7] FROM docker.io/library/golang:1.26.0-alpine@sha256:d4c4845f5d60c6a974c6000ce58ae07  0.0s
+ => => resolve docker.io/library/golang:1.26.0-alpine@sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69  0.0s
+ => [picoclaw-gateway stage-1 1/4] FROM docker.io/library/alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a207  0.0s
+ => => resolve docker.io/library/alpine:3.23@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659   0.0s
+ => [picoclaw-gateway internal] load build context                                                                     0.0s
+ => => transferring context: 7.32kB                                                                                    0.0s
+ => CACHED [picoclaw-gateway builder 2/7] RUN apk add --no-cache git make                                              0.0s
+ => CACHED [picoclaw-gateway builder 3/7] WORKDIR /src                                                                 0.0s
+ => CACHED [picoclaw-gateway builder 4/7] COPY go.mod go.sum ./                                                        0.0s
+ => CACHED [picoclaw-gateway builder 5/7] RUN go mod download                                                          0.0s
+ => [picoclaw-gateway builder 6/7] COPY . .                                                                            0.1s
+ => [picoclaw-gateway builder 7/7] RUN make build                                                                     16.7s
+ => CACHED [picoclaw-gateway stage-1 2/4] RUN apk add --no-cache ca-certificates tzdata curl                           0.0s
+ => [picoclaw-gateway stage-1 3/4] COPY --from=builder /src/build/picoclaw /usr/local/bin/picoclaw                     0.1s
+ => [picoclaw-gateway stage-1 4/4] RUN /usr/local/bin/picoclaw onboard                                                 0.3s
+ => [picoclaw-gateway] exporting to image                                                                              1.0s
+ => => exporting layers                                                                                                0.8s
+ => => exporting manifest sha256:b391433eabf04f6d5a143943ba277d05496d2628048b96a7cc5c7c522a32fc03                      0.0s
+ => => exporting config sha256:3adba98510ecad98efc657cf8ab264b961f6cf55b26107b42861a6ea477da07d                        0.0s
+ => => exporting attestation manifest sha256:85154f27fb34a4bc15776af7d28fa5e542c16c2a67f301f81a16b2b0442b9ae1          0.0s
+ => => exporting manifest list sha256:2071e90c6a03a3cea2844c3284a2eaf9c6336cc7c1440ea8b5e6f060b602b2bf                 0.0s
+ => => naming to docker.io/library/picoclaw-picoclaw-gateway:latest                                                    0.0s
+ => => unpacking to docker.io/library/picoclaw-picoclaw-gateway:latest                                                 0.1s
+ => [picoclaw-gateway] resolving provenance for metadata file                                                          0.0s
+[+] Running 2/2
+ ✔ picoclaw-gateway            Built                                                                                   0.0s
+ ✔ Container picoclaw-gateway  Started                                                                                 0.6s
+
+picoclaw on ⎇ main [?] via 🐹 v1.25.7 🅰 personal-admin  ️G prigela took 20s
+> docker compose logs -f picoclaw-gateway
+picoclaw-gateway  |
+picoclaw-gateway  | 📦 Agent Status:
+picoclaw-gateway  |   • Tools: 13 loaded
+picoclaw-gateway  |   • Skills: 6/6 available
+picoclaw-gateway  | 2026/02/17 10:57:41 [2026-02-17T10:57:41Z] [INFO] agent: Agent initialized {tools_count=13, skills_total=6, skills_available=6}
+picoclaw-gateway  | 2026/02/17 10:57:41 [2026-02-17T10:57:41Z] [INFO] channels: Initializing channel manager
+picoclaw-gateway  | ⚠ Warning: No channels enabled
+picoclaw-gateway  | ✓ Gateway started on 0.0.0.0:18790
+picoclaw-gateway  | Press Ctrl+C to stop
+picoclaw-gateway  | 2026/02/17 10:57:41 [2026-02-17T10:57:41Z] [INFO] channels: Channel initialization completed {enabled_channels=0}
+picoclaw-gateway  | 2026/02/17 10:57:41 [2026-02-17T10:57:41Z] [INFO] voice: Groq voice transcription enabled
+picoclaw-gateway  | 2026/02/17 10:57:41 [2026-02-17T10:57:41Z] [INFO] heartbeat: Heartbeat service started {interval_minutes=30}
+picoclaw-gateway  | 2026/02/17 10:57:41 [2026-02-17T10:57:41Z] [INFO] devices: Device event service disabled or no sources
+picoclaw-gateway  | 2026/02/17 10:57:41 [2026-02-17T10:57:41Z] [WARN] channels: No channels enabled
+picoclaw-gateway  | ✓ Cron service started
+picoclaw-gateway  | ✓ Heartbeat service started
+picoclaw-gateway  | ✓ Health endpoints available at http://0.0.0.0:18790/health and /ready
+picoclaw-gateway  | 2026/02/17 10:57:42 [2026-02-17T10:57:42Z] [INFO] heartbeat: No heartbeat prompt (HEARTBEAT.md empty or missing) 次はconfig.jsonのDiscord設定を有効にして、PicoClawを起動します。
+① config.jsonのchannels.discordを編集
+json"discord": {
+    "enabled": true,
+    "token": "BotページでReset Tokenして取得したトークン",
+    "allow_from": []
+}
+Bot Tokenはさっきの Developer Portal → 左メニュー「Bot」 → 「Reset Token」で取得したものです。このチャットには貼らないでください。
+② Gatewayモードで起動
+bashdocker compose --profile gateway up -d
+③ ログを確認
+bashdocker compose logs -f picoclaw-gateway
+
+---
+
+記事に追記して。
+
+---
+
+この画像記事に貼れる?
+
+---
+
+[Image: source: /mnt/c/Users/sato1/OneDrive/画像/Screenshots/スクリーンショット 2026-02-17 200006.png]
+
+---
+
+これでさくらのAI Engine + PicoClaw + Discord連携が完成です。テストサーバーでメンションすれば会話が続けられます。
+使い終わったら停止を忘れずに：
+bashdocker compose --profile gateway down
+HEARTBEATも30分ごとに動いている（HEARTBEAT_OKが出ている）ので、放置するとさくらのAPIトークンを消費し続けます。を書いといて。
+
+---
+
+open src/content/blog/picoclaw-sakura-ai-engine.md
+
+---
+
+src/content/blog/picoclaw-sakura-ai-engine.mdをcommit

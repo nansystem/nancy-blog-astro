@@ -3,7 +3,7 @@
   "checkpoint_id": "0680615a23ab",
   "strategy": "manual-commit",
   "branch": "master",
-  "checkpoints_count": 1,
+  "checkpoints_count": 7,
   "files_touched": [
     ".agents/financial-teacher-system-survey.md",
     ".claude/settings.json",
@@ -21,13 +21,20 @@
       "context": "",
       "content_hash": "/06/80615a23ab/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/06/80615a23ab/1/metadata.json",
+      "transcript": "/06/80615a23ab/1/full.jsonl",
+      "context": "/06/80615a23ab/1/context.md",
+      "content_hash": "/06/80615a23ab/1/content_hash.txt",
+      "prompt": "/06/80615a23ab/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 0,
-    "cache_creation_tokens": 0,
-    "cache_read_tokens": 0,
-    "output_tokens": 0,
-    "api_call_count": 0
+    "input_tokens": 64,
+    "cache_creation_tokens": 96453,
+    "cache_read_tokens": 1800092,
+    "output_tokens": 7301,
+    "api_call_count": 34
   }
 }
