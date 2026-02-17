@@ -14,8 +14,6 @@ OpenClawが話題になっていたのは知っていたが、試すタイミン
 
 PicoClawをさくらのAI Engineで動かす設定手順と、Discord Bot連携までの流れを書く。
 
-PicoClawはファイル読み書きやシェルコマンド実行のツールを内蔵している。`restrict_to_workspace: true` で読み書き先を制限できるが、あくまでLLM向けのガードレール。Docker Composeならコンテナ自体がOSレベルで隔離してくれるので、こちらを選んだ。
-
 ## PicoClawとは
 
 OpenClawの軽量版。Goで書かれており、普通のLinuxマシンやDocker上でも問題なく動く。自分はWSLで動かした。2月9日にリリースされ、2月17日時点で14,000スターを超えている。
@@ -23,6 +21,8 @@ OpenClawの軽量版。Goで書かれており、普通のLinuxマシンやDocke
 外部のLLMプロバイダにAPI接続して動く仕組みなので、さくらのAI EngineのようなOpenAI互換APIと組み合わせて使える。
 
 ## 前提環境
+
+PicoClawはファイル読み書きやシェルコマンド実行のツールを内蔵している。`restrict_to_workspace: true` で読み書き先を制限できるが、あくまでLLM向けのガードレール。Docker Composeならコンテナ自体がOSレベルで隔離してくれるので、こちらを選んだ。
 
 - Docker / Docker Compose が使える環境
 - さくらのAI Engineのアカウント（基盤モデル無償プランでOK）
