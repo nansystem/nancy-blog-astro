@@ -22,7 +22,7 @@ OpenClawの軽量版。Goで書かれており、普通のLinuxマシンやDocke
 
 ## 前提環境
 
-PicoClawはファイル読み書きやシェルコマンド実行のツールを内蔵している。`restrict_to_workspace: true` で読み書き先を制限できるが、あくまでLLM向けのガードレール。Docker Composeならコンテナ自体がOSレベルで隔離してくれるので、こちらを選んだ。
+PicoClawはファイル読み書きやシェルコマンド実行のツールを内蔵している。`restrict_to_workspace: true` で読み書き先を制限できるが、あくまでLLM向けのガードレール。バイナリを直接動かす方法もあるが、Docker Composeならコンテナ自体がOSレベルで隔離してくれるので、こちらを選んだ。
 
 - Docker / Docker Compose が使える環境
 - さくらのAI Engineのアカウント（基盤モデル無償プランでOK）
