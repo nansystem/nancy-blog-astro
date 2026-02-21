@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
 :root {
 	--accent: #3574f0;
 	--accent-dark: #1a4fc9;
@@ -25,8 +31,7 @@ body {
 }
 
 main {
-	width: 768px;
-	max-width: calc(100% - 2em);
+	max-width: 768px;
 	margin: auto;
 	padding: 2em 1em;
 }
@@ -93,6 +98,8 @@ input {
 table {
 	width: 100%;
 	border-collapse: collapse;
+	display: block;
+	overflow-x: auto;
 }
 table th,
 table td {
@@ -196,7 +203,7 @@ li {
 
 @media (max-width: 768px) {
 	.side-by-side {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 		width: 100%;
 		margin-left: 0;
 		transform: none;
