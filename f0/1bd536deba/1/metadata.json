@@ -1,0 +1,45 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "f01bd536deba",
+  "session_id": "3753a337-50ca-4e97-998c-f858502d7858",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-21T08:24:54.006521396Z",
+  "branch": "master",
+  "checkpoints_count": 7,
+  "files_touched": [
+    ".claude/settings.json",
+    ".claude/settings.local.json",
+    ".gitignore",
+    ".textlintrc.json",
+    "CLAUDE.md",
+    "package.json",
+    "prh.yml",
+    "src/content/blog/claude-code-parallel-development-with-worktree.md",
+    "src/content/blog/git-parallel-development-guide.md",
+    "src/content/blog/git-parallel-development-guide.mdx",
+    "src/content/blog/git-worktree-post-checkout-hook-init.md",
+    "src/layouts/BlogPost.astro",
+    "src/pages/[slug].astro"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "ceafb8c0-d8a7-45e2-b672-4084fc97f2bb",
+  "checkpoint_transcript_start": 2557,
+  "transcript_lines_at_start": 2557,
+  "token_usage": {
+    "input_tokens": 1023,
+    "cache_creation_tokens": 66606,
+    "cache_read_tokens": 3981933,
+    "output_tokens": 11322,
+    "api_call_count": 55
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-21T08:24:51.540650727Z",
+    "agent_lines": 0,
+    "human_added": 148,
+    "human_modified": 223,
+    "human_removed": 0,
+    "total_committed": 155,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-home-nancy-src-github-com-nansystem-sandbox/3753a337-50ca-4e97-998c-f858502d7858.jsonl"
+}
