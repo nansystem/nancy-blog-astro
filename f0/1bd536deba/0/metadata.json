@@ -1,0 +1,31 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "f01bd536deba",
+  "session_id": "2c627e4f-b11b-4276-9ef8-f4255128f950",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-21T08:24:50.672503046Z",
+  "branch": "master",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "src/content/blog/claude-code-parallel-development-with-worktree.md"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "9801a56d-8cc7-481d-b3c6-e8efc40d470a",
+  "token_usage": {
+    "input_tokens": 389,
+    "cache_creation_tokens": 87680,
+    "cache_read_tokens": 4632835,
+    "output_tokens": 27021,
+    "api_call_count": 61
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-21T08:24:50.352783963Z",
+    "agent_lines": 143,
+    "human_added": 0,
+    "human_modified": 5,
+    "human_removed": 2,
+    "total_committed": 148,
+    "agent_percentage": 96.62162162162163
+  },
+  "transcript_path": ".claude/projects/-home-nancy-src-github-com-nansystem-nancy-blog-astro/2c627e4f-b11b-4276-9ef8-f4255128f950.jsonl"
+}

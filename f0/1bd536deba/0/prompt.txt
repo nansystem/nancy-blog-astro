@@ -1,0 +1,107 @@
+http://localhost:4324/claude-code-parallel-development-with-worktreeの記事を書いている。「より良い構成を検証した。」とあるがBoris Cherny(この人の説明軽くして)が"You can also customize it with worktree hooks"と言ってたのでhooksの使い方を検証した。を序文にして。
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L35
+同様にコミットしていない自分独自のclaude rulesやskillsなどは引き継がれないことを書いといて。
+
+---
+
+Claude Code 2.1.49 で --worktree (-w) フラグが追加された。を記事の先頭に持ってきて。
+
+---
+
+複数ブランチを並行して開発するとき、リポジトリを複数クローンするのが手軽な方法の1つだ。はいらない
+
+---
+
+“You can also customize it with worktree hooks”は引用符で書いといて。
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L37
++
+**git で管理されているファイル**は worktree 間で共有される。**gitignore されたファイル**は引き継がれない。
++
+
++
+```
++
+git管理されているファイル  → worktree間で自動共有 ✓（問題なし）
++
+gitignoreされたファイル    → worktreeに引き継がれない ✗（ここだけが問題）
++
+```
++
+
++
+`.claude/rules/` や `CLAUDE.md` をリポジトリにコミットしていれば、worktree を何個作っても自動で共有される。一方、コミットしていない自分独自の rules や skills（`.claude/` 以下のローカル設定など）は gitignore されたファイルと同様に引き継がれない。問題は `.env`・独自の rules/skills・`node_modules` のような重いものに絞られる。　この辺冗長。簡潔に。
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L80
+コメントで説明いれて。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L83
+コメントで00000が何か説明をいれて。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L86
+rev-parseをコメントで説明いれて。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L93
+これ別の機能開発ならlnしない方がよくて、worktree作成時にpnpm installとかするのが正解だと思う
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L151
+taktの話はしないで。あとpost_create hookはgit独自のもの?あるいはwtp独自のもの?
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L80
+コメントで説明いれて。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L83
+コメントで00000が何か説明をいれて。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L86
+rev-parseをコメントで説明いれて。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L93
+これ別の機能開発ならlnしない方がよくて、worktree作成時にpnpm installとかするのが正解だと思う
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L151
+taktの話はしないで。あとpost_create hookはgit独自のもの?あるいはwtp独自のもの?
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L153
+この方法でもpnpm install確認して。/home/nancy/src/github.com/nansystem/sandboxで
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L245
+これ確認して。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L260
+これいらない。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L262
+ここもいらない
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L351
+これいらない
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L201
+これ結局未確認なの？
+
+---
+
+git リポジトリ外の場合のみ WorktreeCreate/WorktreeRemove フックに委ねる。git リポジトリ内では Claude Code 自身が git
+  worktree add を実行する。これはどこに書いてあった？リンク貼っといて。
+
+---
+
+どこで試せばいい?
+
+---
+
+worktree-hook-test on ⎇ master [?] is 📦 v1.0.0 via ⬢ v22.13.1 🅰 wineat  ️G prigela
+> claude -w test-hook --print "pwd"
+で固まった
