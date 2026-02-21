@@ -1,0 +1,208 @@
+---
+title: AI コーディング時代の git 並行開発：複数clone・worktree・git clone --bare・git clone --shared を触ってみた
+description: AI コーディングで並行開発の機会が増えたのを機に、git の並行開発の選択肢を整理した。git stash による一時退避から、複数 clone・git worktree・git clone --bare + worktree・git clone --shared の違いまで、sandbox で実際に動作を確認しながら比較する。
+date: 2026-02-21T12:00:00+09:00
+categories:
+  - AI
+permalink: /git-parallel-development-guide
+published: true
+---
+
+AI コーディングツールのおかげで、複数の機能を同時に並行して実装する機会が増えた。自分だけでなくチームメンバーも AI を使って PR を出すスピードが上がっており、ローカルでどうブランチを管理するかを考え始めた。git worktree や bare clone といった仕組みは名前を聞いたことはあっても、正直ふんわりしか理解していなかった。この記事は、実際に触りながらそのあたりを整理したメモだ。
+
+調べていくうちに [commondir](https://git-scm.com/docs/gitrepository-layout.html#Documentation/gitrepository-layout.txt-commondir) や [alternates](https://git-scm.com/docs/gitrepository-layout.html#Documentation/gitrepository-layout.txt-objectsinfoalternates) といった概念も出てきて、正直まだ完全には腹落ちしていない。
+
+## git stash：一時退避
+
+git stash は作業中の変更を一時的に退避して、後で取り出せる仕組みだ。
+
+```bash
+# 変更を退避
+git stash push -m "作業中のWIP"
+
+# 別ブランチに切り替え
+git switch bugfix/fix-null
+
+# 作業後、元のブランチに戻って退避した変更を復元
+git switch feature/add-login
+git stash pop
+```
+
+単発の割り込みには使えるが、複数の作業を常時並行させる用途には向かない。
+
+## 複数ブランチを常時並行して作業するための構成パターン
+
+複数ブランチを常時並行して作業するための構成は4種類ある。
+
+### 複数clone
+
+`git clone` だけで完結するため、新しい知識が不要で最も手軽に始められる。`.env` や `node_modules` はクローンごとに独立して存在するため、ブランチを切り替えても消えない。
+
+```bash
+git clone git@github.com:org/my-app.git my-app-1
+git clone git@github.com:org/my-app.git my-app-2
+```
+
+```
+~/projects/
+  my-app-1/  ← clone 1（必要なブランチに git switch して作業）
+  my-app-2/  ← clone 2（必要なブランチに git switch して作業）
+```
+
+### git worktree
+
+git worktree は1つのリポジトリに対して複数の working tree を持てる仕組みで、git オブジェクトとリモート設定を共有できる。元のクローンを [**main working tree**](https://git-scm.com/docs/git-worktree#_description)、`git worktree add` で追加した working tree を [**linked worktree**](https://git-scm.com/docs/git-worktree#_description) と呼ぶ。
+
+```bash
+git worktree add -b feature/add-login ../feature-add-login
+git worktree add -b bugfix/fix-null ../bugfix-fix-null
+```
+
+```
+~/projects/
+├── my-app/              ← main working tree
+│   ├── .git/            ← gitの実体（削除すると全worktreeが壊れる）
+│   └── main.js
+├── feature-add-login/   ← linked worktree
+│   ├── .git             ← ファイル1行（my-app/.git/ を参照）
+│   └── main.js          ← feature/add-login ブランチの内容
+└── bugfix-fix-null/     ← linked worktree
+    ├── .git             ← ファイル1行（my-app/.git/ を参照）
+    └── main.js          ← bugfix/fix-null ブランチの内容
+```
+
+#### linked worktree の .git ファイルの仕組み
+
+linked worktree の `.git` はディレクトリではなくファイル1行で、main working tree の `.git/worktrees/<name>/` へのパスが書かれている。
+
+```bash
+$ cat feature-add-login/.git
+gitdir: /home/user/projects/my-app/.git/worktrees/feature-add-login
+```
+
+`my-app/.git/worktrees/feature-add-login/` の中にある `commondir` ファイルには `../..`（メインの `.git/` への相対パス）が書かれている。これにより git オブジェクトの置き場を共有している。
+
+```
+my-app/
+├── main.js                ← コード（main working tree の内容）
+└── .git/
+    ├── objects/           ← コミット履歴（全working treeで共有）
+    ├── refs/              ← ブランチ情報（全working treeで共有）
+    ├── config             ← リモート設定（全working treeで共有）
+    └── worktrees/
+        ├── feature-add-login/
+        │   ├── commondir  ← "../.."（= my-app/.git/ を参照）
+        │   ├── HEAD       ← このlinked worktree専用（現在のブランチ）
+        │   └── index      ← このlinked worktree専用（ステージング状態）
+        └── bugfix-fix-null/
+            ├── commondir
+            ├── HEAD
+            └── index
+```
+
+git オブジェクト（コミット履歴）は `my-app/.git/objects/` を共有し、現在のブランチ（HEAD）とステージング状態（index）だけが linked worktree ごとに独立する。
+
+### git clone --bare + worktree
+
+通常の git worktree では main working tree がリポジトリ本体として残り、linked worktree と非対称な構造になる。`git clone --bare` で作業ディレクトリを持たない「リポジトリだけの状態」を作ってから linked worktree を追加すると、すべての working tree が対等に並ぶ。どの linked worktree も `git worktree remove` で削除できる。
+
+```bash
+mkdir my-app && cd my-app
+
+# bare clone
+git clone --bare git@github.com:org/repo.git .bare
+
+# .git ファイルを作成して .bare/ を参照させる
+echo "gitdir: ./.bare" > .git
+
+# fetch 設定（git clone --bare はデフォルトで remotes/origin/* を取得しない）
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+git fetch origin
+
+# linked worktree を追加
+git worktree add main origin/main
+git worktree add feature-add-login -b feature/add-login origin/main
+git worktree add bugfix-fix-null origin/bugfix/fix-null  # リモートブランチから追加する場合
+```
+
+<div class="side-by-side">
+<div class="side-by-side-panel" data-label="git worktree（通常）">
+
+```
+~/projects/
+├── my-app/              ← main working tree
+│   ├── .git/            ← gitの実体（削除すると全worktreeが壊れる）
+│   └── main.js
+├── feature-add-login/   ← linked worktree
+│   ├── .git             ← ファイル1行（my-app/.git/ を参照）
+│   └── main.js          ← feature/add-login ブランチの内容
+└── bugfix-fix-null/     ← linked worktree
+    ├── .git             ← ファイル1行（my-app/.git/ を参照）
+    └── main.js          ← bugfix/fix-null ブランチの内容
+```
+
+</div>
+<div class="side-by-side-panel" data-label="git clone --bare + worktree">
+
+```
+~/projects/
+└── my-app/
+    ├── .bare/                  ← gitの実体
+    ├── .git                    ← ファイル1行（.bare/ を参照）
+    ├── main/                   ← linked worktree（対等）
+    │   └── main.js
+    ├── feature-add-login/      ← linked worktree（対等）
+    │   └── main.js             ← feature/add-login ブランチの内容
+    └── bugfix-fix-null/        ← linked worktree（対等）
+        └── main.js             ← bugfix/fix-null ブランチの内容
+```
+
+</div>
+</div>
+
+### git clone --shared
+
+複数cloneと同様に複数の作業ディレクトリを作る仕組みだが、git オブジェクトをコピーするのではなく、`alternates` ファイルで元リポジトリのオブジェクト置き場をリンクして共有する。リモートではなく**ローカルのリポジトリ**を複製する点が特徴で、あらかじめ通常の `git clone` でリモートから取得した `my-app/` を元に使う。
+
+```bash
+# 通常のcloneでリモートから取得しておく
+git clone git@github.com:org/my-app.git my-app
+
+# my-app/ を元に --shared clone を作成
+git clone --shared my-app my-app-1
+git clone --shared my-app my-app-2
+```
+
+```
+~/projects/
+├── my-app/                              ← 元のローカルリポジトリ
+│   ├── .git/
+│   │   └── objects/                    ← gitオブジェクトの実体
+│   └── main.js
+├── my-app-1/                           ← --shared clone
+│   ├── .git/
+│   │   └── objects/
+│   │       └── info/
+│   │           └── alternates          ← my-app/.git/objects を参照
+│   └── main.js
+└── my-app-2/                           ← --shared clone
+    ├── .git/
+    │   └── objects/
+    │       └── info/
+    │           └── alternates          ← my-app/.git/objects を参照
+    └── main.js
+```
+
+`my-app-1/.git/objects/` 配下にはオブジェクトが存在せず、`alternates` ファイルが元のリポジトリのオブジェクト置き場を指す。`--shared` が影響するのは `.git/objects/` の扱いだけで、`.git/` 自体は新規作成されるため、**元のリポジトリの hooks は引き継がれない**。`post-checkout` フックで `.env` のコピーや `npm install` を自動実行するように設定していても、`--shared` クローンでは実行されない。git worktree や git clone --bare + worktree では `commondir` 経由でフックが共有されるのと対照的だ。
+
+## まとめ
+
+単発の割り込みには git stash で十分だ。複数ブランチを常時並行して作業する場合、複数 clone は post-checkout フックや追加ツールを必要とせず、`.env` や `node_modules` もそのまま使い回せるシンプルな構成だ。git worktree はオブジェクトとリモート設定を共有できるが、`.env` や `node_modules` の引き継ぎに post-checkout フックや [wtp](https://github.com/satococoa/wtp) などのツールが必要になる。linked worktree をすべて対等に扱いたい場合は git clone --bare + worktree という構成もある。git clone --shared は複数 clone よりディスク使用量が少なく clone も速いが、元リポジトリへの依存が生まれる。
+
+| 目的                                                    | 使うもの                        |
+| ------------------------------------------------------- | ------------------------------- |
+| 割り込み作業を一時退避したい                            | git stash                       |
+| シンプルに並行作業したい                                | 複数 clone                      |
+| .env・node_modules のセットアップも含めて並行作業したい | wtp など（git worktree を内包） |
+| 全linked worktreeを対等に管理したい                     | git clone --bare + worktree     |
+| 複数cloneより軽く並行作業したい                         | git clone --shared              |
