@@ -119,45 +119,47 @@ bulmaを読み込むため、`style.scss`に`@import`で`node_modules`ディレ�
 
 index.html
 
-```html{7}
+```html
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>My custom Bulma website</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <h1 class="title">
-        Bulma
-    </h1>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <h1 class="title">Bulma</h1>
 
     <p class="subtitle">
-        Modern CSS framework based on <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout/Basic_Concepts_of_Flexbox">Flexbox</a>
+      Modern CSS framework based on
+      <a
+        href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout/Basic_Concepts_of_Flexbox"
+        >Flexbox</a
+      >
     </p>
 
     <div class="field">
-        <div class="control">
-            <input class="input" type="text" placeholder="Input">
-        </div>
+      <div class="control">
+        <input class="input" type="text" placeholder="Input" />
+      </div>
     </div>
 
     <div class="field">
-        <p class="control">
-            <span class="select">
-                <select>
-                    <option>Select dropdown</option>
-                </select>
-            </span>
-        </p>
+      <p class="control">
+        <span class="select">
+          <select>
+            <option>Select dropdown</option>
+          </select>
+        </span>
+      </p>
     </div>
 
     <div class="buttons">
-        <a class="button is-primary">Primary</a>
-        <a class="button is-link">Link</a>
+      <a class="button is-primary">Primary</a>
+      <a class="button is-link">Link</a>
     </div>
-</body>
+  </body>
 </html>
 ```
 

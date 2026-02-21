@@ -39,7 +39,7 @@ package.json
 
 webpack.config.js
 
-```js {2,10-12}
+```js
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
@@ -81,7 +81,7 @@ console.info("Hello HtmlWebpackPlugin");
 npx webpack
 ```
 
-```sh{1-3}
+```sh
 ├── dist
 │   ├── bundle.js
 │   └── index.html
@@ -183,15 +183,15 @@ HTMLを用意しなくても、titleやmetaタグ、出力されるHTML名を設
 
 webpack.config.js抜粋
 
-```js{2-7}
-    new HtmlWebpackPlugin({
-      title: 'My app',
-      meta: [
-        {viewport: 'width=device-width, initial-scale=1'},
-        { 'http-equiv': 'X-UA-Compatible', content: 'IE=edge'}
-      ],
-      filename: 'admin.html',
-    })
+```js
+new HtmlWebpackPlugin({
+  title: "My app",
+  meta: [
+    { viewport: "width=device-width, initial-scale=1" },
+    { "http-equiv": "X-UA-Compatible", content: "IE=edge" },
+  ],
+  filename: "admin.html",
+});
 ```
 
 `webpack`コマンドを実行すると、先ほどと同じようにJavaScriptとHTMLが出力されている。出力されたHTMLは`filename`オプションで指定した通り`admin.html`になっている。
@@ -212,15 +212,18 @@ webpack.config.js抜粋
 出力されたHTMLの`title`が`title`オプションで指定した値になり、`meta`タグが`meta`オプションで指定した通りに出力されている。
 admin.html
 
-```html{5,6}
+```html
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>My app</title>
-  <meta viewport="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"></head>
+    <meta viewport="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  </head>
   <body>
-  <script type="text/javascript" src="bundle.js"></script></body>
+    <script type="text/javascript" src="bundle.js"></script>
+  </body>
 </html>
 ```
 
@@ -248,7 +251,7 @@ CSSと、そのCSSを読み込むJavaScriptを用意する。
 
 index.js
 
-```js {1}
+```js
 import "./style.css";
 const component = () => {
   const element = document.createElement("div");
@@ -273,7 +276,7 @@ CSSを読み込み、そのCSSをJavaScriptとは別ファイルとして出力�
 
 webpack.config.js
 
-```js {3,12,22-32}
+```js
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
@@ -311,7 +314,7 @@ module.exports = {
 
 ディレクトリ
 
-```sh{5}
+```sh
 .
 ├── dist
 │   ├── admin.html
@@ -327,15 +330,19 @@ module.exports = {
 
 admin.html
 
-```html{6}
+```html
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>My app</title>
-  <meta viewport="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"><link href="main.css" rel="stylesheet"></head>
+    <meta viewport="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link href="main.css" rel="stylesheet" />
+  </head>
   <body>
-  <script type="text/javascript" src="bundle.js"></script></body>
+    <script type="text/javascript" src="bundle.js"></script>
+  </body>
 </html>
 ```
 
@@ -350,7 +357,7 @@ Google Chrome
 
 webpack.config.js抜粋
 
-```js {8}
+```js
 new HtmlWebpackPlugin({
   title: "My app",
   meta: [
@@ -366,15 +373,19 @@ new HtmlWebpackPlugin({
 
 admin.html
 
-```html{6,8}
+```html
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>My app</title>
-  <meta viewport="width=device-width, initial-scale=1"><meta http-equiv="X-UA-Compatible" content="IE=edge"><link href="main.css?71bc419268b3e133da2d" rel="stylesheet"></head>
+    <meta viewport="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link href="main.css?71bc419268b3e133da2d" rel="stylesheet" />
+  </head>
   <body>
-  <script type="text/javascript" src="bundle.js?71bc419268b3e133da2d"></script></body>
+    <script type="text/javascript" src="bundle.js?71bc419268b3e133da2d"></script>
+  </body>
 </html>
 ```
 
@@ -402,7 +413,7 @@ template.html
 
 webpack.config.js抜粋
 
-```js {2,3,8}
+```js
     new HtmlWebpackPlugin({
       title: 'My Template app',
       originalHeader: 'original header title',
@@ -421,7 +432,7 @@ webpack.config.js抜粋
 
 admin.html
 
-```html {5,8}
+```html
 <!DOCTYPE html>
 <html>
   <head>
@@ -473,7 +484,7 @@ template.ejs
 
 webpack.config.js
 
-```js {18,32-35}
+```js
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");

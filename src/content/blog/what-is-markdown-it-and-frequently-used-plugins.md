@@ -321,7 +321,7 @@ HTML
 npm install markdown-it-emoji --save
 ```
 
-```json{4}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
@@ -365,7 +365,7 @@ npm install twemoji --save
 
 package.json
 
-```json{5}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
@@ -425,7 +425,7 @@ npm install markdown-it-footnote --save
 
 package.json
 
-```json{5}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
@@ -476,7 +476,7 @@ npm install markdown-it-mark --save
 
 package.json
 
-```json{6}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
@@ -516,7 +516,7 @@ npm install markdown-it-deflist --save
 
 package.json
 
-```json{4}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",

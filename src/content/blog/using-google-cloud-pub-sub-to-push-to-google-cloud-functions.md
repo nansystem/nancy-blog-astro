@@ -33,7 +33,7 @@ gcloud コマンドライン ツールを使うことで、トピック、サブ
 
 Cloud Pub/Subから配信されるメッセージの形式は以下の通りである。
 
-```JSON
+```json
 {
   "message": {
     "data": "SGVsbG8gQ2xvdWQgUHViL1N1YiEgSGVyZSBpcyBteSBtZXNzYWdlIQ==",

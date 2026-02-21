@@ -134,7 +134,7 @@ console.log(result);
 `node src/index.js`と実行するとさきほどと同じように計算結果を出力することができる。
 再度、`rollup`コマンドで`calculator.js`と`index.js`を1つにまとめてみる。`npx rollup src/index.js --file dist/bundle.js --format umd --name "calculator"`を実行すると次のファイルが出力される。
 
-```js {6}
+```js
 (function (factory) {
   typeof define === "function" && define.amd ? define(factory) : factory();
 })(function () {
@@ -151,7 +151,7 @@ ES2015のimport/export文で書かれたファイルは1ファイルにまとめ
 
 念のため実行してみると、予想通りエラーになる。
 
-```bash{6}
+```bash
 $ node dist/bundle.js
 module.js:559
     throw err;
@@ -176,7 +176,7 @@ npm install --save-dev rollup-plugin-commonjs
 
 package.json
 
-```json {4}
+```json
 {
   "devDependencies": {
     "rollup": "^1.3.0",
@@ -187,7 +187,7 @@ package.json
 
 さらに、インストールしたプラグインを使うために、`rollup.config.js`という設定ファイルを用意する。
 
-```bash{6}
+```bash
 .
 ├── dist
 │   └── bundle.js
@@ -231,20 +231,18 @@ export default {
 
 次は`rollup-plugin-commonjs`を使う。`rollup.config.js`の`plugins`に追加する。
 
-```js{1,10-12}
-import commonjs from 'rollup-plugin-commonjs'
+```js
+import commonjs from "rollup-plugin-commonjs";
 
 export default {
-  input: 'src/index.js',
+  input: "src/index.js",
   output: {
-    file: 'dist/bundle.js',
-    format: 'umd',
-    name: 'calculator'
+    file: "dist/bundle.js",
+    format: "umd",
+    name: "calculator",
   },
-  plugins: [
-    commonjs(),
-  ],
-}
+  plugins: [commonjs()],
+};
 ```
 
 `npx rollup -c`を実行してみると、`require`で指定したファイルが展開されて1ファイルになっている！
@@ -330,32 +328,34 @@ module.exports = function (a, b) {
 
 bundle.js
 
-```js{17-21}
+```js
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-    typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = global || self, factory(global.calculator = {}));
-}(this, function (exports) { 'use strict';
+  typeof exports === "object" && typeof module !== "undefined"
+    ? factory(exports)
+    : typeof define === "function" && define.amd
+      ? define(["exports"], factory)
+      : ((global = global || self), factory((global.calculator = {})));
+})(this, function (exports) {
+  "use strict";
 
-    var add = function (a, b) {
-        return a + b;
-    };
+  var add = function (a, b) {
+    return a + b;
+  };
 
-    var calculator = {
-    	add: add
-    };
+  var calculator = {
+    add: add,
+  };
 
-    const add$1 = calculator.add;
+  const add$1 = calculator.add;
 
-    var src = function (a, b) {
-        return add$1(a, b) * 2;
-    };
+  var src = function (a, b) {
+    return add$1(a, b) * 2;
+  };
 
-    exports.default = src;
+  exports.default = src;
 
-    Object.defineProperty(exports, '__esModule', { value: true });
-
-}));
+  Object.defineProperty(exports, "__esModule", { value: true });
+});
 ```
 
 `bundle-use.js`を作成しこの関数が読み込めることを確認する。
@@ -387,7 +387,7 @@ $ npm install --save lodash
 
 `package.json`に`lodash`がインストールされている。
 
-```json{7}
+```json
 {
   "devDependencies": {
     "rollup": "^1.3.0",
@@ -403,18 +403,18 @@ $ npm install --save lodash
 
 index.js
 
-```js　{2, 5}
-const add = require('./calculator.js').add;
-const _ = require('lodash');
+```js
+const add = require("./calculator.js").add;
+const _ = require("lodash");
 
 module.exports = function (a, b) {
-    return _.add(add(a, b) * 2, 3);
-}
+  return _.add(add(a, b) * 2, 3);
+};
 ```
 
 `npx rollup -c`で実行すると`Unresolved dependencies`とコンソールに出力される。どうやら`lodash`が読み込まれていないようだ。
 
-```bash{4}
+```bash
 $ npx rollup -c
 
 src/index.js → dist/bundle.js...
@@ -474,7 +474,7 @@ $ npm install --save-dev rollup-plugin-node-resolve
 
 package.json
 
-```json{5}
+```json
 {
   "devDependencies": {
     "rollup": "^1.3.0",
@@ -491,22 +491,19 @@ package.json
 
 rollup.config.js
 
-```js　{2,13}
-import commonjs from 'rollup-plugin-commonjs'
-import resolve from 'rollup-plugin-node-resolve';
+```js
+import commonjs from "rollup-plugin-commonjs";
+import resolve from "rollup-plugin-node-resolve";
 
 export default {
-  input: 'src/index.js',
+  input: "src/index.js",
   output: {
-    file: 'dist/bundle.js',
-    format: 'umd',
-    name: 'calculator'
+    file: "dist/bundle.js",
+    format: "umd",
+    name: "calculator",
   },
-  plugins: [
-    commonjs(),
-    resolve(),
-  ],
-}
+  plugins: [commonjs(), resolve()],
+};
 ```
 
 `npx rollup -c`でファイルを生成すると、今度は`lodash`が定義されている！  
@@ -514,7 +511,7 @@ export default {
 
 dist.js
 
-```js {21}
+```js
 (function (global, factory) {
   typeof exports === "object" && typeof module !== "undefined"
     ? factory(exports)

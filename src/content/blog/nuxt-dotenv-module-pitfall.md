@@ -18,7 +18,7 @@ Nuxt.jsでローカル環境、dev環境、本番環境でそれぞれ異なるA
 
 ディレクトリ構成としては、ローカル環境用の`.env.local`、dev環境用の`.env.development`、本番環境用の`.env.production`を用意し、`config`ディレクトリにまとめる形にした。
 
-```sh{1-4}
+```sh
 ├── config
 │   ├── .env.development
 │   ├── .env.local
@@ -76,7 +76,7 @@ $ npm install @nuxtjs/dotenv
 
 `nuxt.config.js`の`modules`に`@nuxtjs/dotenv`を追加する。
 
-```js{2}
+```js
   modules: [
     '@nuxtjs/dotenv',
     '@nuxtjs/axios',
@@ -95,18 +95,18 @@ MESSAGE="hello!"
 
 `pages/index.vue`に`mounted()`を追加し、`process.env`から追加した値が取得できるか確認する。
 
-```vue{8-10}
+```vue
 <script>
-import Logo from '~/components/Logo.vue'
+import Logo from "~/components/Logo.vue";
 
 export default {
   components: {
-    Logo
+    Logo,
   },
   mounted() {
-    console.log(process.env.MESSAGE)
-  }
-}
+    console.log(process.env.MESSAGE);
+  },
+};
 </script>
 ```
 
@@ -118,10 +118,10 @@ ChromeのConsoleを開くと`hello!`と表示されており、`.env`から値�
 
 `nuxt.config.js`に次の記述を追加する。1行目の`import pkg`は`create-nuxt-app`で生成した際に記述されていたので無視して、`require('dotenv').config()`を追加し、`console.info`で値が取得できるか確認する。
 
-```js{2-3}
-import pkg from './package'
-require('dotenv').config()
-console.info('nuxt.config.js MESSAGE:', process.env.MESSAGE)
+```js
+import pkg from "./package";
+require("dotenv").config();
+console.info("nuxt.config.js MESSAGE:", process.env.MESSAGE);
 ```
 
 起動ログに`.env`で設定したとおり`hello!`が表示されていればOK。
@@ -135,7 +135,7 @@ console.info('nuxt.config.js MESSAGE:', process.env.MESSAGE)
 
 `package.json`の`scripts`にローカル環境、dev環境、本番環境用のビルドスクリプトを追加する。
 
-```json {6-8}
+```json
   "scripts": {
     "dev": "nuxt",
     "build": "nuxt build",

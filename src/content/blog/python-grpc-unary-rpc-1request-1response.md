@@ -137,7 +137,7 @@ $ python -m grpc.tools.protoc -I. --python_out=. --grpc_python_out=. ./hello.pro
 
 コマンドを実行すると、`hello_pb2.py`と`hello_pb2_grpc.py`が出力される。
 
-```sh{5,6}
+```sh
 .
 ├── Pipfile
 ├── Pipfile.lock

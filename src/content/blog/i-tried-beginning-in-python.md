@@ -90,7 +90,7 @@ $ pipenv install Flask==1.0.2
 
 Pipfile
 
-```txt{9}
+```txt
 [[source]]
 name = "pypi"
 url = "https://pypi.org/simple"
@@ -118,7 +118,7 @@ FlaskでHTTPリクエストを受け取り、文字列が返せるようにす�
 
 ディレクトリ
 
-```sh{4}
+```sh
 .
 ├── Pipfile
 ├── Pipfile.lock

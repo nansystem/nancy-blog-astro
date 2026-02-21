@@ -81,7 +81,7 @@ script-compiled.js
 npm install --save-dev @babel/plugin-transform-arrow-functions
 ```
 
-```json{5}
+```json
 {
   "devDependencies": {
     "@babel/cli": "^7.2.3",
@@ -120,7 +120,7 @@ npm install --save-dev @babel/preset-env
 
 package.json
 
-```json{5}
+```json
 {
   "devDependencies": {
     "@babel/cli": "^7.2.3",
@@ -336,7 +336,7 @@ npm install --save-dev @babel/plugin-proposal-private-methods
 
 package.json
 
-```json {4}
+```json
   "devDependencies": {
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.3.4",
@@ -347,7 +347,7 @@ package.json
 
 babel.config.js
 
-```js {6-8,11}
+```js
 module.exports = function (api) {
   api.cache(true);
   const presets = [["@babel/preset-env"]];
@@ -364,7 +364,7 @@ module.exports = function (api) {
 
 index.js
 
-```js {6,11}
+```js
 class Counter {
   constructor() {
     this.count = 0;
@@ -470,20 +470,20 @@ console.info(counter.publicIncrement);
 npm install --save-dev @babel/polyfill
 ```
 
-```json{5}
+```json
 {
-    "devDependencies": {
-        "@babel/cli": "^7.2.3",
-        "@babel/core": "^7.3.4",
-        "@babel/polyfill": "^7.2.5",
-        "@babel/preset-env": "^7.3.4"
-    }
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.3.4",
+    "@babel/polyfill": "^7.2.5",
+    "@babel/preset-env": "^7.3.4"
+  }
 }
 ```
 
 index.js
 
-```js {1}
+```js
 import "@babel/polyfill";
 const resolveAfter2Seconds = () => {
   return new Promise((resolve) => {
@@ -545,7 +545,7 @@ npm install --save @babel/runtime-corejs2
 
 babel.config.js
 
-```js {7-9}
+```js
 module.exports = function (api) {
   api.cache(true);
   const presets = [["@babel/preset-env"]];
@@ -591,7 +591,7 @@ asyncCall();
 
 script-compiled.js
 
-```js {12,15}
+```js
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime-corejs2/helpers/interopRequireDefault");

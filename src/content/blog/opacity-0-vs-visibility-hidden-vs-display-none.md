@@ -177,7 +177,7 @@ p {
 
 index.html抜粋
 
-```html{2-5}
+```html
 <body>
   <button class="box-btn">通常開く</button>
   <button class="box-opacity-btn">opacity: 0開く</button>
@@ -187,7 +187,7 @@ index.html抜粋
   <p>通常</p>
   <div class="box box-normal">通常コンテンツ<a href="#normal">リンク</a></div>
 
-  <hr style="margin-top:30px;">
+  <hr style="margin-top:30px;" />
 
   <p>opacity: 0</p>
   <div class="box box-opacity">opacity:0コンテンツ<a href="#opacity">リンク</a></div>
@@ -289,7 +289,7 @@ boxNoneBtn.addEventListener("click", toggle("box-none"), false);
 
 index.js抜粋
 
-```js{4,8,10}
+```js
 const toggle = (targetClass) => {
   const box = document.querySelector(`.${targetClass}`);
   const openClass = `${targetClass}--open`;
@@ -302,8 +302,8 @@ const toggle = (targetClass) => {
       box.classList.remove(closeClass);
       box.classList.add(openClass);
     }
-  }
-}
+  };
+};
 ```
 
 style.css抜粋

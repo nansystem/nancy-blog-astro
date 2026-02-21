@@ -103,19 +103,15 @@ style.scssに`background-image`を指定することで背景画像を設定す�
 まずはこれを試す。  
 タイトルの文字を大きくして、白にするだけで読みやすくなる。単純。簡単。
 
-```html{4,7}
-  <section class="hero is-fullheight has-text-centered hero--bg">
-    <div class="hero-body">
-      <div class="container container--hero">
-        <h1 class="title title--hero">
-          Fullheight title
-        </h1>
-        <h2 class="subtitle subtitle--hero">
-          Fullheight subtitle
-        </h2>
-      </div>
+```html
+<section class="hero is-fullheight has-text-centered hero--bg">
+  <div class="hero-body">
+    <div class="container container--hero">
+      <h1 class="title title--hero">Fullheight title</h1>
+      <h2 class="subtitle subtitle--hero">Fullheight subtitle</h2>
     </div>
-  </section>
+  </div>
+</section>
 ```
 
 ```scss

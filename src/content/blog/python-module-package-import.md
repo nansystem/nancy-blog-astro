@@ -564,7 +564,7 @@ print(parent.val)
 
 `child1.py`
 
-```py {1-5}
+```py
 import sys
 import pathlib
 parent_dir = str(pathlib.Path(__file__).parent.parent.resolve())
