@@ -1,0 +1,726 @@
+XDG dotfiles submodule symlinksをそれぞれの理解と組みあわせを理解したい。なお、claudeがXDG非対応https://github.com/anthropics/claude-code/issues/1455らしい。もともと興味を持ったのはclaudeで並行して3つローカルで開発したくて同じリポジトリを複数クローンしている。リポジトリにコミットしていない.envなどのコミットしていないclaude skillsやrulesがあり、どう管理するのがベストか知りたくなったため。そこでディレクトリを切って実際にどう違うのか調査して。なお、https://github.com/satococoa/wtpも気になっている。
+
+---
+
+borisはWe directly use git worktrees https://git-scm.com/docs/git-worktree
+
+You can also customize it with worktree hooksといっていたけど、worktree hooksとは?
+
+---
+
+ここまでの調査内容で、/home/nancy/src/github.com/nansystem/nancy-blog-astroにclaude codeにおける平行開発の選択肢および最もよいと思われる方法をまとめた記事を書きたい。
+そのため、sandboxで調査したが、関係なかったことは無理に入れないこと。
+記事の構成としてはclaude code2.1.49で--worktree (-w) flagが導入されたことを起点として、git worktreeの問題点と解決方法を示す記事を書きたい。
+
+https://code.claude.com/docs/en/vs-code#use-git-worktrees-for-parallel-tasksの内容は以下
+Run parallel Claude Code sessions with Git worktrees
+When working on multiple tasks at once, you need each Claude session to have its own copy of the codebase so changes don’t collide. Git worktrees solve this by creating separate working directories that each have their own files and branch, while sharing the same repository history and remote connections. This means you can have Claude working on a feature in one worktree while fixing a bug in another, without either session interfering with the other.
+Use the --worktree flag to create an isolated worktree and start Claude in it. The value you pass becomes the worktree directory name and branch name:
+# Start Claude in a worktree named "feature-auth"
+# Creates .claude/worktrees/feature-auth/ with a new branch
+claude -w feature-auth
+
+# Start another session in a separate worktree
+claude -w bugfix-123
+If you omit the name, Claude generates a random one automatically:
+# Auto-generates a name like "bright-running-fox"
+claude -w
+Worktrees are created at <repo>/.claude/worktrees/<name> and branch from the default remote branch. The worktree branch is named worktree-<name>.
+You can also ask Claude to “work in a worktree” or “start a worktree” during a session, and it will create one automatically.
+​
+Worktree cleanup
+When you exit a worktree session, Claude handles cleanup based on whether you made changes:
+No changes: the worktree and its branch are removed automatically
+Changes or commits exist: Claude prompts you to keep or remove the worktree. Keeping preserves the directory and branch so you can return later. Removing deletes the worktree directory and its branch, discarding all uncommitted changes and commits
+To clean up worktrees outside of a Claude session, use manual worktree management.
+Add .claude/worktrees/ to your .gitignore to prevent worktree contents from appearing as untracked files in your main repository.
+​
+Manage worktrees manually
+For more control over worktree location and branch configuration, create worktrees with Git directly. This is useful when you need to check out a specific existing branch or place the worktree outside the repository.
+# Create a worktree with a new branch
+git worktree add ../project-feature-a -b feature-a
+
+# Create a worktree with an existing branch
+git worktree add ../project-bugfix bugfix-123
+
+# Start Claude in the worktree
+cd ../project-feature-a && claude
+
+# Clean up when done
+git worktree list
+git worktree remove ../project-feature-a
+Learn more in the official Git worktree documentation.
+Remember to initialize your development environment in each new worktree according to your project’s setup. Depending on your stack, this might include running dependency installation (npm install, yarn), setting up virtual environments, or following your project’s standard setup process.
+For automated coordination of parallel sessions with shared tasks and messaging, see agent teams.
+
+claude codeのchangelogは以下
+2.1.49
+Improved MCP OAuth authentication with step-up auth support and discovery caching, reducing redundant network requests during server connections
+Added --worktree (-w) flag to start Claude in an isolated git worktree
+Subagents support isolation: "worktree" for working in a temporary git worktree
+
+2.1.50
+Added WorktreeCreate and WorktreeRemove hook events, enabling custom VCS setup and teardown when agent worktree isolation creates or removes worktrees.
+Added support for isolation: worktree in agent definitions, allowing agents to declaratively run in isolated git worktrees.
+
+---
+
+[Request interrupted by user for tool use]
+
+---
+
+Boris Cherny（Claude Code 作者の1人）は、git worktree の使い勝手についてこう指摘している。は間違っている。指摘したのはNumman Ali
+@nummanali
+·
+46分
+I have a few problems with worktrees:
+- you need to reinstall everything 
+- you need to clean up after 
+- conflicts arise again on merge 
+- different agents handle it their way 
+
+I suppose for incremental changes that are tight this makes sense 
+
+But isn’t that going backwards?
+
+Surely we’re at the stage where you plan out the work and an agents works for 1 hour+ to cover full features  - well  I do so 
+
+Please, tell me, do you actually use worktrees?
+
+---
+
+Claude Code 2.1.50のAdded WorktreeCreate and WorktreeRemove hook events, enabling custom VCS setup and teardown when agent worktree isolation creates or removes worktrees.で対応できるのか、sandboxで検証してほしい。
+
+---
+
+ここまでの調査結果を踏まえて、どういう選択肢があって、どれが有力なのか結論出せる？
+
+---
+
+記事に盛り込んで。また、claude以外のオーケストレーションツールやcodexを使った場合を考慮するとどの選択肢が有力か
+
+---
+
+taktのようなhttps://github.com/nrslib/taktツールを使った場合にも応用出来る方法を選択したい
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L6-L7
+AI１つにして。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L24
+通常、はちょっとえらそう。手っ取り早いというより、git worktreeの知識がなくてもできる、が正確
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L33
+冗長。もっと簡潔に。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L56
+ここも冗長。簡潔に1文にして。全体的に文の区切りが変なので見直して。
+
+---
+
+Claude Codeが面倒を見る。は英語っぽいのでこの言い回ししないようにrulesなのか文章のreviewなのかで除けるようにしたい。ファイル1行。〜だのような文章を書かないようにここもruleなのかreviewなのかあるいはclaude.mdなのか最も最適な形で定義したいまたtextlintも入れたい。
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze this conversation to create a thorough summary.
+
+1. **Initial request**: User wanted to understand XDG, dotfiles, submodules, and symlinks together, motivated by wanting to manage uncommitted Claude skills/rules across multiple clones of the same repository. Also interested in wtp tool and Claude's XDG non-compliance (issue #1455).
+
+2. **Investigation phase**: Created investigation directories in sandbox, researched git worktree vs clone, bare clone approach, wtp tool, and takt-sdd repository structure.
+
+3. **Blog article request**: User wanted to write an article in nancy-blog-astro about parallel development with Claude Code, starting from the --worktree flag introduced in v2.1.49.
+
+4. **Attribution correction**: User corrected that Numman Ali (not Boris Cherny) raised the worktree problems.
+
+5. **WorktreeCreate hook verification**: User asked to verify if WorktreeCreate/WorktreeRemove hooks (2.1.50) solve the .env problem. Key findings:
+   - Hook fires with `isolation: "worktree"` subagents
+   - It's a "creation delegation hook" not a notification hook
+   - Must return `{"worktreePath": "/path"}` to stdout
+   - Does NOT fire on `git worktree add` alone
+
+6. **Conclusion request**: User wanted a clear conclusion on which approach to use.
+
+7. **Codex/other tools consideration**: Added analysis of other tools (Codex, Gemini CLI, Aider).
+
+8. **takt consideration**: User wanted takt included. Investigation revealed takt uses `git clone --shared` not `git worktree add`, so post-checkout hook does NOT fire for takt.
+
+9. **Article edits**: User requested specific fixes:
+   - L6-7: Categories to single "AI"
+   - L24: Remove "通常、" and "手っ取り早い"
+   - L33: Make more concise
+   - L56: Make into one sentence, fix sentence structure
+
+10. **textlint + writing rules**: User wants to prevent "面倒を見る" and "ファイル1行。〜だ" patterns via:
+    - textlint for automated detection
+    - CLAUDE.md or rules for Claude's generation
+    - Currently installing textlint and got an error with the config
+
+The most recent work was setting up textlint in the blog repo - it failed with "No rules found" initially, then with an error about prh needing rulePaths options when run via command line (not config file). The config file approach should work but seems to not be picked up properly.
+
+Summary:
+1. Primary Request and Intent:
+   - Understand XDG/dotfiles/submodules/symlinks together in context of managing Claude Code config files across multiple repository clones
+   - Write a blog article in `/home/nancy/src/github.com/nansystem/nancy-blog-astro` about parallel development with Claude Code, centered on the `--worktree (-w)` flag introduced in v2.1.49
+   - Verify whether WorktreeCreate/WorktreeRemove hooks (v2.1.50) solve the `.env` problem
+   - Determine which solution is best when considering Claude Code, Codex, Gemini CLI, Aider, and takt
+   - Fix specific writing style issues in the article (attribution error, specific line edits)
+   - Set up textlint + Claude writing rules to prevent English-ism expressions like "面倒を見る" and fragment sentence patterns like "ファイル1行。〜だ"
+
+2. Key Technical Concepts:
+   - **git worktree**: Creates multiple working directories from one repo; `.git` becomes a file (pointer), objects shared
+   - **bare clone**: `git clone --bare` + `echo "gitdir: ./.bare" > .git` creates structure where all branches are equal worktrees
+   - **`claude -w` flag**: Creates worktree at `.claude/worktrees/<name>/`, auto-cleanup on session exit (v2.1.49)
+   - **WorktreeCreate hook**: NOT a notification hook—it's a creation delegation hook. When configured, it replaces Claude's internal `git worktree add`. Must return `{"worktreePath": "/path"}` to stdout. Fires on `isolation: "worktree"` subagents (confirmed). Does NOT fire on plain `git worktree add`.
+   - **post-checkout hook**: Fires on `git worktree add` when `$1 == 0000...0000`. Works for all worktree-based tools (Claude Code, Codex, Gemini CLI, Aider). Does NOT fire on `git clone --shared`.
+   - **`git clone --shared`**: Used by takt for isolation. Source repo's post-checkout hook does NOT fire. Cloned repo has empty `.git/hooks/`.
+   - **wtp tool**: `.wtp.yml` is committable config for worktree setup (copy/symlink/command hooks)
+   - **takt**: AI orchestration tool using `git clone --shared` for isolation—incompatible with post-checkout hook approach
+   - **textlint**: Natural language linter; `preset-ja-technical-writing` + `prh` for custom word corrections
+   - **XDG Base Directory Spec**: Claude Code is non-compliant (issue #1455), uses `~/.claude/` instead of `~/.config/claude/`
+
+3. Files and Code Sections:
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/claude-code-parallel-development-with-worktree.md`**
+     - Main blog article created and iteratively updated throughout the conversation
+     - Current frontmatter: `categories: [AI]`, `permalink: /claude-code-parallel-development-with-worktree`
+     - Sections: git worktree intro, `claude -w` flag, worktree problems, post-checkout hook, wtp, WorktreeCreate hook (with actual test results), bare clone approach, conclusion/decision guide, tool comparison (including takt), migration from multiple clones, symlink approach section (added by user/linter)
+     - Key fix: Attribution changed from "Boris Cherny" to "Numman Ali (@nummanali)" for worktree problems
+     - Recent edits: categories → `AI` only; L24 rewritten to remove "通常、" and "手っ取り早い"; L33 condensed; L56 restructured
+
+   - **WorktreeCreate hook test script** (temporary, in `~/.claude/settings.json` during testing):
+     ```bash
+     #!/bin/bash
+     INPUT=$(cat)
+     NAME=$(echo "$INPUT" | jq -r '.name')
+     CWD=$(echo "$INPUT" | jq -r '.cwd')
+     WORKTREE_PATH="$CWD/.claude/worktrees/$NAME"
+     mkdir -p "$CWD/.claude/worktrees"
+     cd "$CWD"
+     git worktree add -b "worktree-$NAME" "$WORKTREE_PATH"
+     if [ -f "$CWD/.env" ]; then
+         cp "$CWD/.env" "$WORKTREE_PATH/.env"
+     fi
+     jq -n --arg path "$WORKTREE_PATH" '{"worktreePath": $path}'
+     ```
+     - Confirmed: WorktreeCreate fires for `isolation: "worktree"` Task tool subagents
+     - Input JSON contains: `session_id`, `transcript_path`, `cwd`, `hook_event_name: "WorktreeCreate"`, `name`
+     - Must return `{"worktreePath": "..."}` — without this, error: "no successful output"
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/.textlintrc.json`** (newly created):
+     ```json
+     {
+       "rules": {
+         "prh": {
+           "rulePaths": ["./prh.yml"]
+         },
+         "preset-ja-technical-writing": {
+           "sentence-length": { "max": 100 },
+           "no-exclamation-question-mark": true,
+           "no-doubled-joshi": true,
+           "no-doubled-conjunctive-particle-ga": true,
+           "no-double-negative-ja": true,
+           "no-invalid-control-character": true,
+           "ja-no-successive-word": true,
+           "ja-no-abusage": true
+         }
+       },
+       "filters": { "comments": true }
+     }
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/prh.yml`** (newly created):
+     ```yaml
+     version: 1
+     rules:
+       - expected: 担う
+         patterns:
+           - 面倒を見る
+       - expected: 処理する
+         patterns:
+           - ハンドルする
+       - expected: 対応する
+         patterns:
+           - カバーする
+       - expected: 構成する
+         patterns:
+           - セットアップする
+       - expected: 実行する
+         patterns:
+           - ランする
+           - 走らせる
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/CLAUDE.md`**
+     - Already has "記事の禁止ワード" section with: 本質, 起点
+     - Needs update to add: "面倒を見る" style expressions and "ファイル1行。〜だ" fragment pattern rule
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/package.json`**
+     - Needs `"lint:text"` script added
+     - textlint packages installed: `textlint`, `textlint-rule-preset-ja-technical-writing`, `textlint-rule-prh`
+
+4. Errors and Fixes:
+   - **textlint "No rules found"**: Running `pnpm exec textlint` without explicit rules gave "No rules found". Tried adding `--rule prh --rule preset-ja-technical-writing` on CLI but got error: `textlint-rule-prh require Rule Options` (prh needs `rulePaths` in config, can't be passed via CLI alone). Config file approach (`.textlintrc.json`) is correct but wasn't being picked up in the test run — still investigating.
+   - **git submodule `file://` protocol**: When creating submodule simulation in sandbox, `git submodule add` failed with "transport 'file' not allowed". Fixed with `git -c protocol.file.allow=always submodule add`.
+   - **WorktreeCreate hook "no successful output"**: First hook attempt used `echo` + `cat` without returning JSON. Fixed by outputting `jq -n --arg path "$WORKTREE_PATH" '{"worktreePath": $path}'`.
+   - **Article attribution error**: Initially wrote "Boris Cherny（Claude Code 作者の1人）は、git worktree の使い勝手についてこう指摘している" — user corrected: the person raising problems was Numman Ali (@nummanali), Boris Cherny was the one who replied saying they use git worktrees.
+   - **Global settings pollution**: Added WorktreeCreate hooks to `~/.claude/settings.json` during testing; restored from backup after testing.
+
+5. Problem Solving:
+   - **Core problem solved**: gitignored files (`.env`, `node_modules`) don't carry over to worktrees. Three solutions verified:
+     1. post-checkout hook (fires on `git worktree add`, works for all worktree-based tools)
+     2. wtp (`.wtp.yml` committable config)
+     3. WorktreeCreate hook (Claude Code specific, fires for `isolation: "worktree"` subagents)
+   - **takt incompatibility discovered**: takt uses `git clone --shared` not `git worktree add`. Verified that `git clone --shared` does NOT trigger source repo's post-checkout hook. Solution: committed `scripts/worktree-setup.sh` + tool-specific calling mechanisms.
+   - **WorktreeCreate hook behavior clarified**: It's not a notification hook but a creation delegation hook—if configured, it must perform the git worktree creation itself and return the path.
+   - **textlint config**: `.textlintrc.json` created with correct structure but not yet confirmed working via CLI run (last command errored).
+
+6. All User Messages:
+   - "XDG dotfiles submodule symlinksをそれぞれの理解と組みあわせを理解したい。なお、claudeがXDG非対応...もともと興味を持ったのはclaudeで並行して3つローカルで開発したくて同じリポジトリを複数クローンしている..."
+   - "borisはWe directly use git worktrees...といっていたけど、worktree hooksとは?"
+   - "ここまでの調査内容で、/home/nancy/src/github.com/nansystem/nancy-blog-astroにclaude codeにおける平行開発の選択肢および最もよいと思われる方法をまとめた記事を書きたい。..."
+   - "Boris Cherny（Claude Code 作者の1人）は、git worktree の使い勝手についてこう指摘している。は間違っている。指摘したのはNumman Ali @nummanali..."
+   - "Claude Code 2.1.50のAdded WorktreeCreate and WorktreeRemove hook eventsで対応できるのか、sandboxで検証してほしい。"
+   - "ここまでの調査結果を踏まえて、どういう選択肢があって、どれが有力なのか結論出せる？"
+   - "記事に盛り込んで。また、claude以外のオーケストレーションツールやcodexを使った場合を考慮するとどの選択肢が有力か"
+   - "taktのようなhttps://github.com/nrslib/taktツールを使った場合にも応用出来る方法を選択したい"
+   - "[system-reminder about file modification] src/content/blog/.../worktree.md was modified... [showing symlink section added]" + "src/content/blog/.../worktree.md:L6-L7 AI１つにして。===== L24 通常、はちょっとえらそう。手っ取り早いというより、git worktreeの知識がなくてもできる、が正確 ===== L33 冗長。もっと簡潔に。===== L56 ここも冗長。簡潔に1文にして。全体的に文の区切りが変なので見直して。"
+   - "Claude Codeが面倒を見る。は英語っぽいのでこの言い回ししないようにrulesなのか文章のreviewなのかで除けるようにしたい。ファイル1行。〜だのような文章を書かないようにここもruleなのかreviewなのかあるいはclaude.mdなのか最も最適な形で定義したいまたtextlintも入れたい。"
+
+7. Pending Tasks:
+   - Fix textlint config so it's properly picked up (`.textlintrc.json` created but CLI run failed)
+   - Add `"lint:text": "textlint 'src/content/blog/**/*.md'"` script to `package.json`
+   - Update `CLAUDE.md` to add writing style rules: prohibit "面倒を見る" style expressions and "ファイル1行。〜だ" fragment sentence pattern
+   - Verify textlint actually catches "面倒を見る" in the article
+   - Fix remaining "面倒を見る" instance in the article itself
+
+8. Current Work:
+   Setting up textlint in `/home/nancy/src/github.com/nansystem/nancy-blog-astro` to catch English-ism expressions and bad sentence patterns. Installed packages (`textlint`, `textlint-rule-preset-ja-technical-writing`, `textlint-rule-prh`). Created `.textlintrc.json` and `prh.yml`. The last CLI run failed:
+   ```
+   pnpm exec textlint "src/content/blog/claude-code-parallel-development-with-worktree.md"
+   == No rules found ==
+   ```
+   Then tried `--rule prh --rule preset-ja-technical-writing` on CLI:
+   ```
+   Error: textlint-rule-prh require Rule Options.
+   ```
+   The config file approach is correct but the textlint CLI isn't picking up `.textlintrc.json`.
+
+9. Optional Next Step:
+   Debug why `.textlintrc.json` is not being picked up by textlint. The user's request was: "textlintも入れたい" and "面倒を見る...ファイル1行。〜だのような文章を書かないようにruleなのかreviewなのかあるいはclaude.mdなのか最も最適な形で定義したい". 
+   
+   Next: Run textlint with explicit config flag to verify the config works, then add the `lint:text` script to `package.json`, then update `CLAUDE.md` with the writing style rules for "面倒を見る" and fragment sentence patterns.
+   
+   ```bash
+   cd "/home/nancy/src/github.com/nansystem/nancy-blog-astro" && pnpm exec textlint --config .textlintrc.json "src/content/blog/claude-code-parallel-development-with-worktree.md"
+   ```
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+なぜbare clone アプローチは補足なのか、「複数clone」は今のアプローチ。でそれぞれ選択肢なのではないか。実際に使っているアプローチがいいと思ってない。そこで、今回の検証をしたため。問題の整理を記事ないの複数個所に書かれているためまとまりがない。編集者として記事全体を見直して、読みやすくなる順番にしてほしい。
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L15
+git worktree を知らなければ、という言い方が偉そう。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L23
+ディスクを無駄に使う。はそこまで観点として重要ではなかった。自分としては。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L38
+ここは意味を理解できてない。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L54
+Numman Ali（@nummanali）が発言したかどうかはどうでもよい。sandboxでの検証およびこの記事で判明したgit worktreeの問題点を列挙したい。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L80
+ここはxの埋め込みしたい。<blockquote class="twitter-tweet"><p lang="en" dir="ltr">We directly use git worktrees <a href="https://t.co/nscHRomzz7">https://t.co/nscHRomzz7</a><br><br>You can also customize it with worktree hooks</p>&mdash; Boris Cherny (@bcherny) <a href="https://twitter.com/bcherny/status/2025009267653443698?ref_src=twsrc%5Etfw">February 21, 2026</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L112
+何か分かりづらい
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L275
+ここの意味がわからなかった
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L371
+シンボリックリンクによる設定共有はここまで詳細じゃないと説明できないのか？もっと簡潔に説明できるのではないか。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L442
+git clone --sharedとは何なのか。bareとは違うのか。また、clone型にbareもあるのではないのか?この大分類は記事の最初の方にあった方が読みやすいのではないか?
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L550
+なぜtaktでwtpは使えないのか?
+
+---
+
+git コマンド記事を別に作り、本記事をスリム化する
+
+---
+
+git-parallel-development-guide.md の内容確認して
+
+---
+
+修正して。src/content/blog/git-parallel-development-guide.md:L15
+スタックに積み→退避して
+スタックがなんなのかの説明がないからわかりづらい。今後もいきなり説明のない用語を使わないようclaude.mdなのかrulesに書いといて。
+=====
+src/content/blog/git-parallel-development-guide.md:L22
+git checkout feature/Aよりもswitchの方が新しい構文では？
+gitの公式サイトで確認して。
+=====
+src/content/blog/git-parallel-development-guide.md:L29
+もっと簡潔に1文にまとめて。
+=====
+src/content/blog/git-parallel-development-guide.md:L33
+公式サイトではどういう言い方してる?ディレクトリを生やす、という言い方をしている？直訳風だから変なのか？
+=====
+src/content/blog/git-parallel-development-guide.md:L47
+ここの理解がいまいち。公式サイトおよびsandboxでもうちょっと腹落ちしたい。
+=====
+src/content/blog/git-parallel-development-guide.md:L73
+worktree型がとして複数cloneは分類がへたくそ。
+=====
+src/content/blog/git-parallel-development-guide.md:L93
+これもworktreeというよりcloneの1種としてまとめたほうがいい
+=====
+src/content/blog/git-parallel-development-guide.md:L171
+たとえば、共通の設定ファイルを別のgitリポジトリで管理している場合に関係しないのか？
+sandboxで確認してほしい。の内容も含めて。
+
+---
+
+こういう複数の比較記事には記事の上の方にtocがほしい
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me analyze the conversation chronologically to create a thorough summary.
+
+1. **Initial context**: The session started with textlint setup already done in a previous conversation. The .textlintrc.json and prh.yml were already created.
+
+2. **textlint fix**: The session began by running textlint - it failed because `textlint-filter-rule-comments` was missing. Installed it and got 8 errors. Fixed them all including auto-fixing `面倒を見る → 担う` via prh, and manual fixes for doubled joshi, sentence length issues.
+
+3. **package.json**: Added `lint:text` script.
+
+4. **CLAUDE.md**: Added writing style rules section including English-ism expressions table and fragment sentence pattern rule.
+
+5. **Article restructuring (major)**: User complained about:
+   - bare clone being "補足" (footnote) instead of equal option
+   - 複数clone being the current approach
+   - シンボリックリンク being portrayed as "best" when user doesn't think it is
+   - Problem description scattered in 3 places
+   User requested editorial restructuring for readability.
+
+6. **Full article rewrite**: Restructured to:
+   - 導入（複数cloneの課題）
+   - git worktree とは
+   - git worktree の問題点（problem description unified here）
+   - Claude Code の --worktree フラグ
+   - 並行開発の構成パターン（3 equal options: 複数clone/worktree/bare clone）
+   - gitignoreファイルの引き継ぎ問題を解決する方法（4 solutions）
+   - 他ツールとの相性
+   - どれを選ぶか
+
+7. **Many specific line edits**: User requested numerous specific fixes to the article:
+   - L15: 「知らなければ」が偉そう
+   - L23: ディスクの話は重要でない
+   - L38: .git がポインタという説明が分かりにくい
+   - L54: 誰が言ったかより検証で判明した問題を列挙
+   - L80: X埋め込みHTMLを貼り込む
+   - L112: 分かりにくい
+   - L275: WorktreeCreate の「代行フック」の意味が分からない
+   - L371: シンボリックリンク説明が詳細すぎる
+   - L442: git clone --shared の説明がない・分類が後半すぎ
+   - L550: wtpがtaktで使えない理由の説明がない
+
+8. **Article split into 2**: User requested splitting into:
+   - Article 1: git コマンド記事（git-parallel-development-guide.md）
+   - Article 2: Claude Code article (slimmed down)
+
+9. **New git article created**: git-parallel-development-guide.md with sections on stash, worktree, patterns, post-checkout hook, submodule.
+
+10. **git article fixes**: User requested many fixes:
+    - L15: スタック→退避
+    - L22: git checkout → git switch (confirmed from official docs Git 2.23+)
+    - L29: 1文に簡潔化
+    - L33: 「ディレクトリを生やす」→公式表現
+    - L47: .git ファイルの仕組みをcommondir含め詳しく（sandbox verified）
+    - L73: 複数cloneをworktree型として分類しない
+    - L93: bare cloneをcloneの1種としてまとめる
+    - L171: submodule+worktree の検証結果を反映（毎回 git submodule update --init が必要）
+    - CLAUDE.md: 専門用語説明ルールを追加
+
+11. **TOC request**: User wants TOC on articles. Asked about position: top vs right sidebar. Needs to consider which is better for technical blogs.
+
+12. **Additional user question about TOC position**: "記事の上の方なのか、右がいいのか技術ブログではどちらが読みやすくなるか検討して。全体像が見えつつ1つずつ理解したいと思っている。"
+
+The last state was:
+- Just read BlogPost.astro and [slug].astro to understand the current layout
+- BlogPost.astro has no TOC implementation
+- [slug].astro uses `render()` which returns Content but NOT headings (headings would need to be extracted differently)
+- The user wants TOC and is asking about position (top vs right)
+- Need to implement TOC in BlogPost.astro
+
+Current layout:
+```astro
+<body>
+  <Header />
+  <main>
+    <article>
+      <div class="post-header">...</div>
+      <div class="prose">
+        <slot />
+      </div>
+    </article>
+  </main>
+  <Footer />
+</body>
+```
+
+For TOC implementation in Astro, `getHeadings()` is available from `render()`. Currently [slug].astro uses:
+```astro
+const { Content } = await render(post);
+```
+But it could also get:
+```astro
+const { Content, headings } = await render(post);
+```
+
+Then pass headings to BlogPost layout.
+
+The user's goal: "全体像が見えつつ1つずつ理解したいと思っている" - they want to see the overview while reading step by step.
+
+For technical blogs:
+- **Top of article TOC**: Good for mobile, simple implementation, doesn't require layout changes, reader reads it then scrolls past
+- **Right sticky sidebar TOC**: Better for long comparison articles, always visible as you scroll, can highlight current section - but requires layout change (needs to be wide enough)
+
+Given the user's goal ("全体像が見えつつ") and that these are long comparison articles, a sticky right sidebar is more useful. But current layout is single-column and doesn't have sidebar.
+
+Need to:
+1. Determine which TOC position to recommend
+2. Implement it
+
+Let me compile the summary now.
+
+Summary:
+1. Primary Request and Intent:
+   - Set up textlint in the blog repo with `preset-ja-technical-writing` and `prh` rules to catch English-ism expressions (面倒を見る etc.) and bad sentence patterns
+   - Add `lint:text` script to package.json
+   - Update CLAUDE.md with writing style rules and (later) terminology rules
+   - Editorially restructure the Claude Code parallel development article so: bare clone is a peer option (not "補足"), 複数clone is acknowledged as the current approach, シンボリックリンク is one option among equals (not "recommended"), and problem descriptions are consolidated to one place
+   - Split the original long article into 2 articles:
+     - `git-parallel-development-guide.md`: git commands reference (stash, worktree, bare clone, clone --shared, hooks, submodule)
+     - `claude-code-parallel-development-with-worktree.md`: slimmed down to focus on Claude Code .env problem and solutions
+   - Fix numerous specific line issues in the git article (偉そうな表現, git switch vs checkout, .git file explanation, classification errors, submodule+worktree behavior from sandbox)
+   - Add TOC (table of contents) to articles; user asking about top-of-article vs right sidebar positioning ("全体像が見えつつ1つずつ理解したいと思っている")
+
+2. Key Technical Concepts:
+   - **textlint**: Natural language linter; `preset-ja-technical-writing` + `textlint-rule-prh` + `textlint-filter-rule-comments`
+   - **prh.yml**: Custom word replacement rules (面倒を見る→担う, ハンドルする→処理する, etc.)
+   - **git worktree**: 1 repository, multiple working trees; `.git` file (not dir) points to main `.git/worktrees/<name>/`; `commondir` file points to `../..` (shared objects/refs); HEAD and index are per-worktree
+   - **bare clone** (`git clone --bare`): No working directory; used as base for equal-peer worktrees
+   - **git clone --shared**: Creates independent `.git/` but links objects; hooks NOT inherited; used by takt
+   - **post-checkout hook**: Fires on `git worktree add` when `$1 == 0000...0000` (zero hash); worktree型tools share this hook; clone型 (takt) do not
+   - **WorktreeCreate hook** (Claude Code 2.1.50+): Not a notification hook but a "delegation hook" — when set, Claude delegates ALL of `git worktree add` to the script, which must return `{"worktreePath": "..."}` to stdout
+   - **wtp**: Git worktree management tool; `.wtp.yml` committable config; does NOT work with takt (takt uses `git clone --shared`, not `git worktree add`)
+   - **git switch**: Introduced in Git 2.23 as branch-switching-only replacement for `git checkout`; officially recommended
+   - **git submodule + worktree**: Submodule is NOT auto-initialized in new worktree; `git submodule update --init` needed each time; can be automated via post-checkout hook
+   - **Astro `getHeadings()`**: Available from `render(post)` return value; used to implement TOC
+   - **worktree型 vs clone型**: worktree型 (Claude Code, Codex, Gemini, Aider) shares hooks; clone型 (takt) does not
+
+3. Files and Code Sections:
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/.textlintrc.json`**
+     - Created to configure textlint rules
+     - Requires `textlint-filter-rule-comments` package for `filters.comments`
+     ```json
+     {
+       "rules": {
+         "prh": { "rulePaths": ["./prh.yml"] },
+         "preset-ja-technical-writing": {
+           "sentence-length": { "max": 100 },
+           "no-exclamation-question-mark": true,
+           "no-doubled-joshi": true,
+           "no-doubled-conjunctive-particle-ga": true,
+           "no-double-negative-ja": true,
+           "no-invalid-control-character": true,
+           "ja-no-successive-word": true,
+           "ja-no-abusage": true
+         }
+       },
+       "filters": { "comments": true }
+     }
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/prh.yml`**
+     - Custom word replacement rules
+     ```yaml
+     version: 1
+     rules:
+       - expected: 担う
+         patterns: [面倒を見る]
+       - expected: 処理する
+         patterns: [ハンドルする]
+       - expected: 対応する
+         patterns: [カバーする]
+       - expected: 構成する
+         patterns: [セットアップする]
+       - expected: 実行する
+         patterns: [ランする, 走らせる]
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/package.json`**
+     - Added `lint:text` script
+     ```json
+     "lint:text": "textlint 'src/content/blog/**/*.md'"
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/CLAUDE.md`**
+     - Added "専門用語の説明ルール" section: don't use unexplained technical terms
+     - Added "文章スタイルルール" section: English-ism expression table + fragment sentence pattern rule
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/claude-code-parallel-development-with-worktree.md`**
+     - Heavily restructured multiple times
+     - Current structure: 導入 → .env問題 → Claude Code --worktree フラグ → 4つの解決策 → 他ツール相性 → どれを選ぶか
+     - Includes X embed HTML for Boris Cherny tweet
+     - Links to git-parallel-development-guide.md for git fundamentals
+     - textlint passing
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/git-parallel-development-guide.md`** (NEW)
+     - New article covering git fundamentals for parallel development
+     - Sections: git stash, git worktree (with commondir explanation), 4 patterns comparison, post-checkout hook, git submodule
+     - Key fixes applied: git switch instead of checkout, commondir explanation for .git file, 4-pattern classification (複数clone/worktree通常/bare clone+worktree/git clone --shared), submodule+worktree behavior from sandbox verification
+     - textlint passing
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/layouts/BlogPost.astro`**
+     - Read to understand current layout for TOC implementation
+     - Currently single-column layout, no TOC
+     - Structure: `<Header /> <main><article><post-header /><div class="prose"><slot /></div></article></main> <Footer />`
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/pages/[slug].astro`**
+     - Read to understand how headings can be extracted
+     - Currently: `const { Content } = await render(post);`
+     - Can be changed to: `const { Content, headings } = await render(post);` to get headings for TOC
+
+4. Errors and Fixes:
+   - **textlint "No rules found"**: Config file not picked up → root cause was `filters.comments` requiring `textlint-filter-rule-comments` package which wasn't installed → fixed with `pnpm add -D textlint-filter-rule-comments`
+   - **textlint `arabic-kanji-numbers` error** (`一つ → 1つ`): Auto-fixed with `textlint --fix`
+   - **Multiple `no-doubled-joshi` errors**: Manual rewrites to avoid repeated particles (か/も/が/に/と)
+   - **`sentence-length` exceeding 100 chars**: Split long sentences in both articles
+   - **`ja-no-mixed-period` (文末が「。」で終わっていない)**: Fixed colons at end of sentences before lists
+   - **git submodule worktree classification errors**: L73 had 複数clone incorrectly grouped under "worktree型"; L93 had bare clone in wrong category → restructured to 4 independent patterns
+
+5. Problem Solving:
+   - **Problem description scattered in 3 places** → unified into single `## git worktree の問題点` section
+   - **bare clone as "補足"** → promoted to equal peer option in a 4-pattern comparison
+   - **シンボリックリンク as "recommended"** → demoted to "解決策4" alongside other options
+   - **「ディレクトリを生やす」直訳表現** → changed to official "複数の作業ディレクトリ（ワーキングツリー）を持てる仕組み"
+   - **worktree .git file explanation unclear** → added commondir explanation with directory tree showing what's shared vs per-worktree
+   - **submodule behavior with worktree** → verified in sandbox: NOT auto-initialized; need `git submodule update --init` each time; can be automated in post-checkout hook
+   - **git clone --shared explanation missing** → added comparison table against bare clone
+
+6. All User Messages:
+   - "なぜbare clone アプローチは補足なのか、「複数clone」は今のアプローチ。でそれぞれ選択肢なのではないか。実際に使っているアプローチがいいと思ってない。そこで、今回の検証をしたため。問題の整理を記事ないの複数個所に書かれているためまとまりがない。編集者として記事全体を見直して、読みやすくなる順番にしてほしい。"
+   - "src/content/blog/claude-code-parallel-development-with-worktree.md:L15 git worktree を知らなければ、という言い方が偉そう。[...複数の行指摘...]"
+   - "[system-reminder: file modified] src/content/blog/.../worktree.md:L502 taktにはwtpのような機能が内蔵されているということなのか？その場合、ここまで書いたことは一切気にしなくていいのか？また、そもそも1つの記事としてまとめたままでいいのか気になってきた。最も大事なイシューはなんなのか？"
+   - "src/content/blog/claude-code-parallel-development-with-worktree.md:L558 ここまでの理解はしてない。"
+   - "平行開発におけるgit stash、git worktree、hook、bare、clone --sahred、submodule(これは平行開発に必要なら)のように、まずはgitコマンドを理解する記事を別にした方が、全体の見通しが良くなるのではないか？"
+   - "git コマンド記事を別に作り、本記事をスリム化する"
+   - "git-parallel-development-guide.md の内容確認して"
+   - "修正して。src/content/blog/git-parallel-development-guide.md:L15 スタックに積み→退避して [...複数の行指摘...] src/content/blog/git-parallel-development-guide.md:L171 たとえば、共通の設定ファイルを別のgitリポジトリで管理している場合に関係しないのか？sandboxで確認してほしい。の内容も含めて。"
+   - "こういう複数の比較記事には記事の上の方にtocがほしい"
+   - "記事の上の方なのか、右がいいのか技術ブログではどちらが読みやすくなるか検討して。全体像が見えつつ1つずつ理解したいと思っている。"
+
+7. Pending Tasks:
+   - **TOC実装**: ユーザーが「全体像が見えつつ1つずつ理解したい」という目的でTOCを求めている。位置（記事上部 vs 右サイドバー）を検討した上で実装する
+   - `BlogPost.astro` に TOC コンポーネントを追加する
+   - `[slug].astro` で `const { Content, headings } = await render(post);` に変更して headings を BlogPost に渡す
+
+8. Current Work:
+   直前の作業：TOC実装のための調査として `BlogPost.astro` と `[slug].astro` を読んだ。
+
+   **BlogPost.astro の現在の構造**（TOC未実装、単一カラム）:
+   ```astro
+   <body>
+     <Header />
+     <main>
+       <article>
+         <div class="post-header">
+           <div class="post-meta">...</div>
+           <h1>{title}</h1>
+         </div>
+         <div class="prose">
+           <slot />
+         </div>
+       </article>
+     </main>
+     <Footer />
+   </body>
+   ```
+
+   **[slug].astro の現在の実装**:
+   ```astro
+   const { Content } = await render(post);
+   // headings も取得可能: const { Content, headings } = await render(post);
+   ```
+
+   ユーザーが求めているのは「全体像が見えつつ1つずつ理解したい」TOCで、位置について「記事の上の方なのか、右がいいのか技術ブログではどちらが読みやすくなるか検討して」と質問している。
+
+9. Optional Next Step:
+   ユーザーの最新メッセージ「記事の上の方なのか、右がいいのか技術ブログではどちらが読みやすくなるか検討して。全体像が見えつつ1つずつ理解したいと思っている。」に答える。
+
+   現在の BlogPost.astro は単一カラムレイアウト。「全体像が見えつつ1つずつ理解したい」という目的には：
+   - **記事上部TOC**: シンプル実装、モバイル対応、しかし記事を読み進めると消える
+   - **右サイドバー sticky TOC**: 常時表示で全体像を把握しながら読める（ユーザーの目的に最適）ただし現在のレイアウトに幅の確保が必要
+
+   長い比較記事という性質と「全体像が見えつつ」という目的から、**右サイドバー sticky TOC** を推奨し、`BlogPost.astro` のレイアウトを2カラム（記事本文 + TOCサイドバー）に変更して実装する。具体的には `[slug].astro` で `headings` を取得し BlogPost に渡す実装を行う。
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+.agents/financial-teacher-system-survey.md .playwright-mcpはgit ignoreに追加して。書きかけの記事はpublished:falseにして。
+
+---
+
+.playwright-mcpもgit ignoreして
+
+---
+
+git ignoreに追加しといて
+
+---
+
+.claude/settings.local.json .claude/settings.jsonの内容を精査して。
+
+---
+
+不要なエントリの整理をして。
+
+---
+
+settings.local.jsonとsettings.jsonどちらに書いた方がいいか整理して。
+
+---
+
+はい
+
+---
+
+どれがcommitしてもよさそう?
+
+---
+
+コミットしていない記事はすべてpublished: falseで。
+
+---
+
+記事以外はcommitしてok
