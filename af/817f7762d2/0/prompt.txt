@@ -1,0 +1,312 @@
+> claude -w feature1
+
+    ✻
+    |
+   ▟█▙     Claude Code v2.1.50
+ ▐▛███▜▌   Sonnet 4.6 · Claude Max
+▝▜█████▛▘  ~/src/github.com/nansystem/sandbox/.claude/worktrees/feature1
+  ▘▘ ▝▝
+  ⎿  SessionStart:startup says:
+
+     Powered by Entire:
+       This conversation will be linked to your next commit.になった　http://localhost:4321/claude-code-parallel-development-with-worktreeの記事に反映して。
+
+---
+
+● Update(~/src/github.com/nansystem/sandbox/.claude/settings.json)
+  ⎿  Added 22 lines
+       74            }
+       75          ]
+       76        }
+       77 +    ],
+       78 +    "WorktreeCreate": [
+       79 +      {
+       80 +        "matcher": "",
+       81 +        "hooks": [
+       82 +          {
+       83 +            "type": "command",
+       84 +            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] WorktreeCreate fired\" >> /tmp/worktree-hook
+          +.log"
+       85 +          }
+       86 +        ]
+       87 +      }
+       88 +    ],
+       89 +    "WorktreeRemove": [
+       90 +      {
+       91 +        "matcher": "",
+       92 +        "hooks": [
+       93 +          {
+       94 +            "type": "command",
+       95 +            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] WorktreeRemove fired\" >> /tmp/worktree-hook
+          +.log"
+       96 +          }
+       97 +        ]
+       98 +      }
+       99      ]
+      100    },
+      101    "permissions": {追加したらが画面が固まったので、2.1.50 では WorktreeCreate / WorktreeRemove フックイベントも追加された。についての該当箇所はすべて削除して。
+
+---
+
+Powered by Entire:
+       This conversation will be linked to your next commit.はいらない
+
+---
+
+前章の問題は別途対策が必要だ。は削除。
+
+---
+
+解決策2を削除して。
+
+---
+
+sandbox on ⎇ master [!?⇕] is 📦 v1.0.0 via ⬢ v22.13.1 🅰 personal-admin  ️G prigela took 7m36s
+> claude -w feature2
+が固まってしまう。
+
+---
+
+`claude -w feature2` 試してみた。どうなってる?
+
+---
+
+固まってない。/home/nancy/src/github.com/nansystem/sandboxしたのworktreeに.envがコピーされてnode_modulesは入っているか?
+
+---
+
+sandbox on ⎇ master [!?⇕] is 📦 v1.0.0 via ⬢ v22.13.1 🅰 personal-admin  ️G prigela
+> cat .git/hooks/post-checkout
+#!/bin/bash
+PREV_HEAD="$1"
+
+[ "$PREV_HEAD" != "0000000000000000000000000000000000000000" ] && exit 0
+
+WORKTREE_DIR="$(pwd)"
+MAIN_DIR="$(realpath "$(git rev-parse --git-common-dir)/..")"
+
+if [ -f "$MAIN_DIR/.env" ]; then
+    cp "$MAIN_DIR/.env" "$WORKTREE_DIR/.env"
+    echo "[worktree-init] .env をコピーしました"
+fi
+
+pnpm installだからコピーは出来たってことだよね?
+
+---
+
+じゃあpnpm-lock.yamlコミットしてよ
+
+---
+
+`claude -w feature3` したのでnode_modules 入るか確認して
+
+---
+
+git pull --rebase した。次どうすればいい？
+
+---
+
+`claude -w feature4` したのでnode_modules 入るか確認して
+
+---
+
+記事の比較表の `claude -w` で発火の列、実測済みに更新して
+
+---
+
+.env 問題を解決する3つの方法
+解決策1：post-checkout フックがうそだよな。
+
+---
+
+git worktree add を実行すると post-checkout フックが発火する。まず echo だけのシンプルなフックで確認する。
+
+#!/bin/bash
+echo "[post-checkout] called: PREV=$1 NEW=$2 FLAG=$3"
+chmod +x .git/hooks/post-checkout
+$ git worktree add /tmp/test-worktree -b test/hook-check
+Preparing worktree (new branch 'test/hook-check')
+HEAD is now at f5e25e2 Merge pull request #2 from ...
+[post-checkout] called: PREV=0000000000000000000000000000000000000000 NEW=f5e25e23ace945a7a45a431a381e7dfa4cb638f5 FLAG=1ここgit worktree addで確認するのがいいか、claude -wで確認するのがいいかどっちがこの記事にあってる？
+
+---
+
+claude -wで確認する方向で記事を更新して
+
+---
+
+実際に> pwd
+/home/nancy/src/github.com/nansystem/sandboxで試したい
+
+---
+
+`claude -w hook-check` したので `/tmp/hook.log` 確認して
+
+---
+
+.env 問題の解決策：post-checkout フックは1. post-checkout フックが呼ばれること、2. ファイルがコピーできること(.envなど)、3. pnpm iなど依存関係を解決できること、のように順を追って確認した記事にしたい
+
+---
+
+ステップ2：.env がコピーできることを確認
+フックに .env のコピー処理を追加する。
+
+#!/bin/bash
+[ "$1" != "0000000000000000000000000000000000000000" ] && exit 0
+
+WORKTREE_DIR="$(pwd)"
+MAIN_DIR="$(realpath "$(git rev-parse --git-common-dir)/..")"
+
+if [ -f "$MAIN_DIR/.env" ]; then
+    cp "$MAIN_DIR/.env" "$WORKTREE_DIR/.env"
+fi
+claude -w env-check を実行してセッション終了後、worktree に .env があるか確認する。
+
+$ ls -la .claude/worktrees/env-check/.env
+-rw-r--r-- 1 nancy nancy 222 Feb 21 16:44 .claude/worktrees/env-check/.env
+.env がコピーされていた。もステップ1と同じ要領で確認して。
+
+---
+
+`claude -w env-check` したので確認して
+
+---
+
+$ claude -w hook-checkと書き方そろえて。
+
+---
+
+フックに pnpm install を追加する。pnpm-lock.yaml は git 管理しておく必要がある。gitignore されていると worktree にコピーされず、pnpm install が空振りする。
+
+#!/bin/bash
+[ "$1" != "0000000000000000000000000000000000000000" ] && exit 0
+
+WORKTREE_DIR="$(pwd)"
+MAIN_DIR="$(realpath "$(git rev-parse --git-common-dir)/..")"
+
+if [ -f "$MAIN_DIR/.env" ]; then
+    cp "$MAIN_DIR/.env" "$WORKTREE_DIR/.env"
+fi
+
+# node_modules を共有すると依存変更が全 worktree に影響するため、個別にインストール
+pnpm install
+claude -w deps-check を実行してセッション終了後、node_modules があるか確認する。
+
+$ ls .claude/worktrees/deps-check/node_modules/
+dayjs
+.env とパッケージが揃った状態で worktree が起動する。
+
+欠点: .git/hooks/ は git 管理外。新しいクローンや新しいメンバーには自動適用されない。 ここも。
+
+---
+
+`claude -w deps-check` したので確認して
+
+---
+
+まとめは文章で簡潔に説明するだけでいい。ファイルコピーも依存関係の解決もgit標準のpost-checkoutフックで対応できた、とか。
+
+---
+
+#!/bin/bash
+echo "[post-checkout] called: PREV=$1 NEW=$2 FLAG=$3" >> /tmp/hook.logだけだとどこにファイルを置いたのか、権限付与したのか、がわからない
+
+---
+
+#!/bin/bash
+[ "$1" != "0000000000000000000000000000000000000000" ] && exit 0
+
+WORKTREE_DIR="$(pwd)"
+MAIN_DIR="$(realpath "$(git rev-parse --git-common-dir)/..")"
+
+if [ -f "$MAIN_DIR/.env" ]; then
+    cp "$MAIN_DIR/.env" "$WORKTREE_DIR/.env"
+fi　#!/bin/bash
+[ "$1" != "0000000000000000000000000000000000000000" ] && exit 0
+
+WORKTREE_DIR="$(pwd)"
+MAIN_DIR="$(realpath "$(git rev-parse --git-common-dir)/..")"
+
+if [ -f "$MAIN_DIR/.env" ]; then
+    cp "$MAIN_DIR/.env" "$WORKTREE_DIR/.env"
+fi
+
+# node_modules を共有すると依存変更が全 worktree に影響するため、個別にインストール
+pnpm installもhook配置すること分かるようにした方がいいのでは?
+
+---
+
+.env や Claude の設定ファイルを各クローンで手動管理するのが煩雑になってきた。クローンじゃなくない? worktree作成時にコミットしていないファイル.envや自分独自のrulesやskills、node_moduelsなどの依存関係は引き継がれないのが面倒である。「の次の発言をきっかけに、hooks の使い方を検証した。」→「はYou can also customize it with worktree hooks」と言ってるので、gitの標準的なhooksでこの問題を解決できるか確認した。
+
+---
+
+post-checkoutへの公式のリンクは記事の上の方に記載して。
+
+---
+
+git の標準的な hooks であるpost-checkout フック](http
+         +s://git-scm.com/docs/githooks#_post_checkout)のように記事前半にポイントを書いて。
+
+---
+
+「git worktree・bare clone・git clone —shared の仕」は先頭になお、のように補足であることを書いといて。
+
+---
+
+この記事は Claude Code 固有の問題と解決策を扱う。は削除。
+
+---
+
+git worktree の .env 問題
+git worktree を作ると、最初から問題がある。
+
+git worktree add -b feature/B ../my-app-feature-B
+
+ls ../my-app-feature-B/
+# README.md  src/  package.json
+# → .env がない（gitignore されているので引き継がれない）
+# → node_modules がない（gitignore されているので引き継がれない）
+git管理されているファイル（CLAUDE.md、コミット済みの .claude/rules/ など）は worktree 間で自動共有される。gitignoreされたファイル（.env、未コミットの個人 rules/skills、node_modules）は引き継がれない。は削除。
+
+---
+
+シェルスクリプト数行で済み、Claude Code 固有のツールは不要だ。はいらない。
+
+---
+
+記事の内容に合わせてSEOにあったタイトルに修正して。
+
+---
+
+タイトルに`が入っていると読みづらい。
+
+---
+
+：post-checkout フックは間違いなくgit標準だよね?
+
+---
+
+git 組み込みのpost-checkout フックを検証したがいい。
+
+---
+
+：いらない
+
+---
+
+記事を公開して。
+
+---
+
+git commit して push して
+
+---
+
+>  pnpm approve-builds
+✔ Choose which packages to build (Press <space> to select, <a> to toggle all, <i> to invert selection) · No items were selected
+
+All packages were added to ignoredBuiltDependencies.
+
+---
+
+/home/nancy/src/github.com/nansystem/sandbox/sdd-article/spec-driven-development.mdをこのリポジトリの記事にコピーして、frontmatterなどを設定して
