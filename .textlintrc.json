@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "prh": {
+      "rulePaths": ["./prh.yml"]
+    },
+    "preset-ja-technical-writing": {
+      "sentence-length": {
+        "max": 100
+      },
+      "no-exclamation-question-mark": true,
+      "no-doubled-joshi": true,
+      "no-doubled-conjunctive-particle-ga": true,
+      "no-double-negative-ja": true,
+      "no-invalid-control-character": true,
+      "ja-no-successive-word": true,
+      "ja-no-abusage": true
+    }
+  },
+  "filters": {
+    "comments": true
+  }
+}

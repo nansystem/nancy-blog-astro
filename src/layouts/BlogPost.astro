@@ -5,9 +5,12 @@ import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Heading = { depth: number; slug: string; text: string };
+type Props = CollectionEntry<'blog'>['data'] & { headings?: Heading[] };
 
-const { title, description, date, categories } = Astro.props;
+const { title, description, date, categories, headings = [] } = Astro.props;
+
+const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
@@ -77,7 +80,7 @@ const jsonLd = JSON.stringify([
 
 	<body>
 		<Header />
-		<main>
+		<main class:list={[{ 'has-toc': tocHeadings.length > 0 }]}>
 			<article>
 				<div class="post-header">
 					<div class="post-meta">
@@ -100,12 +103,32 @@ const jsonLd = JSON.stringify([
 					<slot />
 				</div>
 			</article>
+			{tocHeadings.length > 0 && (
+				<nav class="toc" aria-label="目次">
+					<p class="toc-title">目次</p>
+					<ol>
+						{tocHeadings.map(h => (
+							<li class:list={[{ 'toc-h3': h.depth === 3 }]}>
+								<a href={`#${h.slug}`}>{h.text}</a>
+							</li>
+						))}
+					</ol>
+				</nav>
+			)}
 		</main>
 		<Footer />
 	</body>
 </html>
 
 <style>
+	main.has-toc {
+		width: 1060px;
+		display: grid;
+		grid-template-columns: 1fr 220px;
+		column-gap: 2.5rem;
+		align-items: start;
+	}
+
 	.post-header {
 		margin-bottom: 2em;
 	}
@@ -131,4 +154,80 @@ const jsonLd = JSON.stringify([
 	.prose {
 		color: rgb(var(--gray-dark));
 	}
+
+	/* TOC */
+	.toc {
+		position: sticky;
+		top: 2rem;
+		font-size: 0.82em;
+		line-height: 1.5;
+		border-left: 2px solid rgb(var(--border));
+		padding-left: 1em;
+	}
+	.toc-title {
+		font-weight: 700;
+		color: rgb(var(--black));
+		margin: 0 0 0.6em;
+		font-size: 0.95em;
+	}
+	.toc ol {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+	.toc li {
+		margin-bottom: 0.35em;
+	}
+	.toc-h3 {
+		padding-left: 0.75em;
+	}
+	.toc a {
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+	.toc a:hover {
+		color: var(--accent);
+	}
+	.toc a.active {
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	@media (max-width: 1100px) {
+		main.has-toc {
+			width: auto;
+			max-width: calc(100% - 2em);
+			grid-template-columns: 1fr;
+		}
+		.toc {
+			display: none;
+		}
+	}
 </style>
+
+<script>
+	const headingElements = Array.from(
+		document.querySelectorAll<HTMLElement>('article h2, article h3')
+	);
+	const tocLinks = document.querySelectorAll<HTMLAnchorElement>('.toc a');
+
+	if (tocLinks.length > 0) {
+		function updateActive() {
+			let activeIdx = -1;
+			for (let i = 0; i < headingElements.length; i++) {
+				if (headingElements[i].getBoundingClientRect().top <= 120) {
+					activeIdx = i;
+				}
+			}
+			tocLinks.forEach(link => link.classList.remove('active'));
+			if (activeIdx >= 0) {
+				const id = headingElements[activeIdx].id;
+				const active = document.querySelector<HTMLAnchorElement>(`.toc a[href="#${id}"]`);
+				if (active) active.classList.add('active');
+			}
+		}
+
+		window.addEventListener('scroll', updateActive, { passive: true });
+		updateActive();
+	}
+</script>

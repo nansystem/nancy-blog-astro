@@ -1,0 +1,19 @@
+version: 1
+rules:
+  # 英語的な直訳表現
+  - expected: 担う
+    patterns:
+      - 面倒を見る
+  - expected: 処理する
+    patterns:
+      - ハンドルする
+  - expected: 対応する
+    patterns:
+      - カバーする
+  - expected: 構成する
+    patterns:
+      - セットアップする
+  - expected: 実行する
+    patterns:
+      - ランする
+      - 走らせる
