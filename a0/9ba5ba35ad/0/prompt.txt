@@ -1,0 +1,2226 @@
+XDG dotfiles submodule symlinksをそれぞれの理解と組みあわせを理解したい。なお、claudeがXDG非対応https://github.com/anthropics/claude-code/issues/1455らしい。もともと興味を持ったのはclaudeで並行して3つローカルで開発したくて同じリポジトリを複数クローンしている。リポジトリにコミットしていない.envなどのコミットしていないclaude skillsやrulesがあり、どう管理するのがベストか知りたくなったため。そこでディレクトリを切って実際にどう違うのか調査して。なお、https://github.com/satococoa/wtpも気になっている。
+
+---
+
+borisはWe directly use git worktrees https://git-scm.com/docs/git-worktree
+
+You can also customize it with worktree hooksといっていたけど、worktree hooksとは?
+
+---
+
+ここまでの調査内容で、/home/nancy/src/github.com/nansystem/nancy-blog-astroにclaude codeにおける平行開発の選択肢および最もよいと思われる方法をまとめた記事を書きたい。
+そのため、sandboxで調査したが、関係なかったことは無理に入れないこと。
+記事の構成としてはclaude code2.1.49で--worktree (-w) flagが導入されたことを起点として、git worktreeの問題点と解決方法を示す記事を書きたい。
+
+https://code.claude.com/docs/en/vs-code#use-git-worktrees-for-parallel-tasksの内容は以下
+Run parallel Claude Code sessions with Git worktrees
+When working on multiple tasks at once, you need each Claude session to have its own copy of the codebase so changes don’t collide. Git worktrees solve this by creating separate working directories that each have their own files and branch, while sharing the same repository history and remote connections. This means you can have Claude working on a feature in one worktree while fixing a bug in another, without either session interfering with the other.
+Use the --worktree flag to create an isolated worktree and start Claude in it. The value you pass becomes the worktree directory name and branch name:
+# Start Claude in a worktree named "feature-auth"
+# Creates .claude/worktrees/feature-auth/ with a new branch
+claude -w feature-auth
+
+# Start another session in a separate worktree
+claude -w bugfix-123
+If you omit the name, Claude generates a random one automatically:
+# Auto-generates a name like "bright-running-fox"
+claude -w
+Worktrees are created at <repo>/.claude/worktrees/<name> and branch from the default remote branch. The worktree branch is named worktree-<name>.
+You can also ask Claude to “work in a worktree” or “start a worktree” during a session, and it will create one automatically.
+​
+Worktree cleanup
+When you exit a worktree session, Claude handles cleanup based on whether you made changes:
+No changes: the worktree and its branch are removed automatically
+Changes or commits exist: Claude prompts you to keep or remove the worktree. Keeping preserves the directory and branch so you can return later. Removing deletes the worktree directory and its branch, discarding all uncommitted changes and commits
+To clean up worktrees outside of a Claude session, use manual worktree management.
+Add .claude/worktrees/ to your .gitignore to prevent worktree contents from appearing as untracked files in your main repository.
+​
+Manage worktrees manually
+For more control over worktree location and branch configuration, create worktrees with Git directly. This is useful when you need to check out a specific existing branch or place the worktree outside the repository.
+# Create a worktree with a new branch
+git worktree add ../project-feature-a -b feature-a
+
+# Create a worktree with an existing branch
+git worktree add ../project-bugfix bugfix-123
+
+# Start Claude in the worktree
+cd ../project-feature-a && claude
+
+# Clean up when done
+git worktree list
+git worktree remove ../project-feature-a
+Learn more in the official Git worktree documentation.
+Remember to initialize your development environment in each new worktree according to your project’s setup. Depending on your stack, this might include running dependency installation (npm install, yarn), setting up virtual environments, or following your project’s standard setup process.
+For automated coordination of parallel sessions with shared tasks and messaging, see agent teams.
+
+claude codeのchangelogは以下
+2.1.49
+Improved MCP OAuth authentication with step-up auth support and discovery caching, reducing redundant network requests during server connections
+Added --worktree (-w) flag to start Claude in an isolated git worktree
+Subagents support isolation: "worktree" for working in a temporary git worktree
+
+2.1.50
+Added WorktreeCreate and WorktreeRemove hook events, enabling custom VCS setup and teardown when agent worktree isolation creates or removes worktrees.
+Added support for isolation: worktree in agent definitions, allowing agents to declaratively run in isolated git worktrees.
+
+---
+
+[Request interrupted by user for tool use]
+
+---
+
+Boris Cherny（Claude Code 作者の1人）は、git worktree の使い勝手についてこう指摘している。は間違っている。指摘したのはNumman Ali
+@nummanali
+·
+46分
+I have a few problems with worktrees:
+- you need to reinstall everything 
+- you need to clean up after 
+- conflicts arise again on merge 
+- different agents handle it their way 
+
+I suppose for incremental changes that are tight this makes sense 
+
+But isn’t that going backwards?
+
+Surely we’re at the stage where you plan out the work and an agents works for 1 hour+ to cover full features  - well  I do so 
+
+Please, tell me, do you actually use worktrees?
+
+---
+
+Claude Code 2.1.50のAdded WorktreeCreate and WorktreeRemove hook events, enabling custom VCS setup and teardown when agent worktree isolation creates or removes worktrees.で対応できるのか、sandboxで検証してほしい。
+
+---
+
+ここまでの調査結果を踏まえて、どういう選択肢があって、どれが有力なのか結論出せる？
+
+---
+
+記事に盛り込んで。また、claude以外のオーケストレーションツールやcodexを使った場合を考慮するとどの選択肢が有力か
+
+---
+
+taktのようなhttps://github.com/nrslib/taktツールを使った場合にも応用出来る方法を選択したい
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L6-L7
+AI１つにして。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L24
+通常、はちょっとえらそう。手っ取り早いというより、git worktreeの知識がなくてもできる、が正確
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L33
+冗長。もっと簡潔に。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L56
+ここも冗長。簡潔に1文にして。全体的に文の区切りが変なので見直して。
+
+---
+
+Claude Codeが面倒を見る。は英語っぽいのでこの言い回ししないようにrulesなのか文章のreviewなのかで除けるようにしたい。ファイル1行。〜だのような文章を書かないようにここもruleなのかreviewなのかあるいはclaude.mdなのか最も最適な形で定義したいまたtextlintも入れたい。
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze this conversation to create a thorough summary.
+
+1. **Initial request**: User wanted to understand XDG, dotfiles, submodules, and symlinks together, motivated by wanting to manage uncommitted Claude skills/rules across multiple clones of the same repository. Also interested in wtp tool and Claude's XDG non-compliance (issue #1455).
+
+2. **Investigation phase**: Created investigation directories in sandbox, researched git worktree vs clone, bare clone approach, wtp tool, and takt-sdd repository structure.
+
+3. **Blog article request**: User wanted to write an article in nancy-blog-astro about parallel development with Claude Code, starting from the --worktree flag introduced in v2.1.49.
+
+4. **Attribution correction**: User corrected that Numman Ali (not Boris Cherny) raised the worktree problems.
+
+5. **WorktreeCreate hook verification**: User asked to verify if WorktreeCreate/WorktreeRemove hooks (2.1.50) solve the .env problem. Key findings:
+   - Hook fires with `isolation: "worktree"` subagents
+   - It's a "creation delegation hook" not a notification hook
+   - Must return `{"worktreePath": "/path"}` to stdout
+   - Does NOT fire on `git worktree add` alone
+
+6. **Conclusion request**: User wanted a clear conclusion on which approach to use.
+
+7. **Codex/other tools consideration**: Added analysis of other tools (Codex, Gemini CLI, Aider).
+
+8. **takt consideration**: User wanted takt included. Investigation revealed takt uses `git clone --shared` not `git worktree add`, so post-checkout hook does NOT fire for takt.
+
+9. **Article edits**: User requested specific fixes:
+   - L6-7: Categories to single "AI"
+   - L24: Remove "通常、" and "手っ取り早い"
+   - L33: Make more concise
+   - L56: Make into one sentence, fix sentence structure
+
+10. **textlint + writing rules**: User wants to prevent "面倒を見る" and "ファイル1行。〜だ" patterns via:
+    - textlint for automated detection
+    - CLAUDE.md or rules for Claude's generation
+    - Currently installing textlint and got an error with the config
+
+The most recent work was setting up textlint in the blog repo - it failed with "No rules found" initially, then with an error about prh needing rulePaths options when run via command line (not config file). The config file approach should work but seems to not be picked up properly.
+
+Summary:
+1. Primary Request and Intent:
+   - Understand XDG/dotfiles/submodules/symlinks together in context of managing Claude Code config files across multiple repository clones
+   - Write a blog article in `/home/nancy/src/github.com/nansystem/nancy-blog-astro` about parallel development with Claude Code, centered on the `--worktree (-w)` flag introduced in v2.1.49
+   - Verify whether WorktreeCreate/WorktreeRemove hooks (v2.1.50) solve the `.env` problem
+   - Determine which solution is best when considering Claude Code, Codex, Gemini CLI, Aider, and takt
+   - Fix specific writing style issues in the article (attribution error, specific line edits)
+   - Set up textlint + Claude writing rules to prevent English-ism expressions like "面倒を見る" and fragment sentence patterns like "ファイル1行。〜だ"
+
+2. Key Technical Concepts:
+   - **git worktree**: Creates multiple working directories from one repo; `.git` becomes a file (pointer), objects shared
+   - **bare clone**: `git clone --bare` + `echo "gitdir: ./.bare" > .git` creates structure where all branches are equal worktrees
+   - **`claude -w` flag**: Creates worktree at `.claude/worktrees/<name>/`, auto-cleanup on session exit (v2.1.49)
+   - **WorktreeCreate hook**: NOT a notification hook—it's a creation delegation hook. When configured, it replaces Claude's internal `git worktree add`. Must return `{"worktreePath": "/path"}` to stdout. Fires on `isolation: "worktree"` subagents (confirmed). Does NOT fire on plain `git worktree add`.
+   - **post-checkout hook**: Fires on `git worktree add` when `$1 == 0000...0000`. Works for all worktree-based tools (Claude Code, Codex, Gemini CLI, Aider). Does NOT fire on `git clone --shared`.
+   - **`git clone --shared`**: Used by takt for isolation. Source repo's post-checkout hook does NOT fire. Cloned repo has empty `.git/hooks/`.
+   - **wtp tool**: `.wtp.yml` is committable config for worktree setup (copy/symlink/command hooks)
+   - **takt**: AI orchestration tool using `git clone --shared` for isolation—incompatible with post-checkout hook approach
+   - **textlint**: Natural language linter; `preset-ja-technical-writing` + `prh` for custom word corrections
+   - **XDG Base Directory Spec**: Claude Code is non-compliant (issue #1455), uses `~/.claude/` instead of `~/.config/claude/`
+
+3. Files and Code Sections:
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/claude-code-parallel-development-with-worktree.md`**
+     - Main blog article created and iteratively updated throughout the conversation
+     - Current frontmatter: `categories: [AI]`, `permalink: /claude-code-parallel-development-with-worktree`
+     - Sections: git worktree intro, `claude -w` flag, worktree problems, post-checkout hook, wtp, WorktreeCreate hook (with actual test results), bare clone approach, conclusion/decision guide, tool comparison (including takt), migration from multiple clones, symlink approach section (added by user/linter)
+     - Key fix: Attribution changed from "Boris Cherny" to "Numman Ali (@nummanali)" for worktree problems
+     - Recent edits: categories → `AI` only; L24 rewritten to remove "通常、" and "手っ取り早い"; L33 condensed; L56 restructured
+
+   - **WorktreeCreate hook test script** (temporary, in `~/.claude/settings.json` during testing):
+     ```bash
+     #!/bin/bash
+     INPUT=$(cat)
+     NAME=$(echo "$INPUT" | jq -r '.name')
+     CWD=$(echo "$INPUT" | jq -r '.cwd')
+     WORKTREE_PATH="$CWD/.claude/worktrees/$NAME"
+     mkdir -p "$CWD/.claude/worktrees"
+     cd "$CWD"
+     git worktree add -b "worktree-$NAME" "$WORKTREE_PATH"
+     if [ -f "$CWD/.env" ]; then
+         cp "$CWD/.env" "$WORKTREE_PATH/.env"
+     fi
+     jq -n --arg path "$WORKTREE_PATH" '{"worktreePath": $path}'
+     ```
+     - Confirmed: WorktreeCreate fires for `isolation: "worktree"` Task tool subagents
+     - Input JSON contains: `session_id`, `transcript_path`, `cwd`, `hook_event_name: "WorktreeCreate"`, `name`
+     - Must return `{"worktreePath": "..."}` — without this, error: "no successful output"
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/.textlintrc.json`** (newly created):
+     ```json
+     {
+       "rules": {
+         "prh": {
+           "rulePaths": ["./prh.yml"]
+         },
+         "preset-ja-technical-writing": {
+           "sentence-length": { "max": 100 },
+           "no-exclamation-question-mark": true,
+           "no-doubled-joshi": true,
+           "no-doubled-conjunctive-particle-ga": true,
+           "no-double-negative-ja": true,
+           "no-invalid-control-character": true,
+           "ja-no-successive-word": true,
+           "ja-no-abusage": true
+         }
+       },
+       "filters": { "comments": true }
+     }
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/prh.yml`** (newly created):
+     ```yaml
+     version: 1
+     rules:
+       - expected: 担う
+         patterns:
+           - 面倒を見る
+       - expected: 処理する
+         patterns:
+           - ハンドルする
+       - expected: 対応する
+         patterns:
+           - カバーする
+       - expected: 構成する
+         patterns:
+           - セットアップする
+       - expected: 実行する
+         patterns:
+           - ランする
+           - 走らせる
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/CLAUDE.md`**
+     - Already has "記事の禁止ワード" section with: 本質, 起点
+     - Needs update to add: "面倒を見る" style expressions and "ファイル1行。〜だ" fragment pattern rule
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/package.json`**
+     - Needs `"lint:text"` script added
+     - textlint packages installed: `textlint`, `textlint-rule-preset-ja-technical-writing`, `textlint-rule-prh`
+
+4. Errors and Fixes:
+   - **textlint "No rules found"**: Running `pnpm exec textlint` without explicit rules gave "No rules found". Tried adding `--rule prh --rule preset-ja-technical-writing` on CLI but got error: `textlint-rule-prh require Rule Options` (prh needs `rulePaths` in config, can't be passed via CLI alone). Config file approach (`.textlintrc.json`) is correct but wasn't being picked up in the test run — still investigating.
+   - **git submodule `file://` protocol**: When creating submodule simulation in sandbox, `git submodule add` failed with "transport 'file' not allowed". Fixed with `git -c protocol.file.allow=always submodule add`.
+   - **WorktreeCreate hook "no successful output"**: First hook attempt used `echo` + `cat` without returning JSON. Fixed by outputting `jq -n --arg path "$WORKTREE_PATH" '{"worktreePath": $path}'`.
+   - **Article attribution error**: Initially wrote "Boris Cherny（Claude Code 作者の1人）は、git worktree の使い勝手についてこう指摘している" — user corrected: the person raising problems was Numman Ali (@nummanali), Boris Cherny was the one who replied saying they use git worktrees.
+   - **Global settings pollution**: Added WorktreeCreate hooks to `~/.claude/settings.json` during testing; restored from backup after testing.
+
+5. Problem Solving:
+   - **Core problem solved**: gitignored files (`.env`, `node_modules`) don't carry over to worktrees. Three solutions verified:
+     1. post-checkout hook (fires on `git worktree add`, works for all worktree-based tools)
+     2. wtp (`.wtp.yml` committable config)
+     3. WorktreeCreate hook (Claude Code specific, fires for `isolation: "worktree"` subagents)
+   - **takt incompatibility discovered**: takt uses `git clone --shared` not `git worktree add`. Verified that `git clone --shared` does NOT trigger source repo's post-checkout hook. Solution: committed `scripts/worktree-setup.sh` + tool-specific calling mechanisms.
+   - **WorktreeCreate hook behavior clarified**: It's not a notification hook but a creation delegation hook—if configured, it must perform the git worktree creation itself and return the path.
+   - **textlint config**: `.textlintrc.json` created with correct structure but not yet confirmed working via CLI run (last command errored).
+
+6. All User Messages:
+   - "XDG dotfiles submodule symlinksをそれぞれの理解と組みあわせを理解したい。なお、claudeがXDG非対応...もともと興味を持ったのはclaudeで並行して3つローカルで開発したくて同じリポジトリを複数クローンしている..."
+   - "borisはWe directly use git worktrees...といっていたけど、worktree hooksとは?"
+   - "ここまでの調査内容で、/home/nancy/src/github.com/nansystem/nancy-blog-astroにclaude codeにおける平行開発の選択肢および最もよいと思われる方法をまとめた記事を書きたい。..."
+   - "Boris Cherny（Claude Code 作者の1人）は、git worktree の使い勝手についてこう指摘している。は間違っている。指摘したのはNumman Ali @nummanali..."
+   - "Claude Code 2.1.50のAdded WorktreeCreate and WorktreeRemove hook eventsで対応できるのか、sandboxで検証してほしい。"
+   - "ここまでの調査結果を踏まえて、どういう選択肢があって、どれが有力なのか結論出せる？"
+   - "記事に盛り込んで。また、claude以外のオーケストレーションツールやcodexを使った場合を考慮するとどの選択肢が有力か"
+   - "taktのようなhttps://github.com/nrslib/taktツールを使った場合にも応用出来る方法を選択したい"
+   - "[system-reminder about file modification] src/content/blog/.../worktree.md was modified... [showing symlink section added]" + "src/content/blog/.../worktree.md:L6-L7 AI１つにして。===== L24 通常、はちょっとえらそう。手っ取り早いというより、git worktreeの知識がなくてもできる、が正確 ===== L33 冗長。もっと簡潔に。===== L56 ここも冗長。簡潔に1文にして。全体的に文の区切りが変なので見直して。"
+   - "Claude Codeが面倒を見る。は英語っぽいのでこの言い回ししないようにrulesなのか文章のreviewなのかで除けるようにしたい。ファイル1行。〜だのような文章を書かないようにここもruleなのかreviewなのかあるいはclaude.mdなのか最も最適な形で定義したいまたtextlintも入れたい。"
+
+7. Pending Tasks:
+   - Fix textlint config so it's properly picked up (`.textlintrc.json` created but CLI run failed)
+   - Add `"lint:text": "textlint 'src/content/blog/**/*.md'"` script to `package.json`
+   - Update `CLAUDE.md` to add writing style rules: prohibit "面倒を見る" style expressions and "ファイル1行。〜だ" fragment sentence pattern
+   - Verify textlint actually catches "面倒を見る" in the article
+   - Fix remaining "面倒を見る" instance in the article itself
+
+8. Current Work:
+   Setting up textlint in `/home/nancy/src/github.com/nansystem/nancy-blog-astro` to catch English-ism expressions and bad sentence patterns. Installed packages (`textlint`, `textlint-rule-preset-ja-technical-writing`, `textlint-rule-prh`). Created `.textlintrc.json` and `prh.yml`. The last CLI run failed:
+   ```
+   pnpm exec textlint "src/content/blog/claude-code-parallel-development-with-worktree.md"
+   == No rules found ==
+   ```
+   Then tried `--rule prh --rule preset-ja-technical-writing` on CLI:
+   ```
+   Error: textlint-rule-prh require Rule Options.
+   ```
+   The config file approach is correct but the textlint CLI isn't picking up `.textlintrc.json`.
+
+9. Optional Next Step:
+   Debug why `.textlintrc.json` is not being picked up by textlint. The user's request was: "textlintも入れたい" and "面倒を見る...ファイル1行。〜だのような文章を書かないようにruleなのかreviewなのかあるいはclaude.mdなのか最も最適な形で定義したい". 
+   
+   Next: Run textlint with explicit config flag to verify the config works, then add the `lint:text` script to `package.json`, then update `CLAUDE.md` with the writing style rules for "面倒を見る" and fragment sentence patterns.
+   
+   ```bash
+   cd "/home/nancy/src/github.com/nansystem/nancy-blog-astro" && pnpm exec textlint --config .textlintrc.json "src/content/blog/claude-code-parallel-development-with-worktree.md"
+   ```
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+なぜbare clone アプローチは補足なのか、「複数clone」は今のアプローチ。でそれぞれ選択肢なのではないか。実際に使っているアプローチがいいと思ってない。そこで、今回の検証をしたため。問題の整理を記事ないの複数個所に書かれているためまとまりがない。編集者として記事全体を見直して、読みやすくなる順番にしてほしい。
+
+---
+
+src/content/blog/claude-code-parallel-development-with-worktree.md:L15
+git worktree を知らなければ、という言い方が偉そう。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L23
+ディスクを無駄に使う。はそこまで観点として重要ではなかった。自分としては。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L38
+ここは意味を理解できてない。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L54
+Numman Ali（@nummanali）が発言したかどうかはどうでもよい。sandboxでの検証およびこの記事で判明したgit worktreeの問題点を列挙したい。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L80
+ここはxの埋め込みしたい。<blockquote class="twitter-tweet"><p lang="en" dir="ltr">We directly use git worktrees <a href="https://t.co/nscHRomzz7">https://t.co/nscHRomzz7</a><br><br>You can also customize it with worktree hooks</p>&mdash; Boris Cherny (@bcherny) <a href="https://twitter.com/bcherny/status/2025009267653443698?ref_src=twsrc%5Etfw">February 21, 2026</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L112
+何か分かりづらい
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L275
+ここの意味がわからなかった
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L371
+シンボリックリンクによる設定共有はここまで詳細じゃないと説明できないのか？もっと簡潔に説明できるのではないか。
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L442
+git clone --sharedとは何なのか。bareとは違うのか。また、clone型にbareもあるのではないのか?この大分類は記事の最初の方にあった方が読みやすいのではないか?
+=====
+src/content/blog/claude-code-parallel-development-with-worktree.md:L550
+なぜtaktでwtpは使えないのか?
+
+---
+
+git コマンド記事を別に作り、本記事をスリム化する
+
+---
+
+git-parallel-development-guide.md の内容確認して
+
+---
+
+修正して。src/content/blog/git-parallel-development-guide.md:L15
+スタックに積み→退避して
+スタックがなんなのかの説明がないからわかりづらい。今後もいきなり説明のない用語を使わないようclaude.mdなのかrulesに書いといて。
+=====
+src/content/blog/git-parallel-development-guide.md:L22
+git checkout feature/Aよりもswitchの方が新しい構文では？
+gitの公式サイトで確認して。
+=====
+src/content/blog/git-parallel-development-guide.md:L29
+もっと簡潔に1文にまとめて。
+=====
+src/content/blog/git-parallel-development-guide.md:L33
+公式サイトではどういう言い方してる?ディレクトリを生やす、という言い方をしている？直訳風だから変なのか？
+=====
+src/content/blog/git-parallel-development-guide.md:L47
+ここの理解がいまいち。公式サイトおよびsandboxでもうちょっと腹落ちしたい。
+=====
+src/content/blog/git-parallel-development-guide.md:L73
+worktree型がとして複数cloneは分類がへたくそ。
+=====
+src/content/blog/git-parallel-development-guide.md:L93
+これもworktreeというよりcloneの1種としてまとめたほうがいい
+=====
+src/content/blog/git-parallel-development-guide.md:L171
+たとえば、共通の設定ファイルを別のgitリポジトリで管理している場合に関係しないのか？
+sandboxで確認してほしい。の内容も含めて。
+
+---
+
+こういう複数の比較記事には記事の上の方にtocがほしい
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me analyze the conversation chronologically to create a thorough summary.
+
+1. **Initial context**: The session started with textlint setup already done in a previous conversation. The .textlintrc.json and prh.yml were already created.
+
+2. **textlint fix**: The session began by running textlint - it failed because `textlint-filter-rule-comments` was missing. Installed it and got 8 errors. Fixed them all including auto-fixing `面倒を見る → 担う` via prh, and manual fixes for doubled joshi, sentence length issues.
+
+3. **package.json**: Added `lint:text` script.
+
+4. **CLAUDE.md**: Added writing style rules section including English-ism expressions table and fragment sentence pattern rule.
+
+5. **Article restructuring (major)**: User complained about:
+   - bare clone being "補足" (footnote) instead of equal option
+   - 複数clone being the current approach
+   - シンボリックリンク being portrayed as "best" when user doesn't think it is
+   - Problem description scattered in 3 places
+   User requested editorial restructuring for readability.
+
+6. **Full article rewrite**: Restructured to:
+   - 導入（複数cloneの課題）
+   - git worktree とは
+   - git worktree の問題点（problem description unified here）
+   - Claude Code の --worktree フラグ
+   - 並行開発の構成パターン（3 equal options: 複数clone/worktree/bare clone）
+   - gitignoreファイルの引き継ぎ問題を解決する方法（4 solutions）
+   - 他ツールとの相性
+   - どれを選ぶか
+
+7. **Many specific line edits**: User requested numerous specific fixes to the article:
+   - L15: 「知らなければ」が偉そう
+   - L23: ディスクの話は重要でない
+   - L38: .git がポインタという説明が分かりにくい
+   - L54: 誰が言ったかより検証で判明した問題を列挙
+   - L80: X埋め込みHTMLを貼り込む
+   - L112: 分かりにくい
+   - L275: WorktreeCreate の「代行フック」の意味が分からない
+   - L371: シンボリックリンク説明が詳細すぎる
+   - L442: git clone --shared の説明がない・分類が後半すぎ
+   - L550: wtpがtaktで使えない理由の説明がない
+
+8. **Article split into 2**: User requested splitting into:
+   - Article 1: git コマンド記事（git-parallel-development-guide.md）
+   - Article 2: Claude Code article (slimmed down)
+
+9. **New git article created**: git-parallel-development-guide.md with sections on stash, worktree, patterns, post-checkout hook, submodule.
+
+10. **git article fixes**: User requested many fixes:
+    - L15: スタック→退避
+    - L22: git checkout → git switch (confirmed from official docs Git 2.23+)
+    - L29: 1文に簡潔化
+    - L33: 「ディレクトリを生やす」→公式表現
+    - L47: .git ファイルの仕組みをcommondir含め詳しく（sandbox verified）
+    - L73: 複数cloneをworktree型として分類しない
+    - L93: bare cloneをcloneの1種としてまとめる
+    - L171: submodule+worktree の検証結果を反映（毎回 git submodule update --init が必要）
+    - CLAUDE.md: 専門用語説明ルールを追加
+
+11. **TOC request**: User wants TOC on articles. Asked about position: top vs right sidebar. Needs to consider which is better for technical blogs.
+
+12. **Additional user question about TOC position**: "記事の上の方なのか、右がいいのか技術ブログではどちらが読みやすくなるか検討して。全体像が見えつつ1つずつ理解したいと思っている。"
+
+The last state was:
+- Just read BlogPost.astro and [slug].astro to understand the current layout
+- BlogPost.astro has no TOC implementation
+- [slug].astro uses `render()` which returns Content but NOT headings (headings would need to be extracted differently)
+- The user wants TOC and is asking about position (top vs right)
+- Need to implement TOC in BlogPost.astro
+
+Current layout:
+```astro
+<body>
+  <Header />
+  <main>
+    <article>
+      <div class="post-header">...</div>
+      <div class="prose">
+        <slot />
+      </div>
+    </article>
+  </main>
+  <Footer />
+</body>
+```
+
+For TOC implementation in Astro, `getHeadings()` is available from `render()`. Currently [slug].astro uses:
+```astro
+const { Content } = await render(post);
+```
+But it could also get:
+```astro
+const { Content, headings } = await render(post);
+```
+
+Then pass headings to BlogPost layout.
+
+The user's goal: "全体像が見えつつ1つずつ理解したいと思っている" - they want to see the overview while reading step by step.
+
+For technical blogs:
+- **Top of article TOC**: Good for mobile, simple implementation, doesn't require layout changes, reader reads it then scrolls past
+- **Right sticky sidebar TOC**: Better for long comparison articles, always visible as you scroll, can highlight current section - but requires layout change (needs to be wide enough)
+
+Given the user's goal ("全体像が見えつつ") and that these are long comparison articles, a sticky right sidebar is more useful. But current layout is single-column and doesn't have sidebar.
+
+Need to:
+1. Determine which TOC position to recommend
+2. Implement it
+
+Let me compile the summary now.
+
+Summary:
+1. Primary Request and Intent:
+   - Set up textlint in the blog repo with `preset-ja-technical-writing` and `prh` rules to catch English-ism expressions (面倒を見る etc.) and bad sentence patterns
+   - Add `lint:text` script to package.json
+   - Update CLAUDE.md with writing style rules and (later) terminology rules
+   - Editorially restructure the Claude Code parallel development article so: bare clone is a peer option (not "補足"), 複数clone is acknowledged as the current approach, シンボリックリンク is one option among equals (not "recommended"), and problem descriptions are consolidated to one place
+   - Split the original long article into 2 articles:
+     - `git-parallel-development-guide.md`: git commands reference (stash, worktree, bare clone, clone --shared, hooks, submodule)
+     - `claude-code-parallel-development-with-worktree.md`: slimmed down to focus on Claude Code .env problem and solutions
+   - Fix numerous specific line issues in the git article (偉そうな表現, git switch vs checkout, .git file explanation, classification errors, submodule+worktree behavior from sandbox)
+   - Add TOC (table of contents) to articles; user asking about top-of-article vs right sidebar positioning ("全体像が見えつつ1つずつ理解したいと思っている")
+
+2. Key Technical Concepts:
+   - **textlint**: Natural language linter; `preset-ja-technical-writing` + `textlint-rule-prh` + `textlint-filter-rule-comments`
+   - **prh.yml**: Custom word replacement rules (面倒を見る→担う, ハンドルする→処理する, etc.)
+   - **git worktree**: 1 repository, multiple working trees; `.git` file (not dir) points to main `.git/worktrees/<name>/`; `commondir` file points to `../..` (shared objects/refs); HEAD and index are per-worktree
+   - **bare clone** (`git clone --bare`): No working directory; used as base for equal-peer worktrees
+   - **git clone --shared**: Creates independent `.git/` but links objects; hooks NOT inherited; used by takt
+   - **post-checkout hook**: Fires on `git worktree add` when `$1 == 0000...0000` (zero hash); worktree型tools share this hook; clone型 (takt) do not
+   - **WorktreeCreate hook** (Claude Code 2.1.50+): Not a notification hook but a "delegation hook" — when set, Claude delegates ALL of `git worktree add` to the script, which must return `{"worktreePath": "..."}` to stdout
+   - **wtp**: Git worktree management tool; `.wtp.yml` committable config; does NOT work with takt (takt uses `git clone --shared`, not `git worktree add`)
+   - **git switch**: Introduced in Git 2.23 as branch-switching-only replacement for `git checkout`; officially recommended
+   - **git submodule + worktree**: Submodule is NOT auto-initialized in new worktree; `git submodule update --init` needed each time; can be automated via post-checkout hook
+   - **Astro `getHeadings()`**: Available from `render(post)` return value; used to implement TOC
+   - **worktree型 vs clone型**: worktree型 (Claude Code, Codex, Gemini, Aider) shares hooks; clone型 (takt) does not
+
+3. Files and Code Sections:
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/.textlintrc.json`**
+     - Created to configure textlint rules
+     - Requires `textlint-filter-rule-comments` package for `filters.comments`
+     ```json
+     {
+       "rules": {
+         "prh": { "rulePaths": ["./prh.yml"] },
+         "preset-ja-technical-writing": {
+           "sentence-length": { "max": 100 },
+           "no-exclamation-question-mark": true,
+           "no-doubled-joshi": true,
+           "no-doubled-conjunctive-particle-ga": true,
+           "no-double-negative-ja": true,
+           "no-invalid-control-character": true,
+           "ja-no-successive-word": true,
+           "ja-no-abusage": true
+         }
+       },
+       "filters": { "comments": true }
+     }
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/prh.yml`**
+     - Custom word replacement rules
+     ```yaml
+     version: 1
+     rules:
+       - expected: 担う
+         patterns: [面倒を見る]
+       - expected: 処理する
+         patterns: [ハンドルする]
+       - expected: 対応する
+         patterns: [カバーする]
+       - expected: 構成する
+         patterns: [セットアップする]
+       - expected: 実行する
+         patterns: [ランする, 走らせる]
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/package.json`**
+     - Added `lint:text` script
+     ```json
+     "lint:text": "textlint 'src/content/blog/**/*.md'"
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/CLAUDE.md`**
+     - Added "専門用語の説明ルール" section: don't use unexplained technical terms
+     - Added "文章スタイルルール" section: English-ism expression table + fragment sentence pattern rule
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/claude-code-parallel-development-with-worktree.md`**
+     - Heavily restructured multiple times
+     - Current structure: 導入 → .env問題 → Claude Code --worktree フラグ → 4つの解決策 → 他ツール相性 → どれを選ぶか
+     - Includes X embed HTML for Boris Cherny tweet
+     - Links to git-parallel-development-guide.md for git fundamentals
+     - textlint passing
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/git-parallel-development-guide.md`** (NEW)
+     - New article covering git fundamentals for parallel development
+     - Sections: git stash, git worktree (with commondir explanation), 4 patterns comparison, post-checkout hook, git submodule
+     - Key fixes applied: git switch instead of checkout, commondir explanation for .git file, 4-pattern classification (複数clone/worktree通常/bare clone+worktree/git clone --shared), submodule+worktree behavior from sandbox verification
+     - textlint passing
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/layouts/BlogPost.astro`**
+     - Read to understand current layout for TOC implementation
+     - Currently single-column layout, no TOC
+     - Structure: `<Header /> <main><article><post-header /><div class="prose"><slot /></div></article></main> <Footer />`
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/pages/[slug].astro`**
+     - Read to understand how headings can be extracted
+     - Currently: `const { Content } = await render(post);`
+     - Can be changed to: `const { Content, headings } = await render(post);` to get headings for TOC
+
+4. Errors and Fixes:
+   - **textlint "No rules found"**: Config file not picked up → root cause was `filters.comments` requiring `textlint-filter-rule-comments` package which wasn't installed → fixed with `pnpm add -D textlint-filter-rule-comments`
+   - **textlint `arabic-kanji-numbers` error** (`一つ → 1つ`): Auto-fixed with `textlint --fix`
+   - **Multiple `no-doubled-joshi` errors**: Manual rewrites to avoid repeated particles (か/も/が/に/と)
+   - **`sentence-length` exceeding 100 chars**: Split long sentences in both articles
+   - **`ja-no-mixed-period` (文末が「。」で終わっていない)**: Fixed colons at end of sentences before lists
+   - **git submodule worktree classification errors**: L73 had 複数clone incorrectly grouped under "worktree型"; L93 had bare clone in wrong category → restructured to 4 independent patterns
+
+5. Problem Solving:
+   - **Problem description scattered in 3 places** → unified into single `## git worktree の問題点` section
+   - **bare clone as "補足"** → promoted to equal peer option in a 4-pattern comparison
+   - **シンボリックリンク as "recommended"** → demoted to "解決策4" alongside other options
+   - **「ディレクトリを生やす」直訳表現** → changed to official "複数の作業ディレクトリ（ワーキングツリー）を持てる仕組み"
+   - **worktree .git file explanation unclear** → added commondir explanation with directory tree showing what's shared vs per-worktree
+   - **submodule behavior with worktree** → verified in sandbox: NOT auto-initialized; need `git submodule update --init` each time; can be automated in post-checkout hook
+   - **git clone --shared explanation missing** → added comparison table against bare clone
+
+6. All User Messages:
+   - "なぜbare clone アプローチは補足なのか、「複数clone」は今のアプローチ。でそれぞれ選択肢なのではないか。実際に使っているアプローチがいいと思ってない。そこで、今回の検証をしたため。問題の整理を記事ないの複数個所に書かれているためまとまりがない。編集者として記事全体を見直して、読みやすくなる順番にしてほしい。"
+   - "src/content/blog/claude-code-parallel-development-with-worktree.md:L15 git worktree を知らなければ、という言い方が偉そう。[...複数の行指摘...]"
+   - "[system-reminder: file modified] src/content/blog/.../worktree.md:L502 taktにはwtpのような機能が内蔵されているということなのか？その場合、ここまで書いたことは一切気にしなくていいのか？また、そもそも1つの記事としてまとめたままでいいのか気になってきた。最も大事なイシューはなんなのか？"
+   - "src/content/blog/claude-code-parallel-development-with-worktree.md:L558 ここまでの理解はしてない。"
+   - "平行開発におけるgit stash、git worktree、hook、bare、clone --sahred、submodule(これは平行開発に必要なら)のように、まずはgitコマンドを理解する記事を別にした方が、全体の見通しが良くなるのではないか？"
+   - "git コマンド記事を別に作り、本記事をスリム化する"
+   - "git-parallel-development-guide.md の内容確認して"
+   - "修正して。src/content/blog/git-parallel-development-guide.md:L15 スタックに積み→退避して [...複数の行指摘...] src/content/blog/git-parallel-development-guide.md:L171 たとえば、共通の設定ファイルを別のgitリポジトリで管理している場合に関係しないのか？sandboxで確認してほしい。の内容も含めて。"
+   - "こういう複数の比較記事には記事の上の方にtocがほしい"
+   - "記事の上の方なのか、右がいいのか技術ブログではどちらが読みやすくなるか検討して。全体像が見えつつ1つずつ理解したいと思っている。"
+
+7. Pending Tasks:
+   - **TOC実装**: ユーザーが「全体像が見えつつ1つずつ理解したい」という目的でTOCを求めている。位置（記事上部 vs 右サイドバー）を検討した上で実装する
+   - `BlogPost.astro` に TOC コンポーネントを追加する
+   - `[slug].astro` で `const { Content, headings } = await render(post);` に変更して headings を BlogPost に渡す
+
+8. Current Work:
+   直前の作業：TOC実装のための調査として `BlogPost.astro` と `[slug].astro` を読んだ。
+
+   **BlogPost.astro の現在の構造**（TOC未実装、単一カラム）:
+   ```astro
+   <body>
+     <Header />
+     <main>
+       <article>
+         <div class="post-header">
+           <div class="post-meta">...</div>
+           <h1>{title}</h1>
+         </div>
+         <div class="prose">
+           <slot />
+         </div>
+       </article>
+     </main>
+     <Footer />
+   </body>
+   ```
+
+   **[slug].astro の現在の実装**:
+   ```astro
+   const { Content } = await render(post);
+   // headings も取得可能: const { Content, headings } = await render(post);
+   ```
+
+   ユーザーが求めているのは「全体像が見えつつ1つずつ理解したい」TOCで、位置について「記事の上の方なのか、右がいいのか技術ブログではどちらが読みやすくなるか検討して」と質問している。
+
+9. Optional Next Step:
+   ユーザーの最新メッセージ「記事の上の方なのか、右がいいのか技術ブログではどちらが読みやすくなるか検討して。全体像が見えつつ1つずつ理解したいと思っている。」に答える。
+
+   現在の BlogPost.astro は単一カラムレイアウト。「全体像が見えつつ1つずつ理解したい」という目的には：
+   - **記事上部TOC**: シンプル実装、モバイル対応、しかし記事を読み進めると消える
+   - **右サイドバー sticky TOC**: 常時表示で全体像を把握しながら読める（ユーザーの目的に最適）ただし現在のレイアウトに幅の確保が必要
+
+   長い比較記事という性質と「全体像が見えつつ」という目的から、**右サイドバー sticky TOC** を推奨し、`BlogPost.astro` のレイアウトを2カラム（記事本文 + TOCサイドバー）に変更して実装する。具体的には `[slug].astro` で `headings` を取得し BlogPost に渡す実装を行う。
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+.agents/financial-teacher-system-survey.md .playwright-mcpはgit ignoreに追加して。書きかけの記事はpublished:falseにして。
+
+---
+
+.playwright-mcpもgit ignoreして
+
+---
+
+git ignoreに追加しといて
+
+---
+
+.claude/settings.local.json .claude/settings.jsonの内容を精査して。
+
+---
+
+不要なエントリの整理をして。
+
+---
+
+settings.local.jsonとsettings.jsonどちらに書いた方がいいか整理して。
+
+---
+
+はい
+
+---
+
+どれがcommitしてもよさそう?
+
+---
+
+コミットしていない記事はすべてpublished: falseで。
+
+---
+
+記事以外はcommitしてok
+
+---
+
+src/content/blog/git-parallel-development-guide.md:L33
+「公式ドキュメントには “Manage multiple working trees attached to the same repository” と説明されている。」はいらない。
+=====
+src/content/blog/git-parallel-development-guide.md:L65
+「核心」は禁止ワードにして。
+=====
+src/content/blog/git-parallel-development-guide.md:L68
+sandboxのどこで確認できる？パスを教えて。
+=====
+src/content/blog/git-parallel-development-guide.md:L81
+stashの次にこれが来て、そのうちの1つとしてworktreeを紹介する構成がいい
+
+---
+
+src/content/blog/git-parallel-development-guide.md:L33
+文章のつながりが唐突。
+=====
+src/content/blog/git-parallel-development-guide.md:L90
+なんでこんなことやろうと思ったのかが唐突すぎる
+=====
+src/content/blog/git-parallel-development-guide.md:L111
+ツールの話は出てきてないから（ツールが内部で使う）は文脈的に変。
+=====
+src/content/blog/git-parallel-development-guide.md:L119
+git clone --bareとgit clone --sharedの方が対称性あって読みやすいのでは?
+
+---
+
+src/content/blog/git-parallel-development-guide.md:L102
+ここは通常のworktreeとsie by side比較しやすくしたい
+
+---
+
+side by sideはmdx コンポーネントあったよね?
+
+---
+
+.mdx に変換する
+
+---
+
+記事の幅を広げすぎてるからか、tocが見えない
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me analyze the conversation chronologically to create a comprehensive summary.
+
+1. The session started with a pre-existing context (summarized from previous conversation) about:
+   - textlint setup
+   - Two articles being worked on: `git-parallel-development-guide.md` and `claude-code-parallel-development-with-worktree.md`
+   - TOC implementation discussion
+
+2. TOC Implementation:
+   - User asked about TOC position (top vs right sidebar)
+   - Decided on right sticky sidebar
+   - Implemented in BlogPost.astro with 2-column grid layout
+   - Fixed `minmax(0, 1fr)` issue where code blocks were pushing TOC off screen
+
+3. .gitignore updates:
+   - Added `.agents/`, `.playwright-mcp/`, `.claude/settings.local.json`
+   - Removed tracked files with `git rm --cached`
+
+4. settings.json / settings.local.json reorganization:
+   - Analyzed both files
+   - Moved Bash permissions to settings.json (project-level)
+   - Kept WebFetch/WebSearch in settings.local.json (personal)
+   - Removed settings.local.json from git tracking
+
+5. Article edits (git-parallel-development-guide.md):
+   - Multiple line-specific fixes requested by user
+   - L33: Remove official docs quote
+   - L65: Add "核心" to prohibited words in CLAUDE.md
+   - L68: Sandbox path question (found at xdg-dotfiles-investigation)
+   - L81: Restructure to put 構成パターン after stash, worktree as one option
+   - More fixes: L33 transition, L90 bare clone motivation, L111 section title, L119 table header symmetry
+   - L102: Side-by-side comparison of worktree vs bare clone
+   - Converted .md to .mdx
+
+6. TOC fix:
+   - `minmax(0, 1fr)` fix for code blocks pushing TOC off screen
+   - TOC now visible
+
+Key files:
+- `src/layouts/BlogPost.astro` - TOC implementation
+- `src/pages/[slug].astro` - headings extraction
+- `src/content/blog/git-parallel-development-guide.mdx` - article (renamed from .md)
+- `.gitignore` - updated
+- `.claude/settings.json` - reorganized
+- `.claude/settings.local.json` - reorganized
+- `CLAUDE.md` - added "核心" to prohibited words
+
+Current state: TOC is now visible after minmax fix. Screenshot shows TOC on right sidebar working correctly.
+
+Summary:
+1. Primary Request and Intent:
+   - Implement right sticky sidebar TOC for blog articles, with `[slug].astro` extracting `headings` from `render()` and passing to `BlogPost`
+   - Add `.agents/`, `.playwright-mcp/`, `.claude/settings.local.json` to `.gitignore` and untrack already-tracked files
+   - Reorganize `settings.json` vs `settings.local.json`: move Bash/project-level permissions to `settings.json`, keep WebFetch/WebSearch in `settings.local.json`
+   - Set `published: false` on uncommitted draft articles
+   - Commit non-article files
+   - Multiple specific line edits to `git-parallel-development-guide.md`:
+     - L33: Remove official docs English quote
+     - L65: "核心" → replace with concrete description; add to CLAUDE.md prohibited words
+     - L68: Find sandbox path for commondir verification
+     - L81: Restructure so 構成パターン comes right after stash, worktree as one of 4 options
+     - L33 (second): Fix abrupt transition into 構成パターン
+     - L90: Add motivation for bare clone (asymmetry problem)
+     - L111: Remove `（ツールが内部で使う）` from section title
+     - L119: Change `bare clone` → `git clone --bare` for symmetry
+     - L102: Side-by-side comparison of worktree vs bare clone using `.side-by-side` CSS class
+   - Convert `git-parallel-development-guide.md` → `.mdx`
+   - Fix TOC not visible: `1fr` → `minmax(0, 1fr)` in grid columns
+
+2. Key Technical Concepts:
+   - **Astro `getHeadings()`**: `const { Content, headings } = await render(post)` returns headings for TOC
+   - **CSS Grid TOC**: `grid-template-columns: minmax(0, 1fr) 220px` — `minmax(0, 1fr)` prevents wide code blocks from expanding the article column beyond its space and pushing TOC off-screen
+   - **Sticky TOC**: `position: sticky; top: 2rem` on the `<nav class="toc">` element
+   - **Scroll-based active section**: `window.addEventListener('scroll', updateActive, { passive: true })` finds the last heading where `getBoundingClientRect().top <= 120`
+   - **Astro scoped styles**: Higher specificity than global.css via `data-astro-cid-*` attribute selector
+   - **`.side-by-side` CSS class**: Existing global CSS for 2-column code comparison, used in MDX files via raw HTML
+   - **git commondir**: `/home/nancy/src/github.com/nansystem/sandbox/xdg-dotfiles-investigation/06-worktree-vs-clone/base-repo/.git/worktrees/worktree-feature-B/commondir`
+   - **settings.json vs settings.local.json**: Project-shared vs personal/untracked Claude Code settings
+   - **MDX vs MD**: `.mdx` supports JSX components and raw HTML with better tooling; converted git article to `.mdx`
+   - **oxfmt pre-commit hook**: Auto-formats markdown on commit; must re-stage after formatting
+
+3. Files and Code Sections:
+
+   - **`src/layouts/BlogPost.astro`** — TOC implementation, 2-column layout
+     - Added `type Heading = { depth: number; slug: string; text: string }` and `headings?: Heading[]` to Props
+     - `main.has-toc` CSS class triggers 2-column grid when TOC headings exist
+     - Key fix: `grid-template-columns: minmax(0, 1fr) 220px` (was `1fr 220px`)
+     - Scroll-based active section JS
+     ```astro
+     type Heading = { depth: number; slug: string; text: string };
+     type Props = CollectionEntry<'blog'>['data'] & { headings?: Heading[] };
+     const { title, description, date, categories, headings = [] } = Astro.props;
+     const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
+     ```
+     ```css
+     main.has-toc {
+       width: 1060px;
+       display: grid;
+       grid-template-columns: minmax(0, 1fr) 220px;
+       column-gap: 2.5rem;
+       align-items: start;
+     }
+     .toc { position: sticky; top: 2rem; font-size: 0.82em; border-left: 2px solid rgb(var(--border)); padding-left: 1em; }
+     .toc a.active { color: var(--accent); font-weight: 600; }
+     @media (max-width: 1100px) { main.has-toc { width: auto; max-width: calc(100% - 2em); grid-template-columns: 1fr; } .toc { display: none; } }
+     ```
+     ```js
+     function updateActive() {
+       let activeIdx = -1;
+       for (let i = 0; i < headingElements.length; i++) {
+         if (headingElements[i].getBoundingClientRect().top <= 120) activeIdx = i;
+       }
+       tocLinks.forEach(link => link.classList.remove('active'));
+       if (activeIdx >= 0) {
+         const id = headingElements[activeIdx].id;
+         const active = document.querySelector(`.toc a[href="#${id}"]`);
+         if (active) active.classList.add('active');
+       }
+     }
+     window.addEventListener('scroll', updateActive, { passive: true });
+     updateActive();
+     ```
+
+   - **`src/pages/[slug].astro`** — Extract headings and pass to BlogPost
+     ```astro
+     const { Content, headings } = await render(post);
+     ---
+     <BlogPost {...post.data} headings={headings}>
+       <Content />
+     </BlogPost>
+     ```
+
+   - **`src/content/blog/git-parallel-development-guide.mdx`** (renamed from `.md`)
+     - Restructured: stash → 構成パターン (with worktree as one of 4 options) → post-checkout → submodule → まとめ
+     - `### git worktree` section includes `#### worktree の .git ファイルの仕組み`
+     - `### bare clone + worktree` opens with motivation: "通常の worktree ではメインの作業ディレクトリが残り、他の worktree と非対称な構造になる。"
+     - Side-by-side HTML block comparing worktree vs bare clone:
+     ```html
+     <div class="side-by-side">
+     <div class="side-by-side-panel" data-label="git worktree（通常）">
+     ```~/projects/
+       my-app/              ← メインworktree（.git/ が実体）
+       my-app-feature-A/    ← worktree（.git はファイル1行）
+       my-app-bugfix/       ← worktree（.git はファイル1行）```
+     </div>
+     <div class="side-by-side-panel" data-label="bare clone + worktree">
+     ```my-project/
+     ├── .bare/          ← gitオブジェクトの実体（作業ディレクトリなし）
+     ├── .git            ← "gitdir: ./.bare" と書かれたファイル1行
+     ├── main/           ← mainブランチ（worktree）
+     └── feature/
+         └── a/          ← feature/aブランチ（worktree）```
+     </div>
+     </div>
+     ```
+     - Table header: `| git clone --bare | git clone --shared |` (symmetric)
+     - `### git clone --shared` (no parenthetical subtitle)
+
+   - **`CLAUDE.md`** — Added "核心" to prohibited words
+     ```markdown
+     - **核心** — 「〜の核心は」ではなく、具体的に何を指すのかを書く
+     ```
+
+   - **`.gitignore`** — Added:
+     ```
+     # agents docs
+     .agents/
+     # playwright mcp
+     .playwright-mcp/
+     # claude local settings
+     .claude/settings.local.json
+     ```
+
+   - **`.claude/settings.json`** — Reorganized with `permissions.allow` for project Bash commands:
+     ```json
+     {
+       "hooks": { ... (entire hooks unchanged) ... },
+       "permissions": {
+         "allow": [
+           "Bash(pnpm add:*)", "Bash(pnpm approve-builds:*)", "Bash(pnpm remove:*)",
+           "Bash(pnpm install:*)", "Bash(pnpm lint:*)", "Bash(pnpm test:*)",
+           "Bash(npx prek:*)", "Bash(./node_modules/.bin/prek:*)",
+           "Bash(npx oxlint:*)", "Bash(npx oxfmt:*)", "Bash(npm run build:*)",
+           "Bash(git add:*)", "Bash(git commit:*)", "Bash(git push:*)",
+           "Bash(find:*)", "Bash(ls:*)"
+         ],
+         "deny": ["Read(./.entire/metadata/**)"]
+       }
+     }
+     ```
+
+   - **`.claude/settings.local.json`** — Personal settings only (untracked):
+     ```json
+     {
+       "permissions": {
+         "allow": [
+           "WebFetch(domain:github.com)", "WebFetch(domain:medium.com)",
+           "WebFetch(domain:www.patterns.dev)", "WebFetch(domain:www.freecodecamp.org)",
+           "WebFetch(domain:nansystem.com)", "WebFetch(domain:entire.io)",
+           "WebSearch", "Bash(python3:*)"
+         ]
+       }
+     }
+     ```
+
+4. Errors and Fixes:
+   - **TOC not visible**: `grid-template-columns: 1fr 220px` — wide code blocks expand `1fr` column beyond viewport, pushing TOC off-screen → Fixed with `minmax(0, 1fr) 220px`
+   - **oxfmt pre-commit hook failure on first commit**: oxfmt auto-modified staged files → re-staged and re-committed successfully
+   - **dev server 404 after .md → .mdx rename**: Old dev server was caching the route → killed and restarted on new port (4323)
+   - **settings.local.json already tracked**: ran `git rm --cached .claude/settings.local.json` before adding to .gitignore
+   - **`.playwright-mcp/` and `.agents/` already tracked**: ran `git rm -r --cached` on both
+
+5. Problem Solving:
+   - **TOC position**: Chose right sticky sidebar over top-of-article TOC because user wants "全体像が見えつつ1つずつ理解したい" — sticky sidebar keeps TOC visible throughout reading
+   - **Article structure**: Restructured so 構成パターン follows immediately after stash, with worktree as one of 4 equal options (not a standalone main section)
+   - **bare clone motivation**: Added "通常の worktree では〜非対称な構造になる" to explain why bare clone is used
+   - **settings separation**: Project-shared Bash permissions in `settings.json`, personal WebFetch domains in untracked `settings.local.json`
+   - **Sandbox path for commondir**: Found at `/home/nancy/src/github.com/nansystem/sandbox/xdg-dotfiles-investigation/06-worktree-vs-clone/base-repo/.git/worktrees/worktree-feature-B/commondir`
+
+6. All User Messages:
+   - `.agents/financial-teacher-system-survey.md .playwright-mcpはgit ignoreに追加して。書きかけの記事はpublished:falseにして。`
+   - `.playwright-mcpもgit ignoreして`
+   - `.agentsもignoreして` (interrupt during work)
+   - `git ignoreに追加しといて`
+   - `.claude/settings.local.json .claude/settings.jsonの内容を精査して。`
+   - `不要なエントリの整理をして。`
+   - `settings.local.jsonとsettings.jsonどちらに書いた方がいいか整理して。`
+   - `はい`
+   - `記事以外はcommitしてok`
+   - `コミットしていない記事はすべてpublished: falseで。`
+   - `src/content/blog/git-parallel-development-guide.md:L33 「公式ドキュメントには〜」はいらない。===== L65 「核心」は禁止ワードにして。===== L68 sandboxのどこで確認できる？パスを教えて。===== L81 stashの次にこれが来て、そのうちの1つとしてworktreeを紹介する構成がいい`
+   - `home/nancy/src/github.com/nansystem/sandboxの下にディレクトリを切って確認してるはず` (interrupt)
+   - `src/content/blog/git-parallel-development-guide.md:L33 文章のつながりが唐突。===== L90 なんでこんなことやろうと思ったのかが唐突すぎる ===== L111 ツールの話は出てきてないから（ツールが内部で使う）は文脈的に変。===== L119 git clone --bareとgit clone --sharedの方が対称性あって読みやすいのでは?`
+   - `src/content/blog/git-parallel-development-guide.md:L102 ここは通常のworktreeとside by side比較しやすくしたい`
+   - `side by sideはmdx コンポーネントあったよね?`
+   - `.mdx に変換する`
+   - `記事の幅を広げすぎてるからか、tocが見えない`
+
+7. Pending Tasks:
+   - Continue reviewing and editing `git-parallel-development-guide.mdx` content as needed
+   - Review and edit `claude-code-parallel-development-with-worktree.md` (still a draft)
+   - textlint check on updated articles before publishing
+
+8. Current Work:
+   Fixed TOC visibility issue in `BlogPost.astro` by changing `grid-template-columns: 1fr 220px` to `grid-template-columns: minmax(0, 1fr) 220px`. The problem was that wide code blocks in the article column were expanding the `1fr` column beyond its allocated space, pushing the 220px TOC column outside the viewport. The fix constrains the article column's minimum size to 0, preventing overflow. Screenshot confirmed TOC is now visible on the right side.
+
+9. Optional Next Step:
+   No explicit pending task remains from the user's last message. The TOC fix has been applied and visually confirmed working. The next action should be guided by the user — possible directions include continuing to edit the git article content or starting on the Claude Code parallel development article.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+side by sideは同じCSS使ってる?前より横幅広くなってる気がして。
+
+---
+
+はい
+
+---
+
+playwrightで見た目確認して。
+
+---
+
+重なってるよ。重なるのは仕方ないけど、tocの背景が等価で見づらくなってるのかもしれない。
+
+---
+
+gitworktreeとbare cloneのside by side何で他の記事と違って右にだけ出っ張ってるの?
+
+---
+
+記事全体でこのブランチで統一して
+
+---
+
+ただしメインの作業ディレクトリが worktree の1つとして残り、他の worktree と非対称な構造になる。これ正しい？またgit worktreeしたときにほんとにこのディレクトリ構成になる?sandboxで検証した?
+
+---
+
+.git/の位置をそれぞれ書いといた方が分かりやすいのでは?
+
+---
+
+.git/どっちでもよかった。何が非対称なのか知りたい
+
+---
+
+対等だと何がうれしいのか？メリットはあるのか?(bareを理解するほどの)
+
+---
+
+├── my-app/           ← メインworktree（特別扱い）これほんとにworktreeと呼んでる??
+
+---
+
+git の正式用語 "main working tree" / "linked worktree"なら使った方がいい
+
+---
+
+git worktree で推奨される元repositoryに並列でworktree directory作っていくのあまり好きになれないんですよね（こういう構成）
+どのみち作業は各worktreeでしかやらないなら元repositoryはbare cloneでいいんじゃないかと思って最近試しているのが次の手順。今のところはうまくいっているし満足してますが、もっと良いやり方があれば教えて欲しいです
+最終的な構成はこんな感じで、個人的には好き
+
+---
+
+# create a project dir
+mkdir my-project && cd my-project
+
+# bare clone into .bare
+git clone --bare git@github.com:user/repo.git .bare
+
+# create .git to refer bare repository
+echo "gitdir: ./.bare" > .git
+
+# configure and fetch origin
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+git fetch origin
+
+# add worktrees
+git worktree add main main
+git worktree add feature/a -b feature/a origin/main
+# use existing remote branch
+git worktree add feature/b origin/feature/b　my-project/
+├── .bare/          # Git data
+├── .git            # gitdir ref
+├── main/           # main branch worktree
+│   ├── src/
+│   └── ...
+└── feature/
+    ├── a/          # feature/a branch
+    └── b/          # feature/b branch
+
+---
+
+はい
+
+---
+
+対等に並ぶ。価値を簡潔に記載して。
+
+---
+
+└── feature/
+        ├── A/         ← linked worktree（対等）
+        └── bugfix/    ← linked worktree（対等）　一般的にはfeature/a、bugfix/xxxようにブランチ名をつけるのでは?調査して。
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me analyze the conversation chronologically to create a comprehensive summary.
+
+1. The session started as a continuation from a previous conversation about a blog article and TOC implementation.
+
+2. Key work in this session:
+
+**TOC CSS fix**: The `minmax(0, 1fr)` fix was already applied before this session started.
+
+**Side-by-side CSS conflict with TOC**: User noticed side-by-side and TOC overlap. Added `background: #fff` to TOC and CSS override in BlogPost.astro for `main.has-toc :global(.side-by-side)` to constrain width.
+
+**Side-by-side content improvements**: Multiple rounds of fixes to the comparison diagram between git worktree (通常) and bare clone + worktree.
+
+**Heading change**: "構成パターン" → "複数ブランチを常時並行して作業するための構成パターン"
+
+**Branch naming unification**: Standardized to `feature-A`, `bugfix` throughout the article, removed `hotfix/xxx`, `feature/A`, `bugfix/123`, `worktree-A`, etc.
+
+**Comment removal**: Removed "git switch は Git 2.23 で導入されたブランチ切り替え専用コマンド" comment
+
+**Terminology**: Updated to use git official terms `main working tree` and `linked worktree`
+
+**bare clone commands**: Updated to user's preferred approach (mkdir first, config after .git, git fetch origin, origin/main)
+
+**Side-by-side structure**: Multiple iterations - added .git/ position, then simplified to show asymmetry, then focused on what's non-symmetric
+
+**Branch naming investigation**: User asked to research git branch naming conventions because the article used `feature/A` (uppercase) and had `bugfix/` incorrectly nested under `feature/`
+
+Current state: The user asked to research branch naming conventions and is awaiting the result + article updates.
+
+Key files:
+- `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/layouts/BlogPost.astro`
+- `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/git-parallel-development-guide.mdx`
+- `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/styles/global.css`
+
+Pending: Update article to use proper branch naming conventions (lowercase, `feature/add-xxx`, `bugfix/xxx`) and fix the `bugfix/` being incorrectly nested under `feature/` in the side-by-side diagram.
+
+Summary:
+1. Primary Request and Intent:
+   - Fix TOC background transparency issue (TOC overlapping with side-by-side content)
+   - Fix side-by-side CSS conflicting with TOC layout (`width: 100vw` full-bleed was overflowing into TOC column)
+   - Unify branch names throughout article (`feature-A`, `bugfix`)
+   - Change heading "構成パターン" → "複数ブランチを常時並行して作業するための構成パターン"
+   - Remove redundant comment about `git switch` in stash section
+   - Update git terminology to official terms: `main working tree` / `linked worktree`
+   - Improve side-by-side comparison to clearly show what is "non-symmetric" about git worktree (通常)
+   - Update bare clone commands to user's preferred approach (mkdir first, `.git` file before `git config`, explicit `git fetch origin`, `origin/main` for worktree add)
+   - Add value statement after "すべての working tree が対等に並ぶ"
+   - Research git branch naming conventions because article uses `feature/A` (uppercase) and `bugfix/` incorrectly nested under `feature/`
+
+2. Key Technical Concepts:
+   - **Astro scoped styles**: `main.has-toc :global(.side-by-side)` to override global CSS from child content
+   - **CSS full-bleed technique**: `width: 100vw; margin-left: 50%; transform: translateX(-50%)` used in `.side-by-side` - must be disabled when TOC is present
+   - **git main working tree**: The original clone directory; owns `.git/` directory; appears in `git worktree list` as first entry; cannot be removed with `git worktree remove`
+   - **git linked worktree**: Working trees added with `git worktree add`; have `.git` as a file (1 line) pointing to main's `.git/worktrees/<name>/`
+   - **bare clone setup**: `git clone --bare` → create `.git` file → `git config remote.origin.fetch` → `git fetch origin` → `git worktree add`
+   - **Branch naming with `/`**: Creates nested directories (e.g., `feature/a` → `feature/a/` directory)
+   - **Branch naming conventions**: Lowercase, hyphen-separated, with prefix (`feature/`, `bugfix/`, `hotfix/`); `bugfix/` is separate from `feature/`
+
+3. Files and Code Sections:
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/layouts/BlogPost.astro`**
+     - Added `background: #fff` to `.toc` to prevent transparency when content overlaps
+     - Added CSS override for `main.has-toc :global(.side-by-side)` to disable full-bleed when TOC is present:
+     ```css
+     main.has-toc :global(.side-by-side) {
+       width: 100%;
+       margin-left: 0;
+       transform: none;
+       padding: 0;
+     }
+     .toc {
+       position: sticky;
+       top: 2rem;
+       font-size: 0.82em;
+       line-height: 1.5;
+       border-left: 2px solid rgb(var(--border));
+       padding-left: 1em;
+       background: #fff;
+     }
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/git-parallel-development-guide.mdx`**
+     - Major article being edited throughout session
+     - Heading: `## 構成パターン` → `## 複数ブランチを常時並行して作業するための構成パターン`
+     - Branch names unified: `hotfix/xxx`→`bugfix`, `feature/A`→`feature-A`, `bugfix/123`→`bugfix`, `worktree-A`→`my-app-feature-A`
+     - Removed git switch version comment
+     - Terminology: "メインworktree"→"main working tree", "worktree"(追加分)→"linked worktree", "メインの作業ディレクトリ"→"main working tree"
+     - bare clone commands updated to user's preferred approach:
+     ```bash
+     mkdir my-app && cd my-app
+     git clone --bare git@github.com:org/repo.git .bare
+     echo "gitdir: ./.bare" > .git
+     git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+     git fetch origin
+     git worktree add main origin/main
+     git worktree add feature/A -b feature/A origin/main
+     git worktree add feature/bugfix origin/feature/bugfix
+     ```
+     - Side-by-side comparison (current state):
+     ```
+     # Left panel (git worktree 通常):
+     ~/projects/
+     ├── my-app/           ← リポジトリ本体（main working tree）
+     │                        .git/ を持つ。削除すると他が壊れる
+     ├── my-app-feature-A/ ← linked worktree（my-appに依存）
+     └── my-app-bugfix/    ← linked worktree（my-appに依存）
+
+     # Right panel (bare clone + worktree):
+     ~/projects/
+     └── my-app/
+         ├── .bare/         ← gitオブジェクトの実体
+         ├── .git
+         ├── main/          ← linked worktree（対等）
+         └── feature/
+             ├── A/         ← linked worktree（対等）
+             └── bugfix/    ← linked worktree（対等）
+     ```
+     - Added value sentence after "対等に並ぶ": "どの linked worktree も `git worktree remove` で削除でき、ブランチ名の `/` がディレクトリ階層に対応するため、関連ブランチをフォルダでまとめて管理しやすい。"
+
+4. Errors and fixes:
+   - **TOC transparent background**: TOC had no background so side-by-side content showed through → added `background: #fff` to `.toc`
+   - **side-by-side width not constrained**: `main.has-toc :global(.side-by-side)` override added to disable full-bleed technique inside TOC layout
+   - **Incorrect project name in bare clone section**: Was `my-project/`, unified to `my-app/`
+   - **`feature/` directory incorrectly nesting `bugfix/`**: Currently `bugfix/` appears nested under `feature/` in the right panel diagram — this is wrong and is the current open issue
+   - **`feature/A` uppercase in branch names**: Inconsistent with conventions; user flagged as unrealistic
+
+5. Problem Solving:
+   - TOC visibility: `background: #fff` + full-bleed CSS override solved overlap readability
+   - Asymmetry visualization: Multiple iterations — added `.git/` positions, then removed them ("どっちでもよかった"), then focused purely on what is asymmetric (main working tree is special, linked worktrees depend on it)
+   - Sandbox verification: Confirmed git worktree structure is correct via `/home/nancy/src/github.com/nansystem/sandbox/git-worktree-test/`
+   - User's bare clone preference: User shared their own setup approach which is cleaner than the original article; article was updated to match
+
+6. All user messages:
+   - "side by sideは同じCSS使ってる?前より横幅広くなってる気がして。"
+   - "tocとside by sideが重なると思うけどどういうUIだったらブログの読者は読みやすい？"
+   - "はい" (approve TOC background fix)
+   - "playwrightで見た目確認して。"
+   - "重なってるよ。重なるのは仕方ないけど、tocの背景が等価で見づらくなってるのかもしれない。"
+   - (side-by-side content complaint with two panels shown)
+   - "構成パターンよりも複数ブランチを常時並行して作業するための構成パターンというheadingの方がいい"
+   - "記事全体でこのブランチで統一して" (with branch names shown)
+   - "git switch は Git 2.23 で導入されたブランチ切り替え専用コマンド）の補足はいらない。"
+   - "git の正式用語 'main working tree' / 'linked worktree' なら使った方がいい"
+   - "ただしメインの作業ディレクトリが worktree の1つとして残り、他の worktree と非対称な構造になる。これ正しい？またgit worktreeしたときにほんとにこのディレクトリ構成になる?sandboxで検証した?"
+   - (two side-by-side panels shown with complaint about inconsistent notation)
+   - ".git/どっちでもよかった。何が非対称なのか知りたい"
+   - "これほんとにworktreeと呼んでる??"
+   - "git の正式用語 'main working tree' / 'linked worktree' なら使った方がいい"
+   - "対等だと何がうれしいのか？メリットはあるのか?(bareを理解するほどの)"
+   - "はい" (approve adding value sentence)
+   - (user shared their bare clone setup approach with commands and final structure)
+   - "はい" (approve updating article to user's approach)
+   - "対等に並ぶ。価値を簡潔に記載して。"
+   - (side-by-side panels with complaint about `feature/A` uppercase and `bugfix/` nested under `feature/`)
+   - "一般的にはfeature/a、bugfix/xxxようにブランチ名をつけるのでは?調査して。"
+
+7. Pending Tasks:
+   - Update article branch naming in side-by-side and commands to use proper conventions:
+     - Lowercase: `feature/a` not `feature/A`
+     - `bugfix/xxx` should be at same level as `feature/`, NOT nested under `feature/`
+     - Use realistic names like `feature/add-login`, `bugfix/fix-null`
+   - Fix right panel of side-by-side: `bugfix/` should not be under `feature/` directory
+
+8. Current Work:
+   Researched git branch naming conventions in response to user's question: "一般的にはfeature/a、bugfix/xxxようにブランチ名をつけるのでは?調査して。"
+   
+   Research confirmed:
+   - All lowercase is standard
+   - `feature/description`, `bugfix/description` are separate prefixes (not nested)
+   - Hyphen-separated words: `feature/add-user-authentication`, `bugfix/fix-login-error`
+   - Ticket numbers common: `feature/PROJ-123-description`, `bugfix/issue-456-description`
+
+   Current problematic code in article:
+   ```bash
+   git worktree add feature/A -b feature/A origin/main
+   git worktree add feature/bugfix origin/feature/bugfix  # wrong: bugfix nested under feature/
+   ```
+   And in side-by-side right panel:
+   ```
+   └── feature/
+       ├── A/         ← linked worktree（対等）  # wrong: uppercase A
+       └── bugfix/    ← linked worktree（対等）  # wrong: bugfix under feature/
+   ```
+
+9. Optional Next Step:
+   Update the article's bare clone commands and side-by-side right panel to use proper lowercase branch naming conventions and fix `bugfix/` being incorrectly nested under `feature/`:
+   
+   From user: "一般的にはfeature/a、bugfix/xxxようにブランチ名をつけるのでは?調査して。"
+   
+   The commands should change to something like:
+   ```bash
+   git worktree add feature/a -b feature/a origin/main
+   git worktree add bugfix/fix-login -b bugfix/fix-login origin/main
+   ```
+   And the right panel directory structure:
+   ```
+   ~/projects/
+   └── my-app/
+       ├── .bare/
+       ├── .git
+       ├── main/
+       ├── feature/
+       │   └── a/        ← linked worktree（対等）
+       └── bugfix/
+           └── fix-login/ ← linked worktree（対等）
+   ```
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+記事全体で見直して
+
+---
+
+my-app-feature/ ← clone 1（feature/add-login開発）
+  my-app-bugfix/  ← clone 2（bugfix/fix-null開発） my-appというリポジトリ名をmy-app-1やmy-app-2として残しておいて、作業が発生したらそれぞれswして作業してる
+
+---
+
+.envや.node_modulesなどが使いまわせるメリットがあることを書いて
+
+---
+
+git オブジェクトはクローンごとにコピーされ、リモート設定も独立するため git fetch を各クローンで実行する必要がある。はいらない
+
+---
+
+cloneコマンドも書いた方が分かりやすい
+
+---
+
+git clone git@github.com:org/repo.gitの部分はリポジトリ名をmy-appとしたい。その方が1、2と別名をつけたのが分かるから
+
+---
+
+git cloneは誰でも知ってるので追加の知識が不要でわかいりやすい。
+
+---
+
+という説明を簡潔に複数cloneの下に書いて
+
+---
+
+複数clone
+git clone git@github.com:org/my-app.git my-app-1
+git clone git@github.com:org/my-app.git my-app-2
+~/projects/
+  my-app-1/  ← clone 1（必要なブランチに git switch して作業）
+  my-app-2/  ← clone 2（必要なブランチに git switch して作業）
+git clone だけで完結するため、新しい知識が不要で最も手軽に始められる。.env や node_modules はクローンごとに独立して存在するため、ブランチを切り替えても消えない。
+
+git worktree
+git worktree は1つのリポジトリに対して複数の working tree を持てる仕組みだ。git worktree add で追加した working tree を linked worktree と呼ぶ。で文章を書く位置が違うので読みやすい方でそろえて。
+
+---
+
+ただし main working tree がリポジトリ本体として残り、linked worktree と非対称な構造になる。この意味わからないので削除で。
+
+---
+
+git オブジェクトとリモート設定を共有できる。は上の文章で書いて。
+
+---
+
+main worktreeとlinked worktreeは公式のリンク貼っといて。
+
+---
+
+my-app/.git/
+├── objects/               ← コミット履歴（全working treeで共有）
+├── refs/                  ← ブランチ情報（全working treeで共有）
+├── config                 ← リモート設定（全working treeで共有）
+└── worktrees/
+    └── my-app-feature/
+        ├── commondir      ← "../.."（= my-app/.git/ を参照）
+        ├── HEAD           ← このlinked worktree専用（現在のブランチ）
+        └── index          ← このlinked worktree専用（ステージング状態）ここにmy-app-bugfixもほしい
+
+---
+
+my-app/          ← main working tree（.git/ が実体）ということは個のディレクトリにコードとかが入ってくるんだよね？また、worktreesの場合は、その下の階層にコードとかが入ってくる理解であってる?
+
+---
+
+main.jsとかでコードの位置を示して、worktree利用時に対称性がくなることを図解で示したい。
+
+---
+
+my-app/.git/
+├── objects/               ← コミット履歴（全working treeで共有）
+├── refs/                  ← ブランチ情報（全working treeで共有）
+├── config                 ← リモート設定（全working treeで共有）
+└── worktrees/
+    ├── my-app-feature/
+    │   ├── commondir      ← "../.."（= my-app/.git/ を参照）
+    │   ├── HEAD           ← このlinked worktree専用（現在のブランチ）
+    │   └── index          ← このlinked worktree専用（ステージング状態）
+    └── my-app-bugfix/
+        ├── commondir
+        ├── HEAD
+        └── indexここにも反映して。~/projects/
+├── my-app/           ← リポジトリ本体（main working tree）
+│                        .git/ を持つ。削除すると他が壊れる
+├── my-app-feature/   ← linked worktree（my-appに依存）
+└── my-app-bugfix/    ← linked worktree（my-appに依存）
+~/projects/
+└── my-app/
+    ├── .bare/         ← gitオブジェクトの実体
+    ├── .git
+    ├── main/          ← linked worktree（対等）
+    ├── feature/
+    │   └── add-login/ ← linked worktree（対等）
+    └── bugfix/
+        └── fix-null/  ← linked worktree（対等）ここも書き方そろえて。
+
+---
+
+なんかディレクトリ名のつけ方変わってない?~/projects/
+├── my-app/              ← main working tree
+│   ├── .git/            ← gitの実体（削除すると全worktreeが壊れる）
+│   └── main.js
+├── my-app-feature/      ← linked worktree
+│   ├── .git             ← ファイル1行（my-app/.git/ を参照）
+│   └── main.js          ← feature/add-login ブランチの内容
+└── my-app-bugfix/       ← linked worktree
+    ├── .git             ← ファイル1行（my-app/.git/ を参照）
+    └── main.js          ← bugfix/fix-null ブランチの内容
+~/projects/
+└── my-app/
+    ├── .bare/              ← gitの実体
+    ├── .git                ← ファイル1行（.bare/ を参照）
+    ├── main/               ← linked worktree（対等）
+    │   └── main.js
+    ├── feature/
+    │   └── add-login/      ← linked worktree（対等）
+    │       └── main.js     ← feature/add-login ブランチの内容
+    └── bugfix/
+        └── fix-null/       ← linked worktree（対等）
+            └── main.js     ← bugfix/fix-null ブランチ
+
+---
+
+git worktree add feature/add-login のようにブランチ名をそのままパスに使うため、ブランチ名の /
+  がディレクトリ階層になります。これが bare clone
+  の利点の一つ（関連ブランチをフォルダでまとめられる）として記事でも説明している部分です。こっちもフラットな名前にした方が比較見やすいのでは?
+
+---
+
+my-app-featureをfeature-add-login、my-app-bugfixをbugfix-fix-nullにすると分かりやすいのでは?worktreeの慣習に従い統一して。
+
+---
+
+~/projects/
+├── my-app/              ← main working tree
+│   ├── .git/            ← gitの実体（削除すると全worktreeが壊れる）
+│   └── main.js
+├── feature-add-login/      ← linked worktree
+│   ├── .git             ← ファイル1行（my-app/.git/ を参照）
+│   └── main.js          ← feature/add-login ブランチの内容
+└── bugfix-fix-null/       ← linked worktree
+    ├── .git             ← ファイル1行（my-app/.git/ を参照）
+    └── main.js          ← bugfix/fix-null ブランチの内容矢印の位置がくずれてる
+
+---
+
+git clone —shared
+git clone --shared は通常の git clone に似ているが、コミット履歴だけを元のリポジトリとリンクで共有する。.git/ ディレクトリ自体は新たに作られるため、元のリポジトリの hooks は引き継がれない。
+
+takt など一部の AI コーディングツールが並行エージェントの実行環境としてこの仕組みを使っており、ユーザーが直接選ぶ構成というより「ツールが裏で使う仕組み」として知っておく必要がある。これもbare clone + worktreeやgit worktreeの項目のように、実際にコマンド実行して、ディレクトリがどうなるか示してほしい。sandbox検証して。
+
+---
+
+bare cloneはgit clone --bareにするか、git clone —sharedの方をclone —sharedにするのかして対称性を保ってほしい
+
+---
+
+git clone --shared origin clone-1の意味がわからない。git clone git@github.com:org/my-app.gitが前提にあるのか？
+
+---
+
+takt など一部の AI コーディングツールが並行エージェントの実行環境としてこの仕組みを使っており、ユーザーが直接選ぶ構成というより「ツールが裏で使う仕組み」として知っておく必要がある。はいらない。
+
+---
+
+git clone --shared はリモートではなくローカルのリポジトリを複製する。あらかじめ git clone git@github.com:org/my-app.git で取得した my-app/ を元に、エージェントごとのクローンを作成する。ここだけ急にエージェントの話が出てきている。複数cloneとやろうとしていることは近いのか？
+
+---
+
+.git/ ディレクトリ自体は新たに作られるため、元のリポジトリの hooks は引き継がれない。　これほんと？なんで?
+
+---
+
+はい
+
+---
+
+大きなGitリポジトリをクローンするときの工夫を図解します
+git CI/CD
+こんにちは、SWETでCI/CDチームの前田（ @mad_p ）です。 SWETではCI/CDチームの一員として、Jenkins運用のサポートや、CI/CD回りのノウハウ蓄積・研究をしています。
+
+はじめに
+Gitリポジトリをクローンすると、ローカルフォルダにはそのリポジトリの全体がダウンロードされ .git というフォルダに格納されます。ブランチをチェックアウトすると、ブランチ内のファイルがワーキングツリーとして展開されます。この様子を図にするとこのようになります。
+
+クローン+チェックアウト
+
+この .git とワーキングツリーの使うディスク容量を節約しようというのが今回のお話です。特にJenkinsにおいて、大きめのGitリポジトリをクローンしてくる場合に課題があり、いろいろ工夫してみたので、その結果を紹介します。同じCI/CDチームの加瀬による記事「大規模リポジトリで高速にgit cloneするテクニック」と内容的に重なる部分もあるので、そちらの記事も参考にしてください。
+
+今回、Jenkinsでの設定方法を多めに解説していますが、紹介する工夫はJenkins以外でも使えるものです。図を見て仕組みを理解しておくだけでも、後で役に立つと思います。
+
+Gitリポジトリは大きくなっていく
+アプリコードやアセットのリポジトリは、開発が進むにしたがって大きくなっていきます。これはゲーム開発では特に顕著です。とあるタイトルのアセットリポジトリは、そのままクローンすると .git が17GiB、チェックアウトした部分も含めると45GiB程度になっています。これは日々大きくなっていきます。
+
+大きくなる原因
+リポジトリ内のオブジェクトを簡略化して図にすると以下のようになります。丸がコミット、四角がファイルに対応します。
+
+リポジトリ内のオブジェクト
+
+リポジトリが時間とともに大きくなっていくのは、以下のような要因によるものです。それぞれに対して、何か対策があるか見てみましょう。
+
+コミットされるファイル数が多くなる
+これは必要だからコミットされているので、仕方がありません
+コミットされるファイルが大きい
+これの対策としては、大きいファイル（画像、音声データなど）をGit LFSに置くことで、リポジトリ内のオブジェクトとしては保存しない、という方法があります。LFSについては後でもう少し詳しく見てみます
+歴史が長くなる
+これも長く開発が続いていくと増えるものなので、仕方がありません
+コミットされるファイル数が多くなる方向、歴史が長くなる方向の2つの軸を意識しておくと、この後紹介する工夫の理解がしやすくなると思います。
+
+大きくなると困ること
+Gitリポジトリが大きくなると様々な問題が発生します。
+
+クローンに時間がかかり、待ち時間やJenkinsジョブ実行時間が長くなる
+クローンしたフォルダのディスク使用量が多くなり、ディスク枯渇が発生しやすくなる
+これに加え、Jenkinsエージェント特有の事情として以下があり、巨大なリポジトリのクローンによる困り事は増幅されることになります。
+
+Jenkinsではジョブごとにワークスペースが分離される。同じリポジトリを使うジョブが複数個あると、ひとつのリポジトリでも複数回別のフォルダにクローンされる。その回数分ディスク容量を必要とする
+ワークスペースは、特に明示しない限り、次回の実行に備えて保存される。次回実行時にリポジトリのフェッチの負荷が低くなるというメリットとなる（クローン済の .git を使って差分だけを取ってくればよいため）。一方で、取っておく分のディスクを消費する
+Gitリポジトリからローカルフォルダへのダウンロード量や通信量を減らすことで、これらの困り事を軽減できます。クローン時、チェックアウト時、LFSの順で、どのような工夫ができるかの方法を紹介します。また、その結果どのように節約できるのかを図にして見ていきましょう。
+
+GitHub公式ブログ
+ここで取り挙げる節約方法はGitHubブログの以下の記事でも解説されています。図が多くわかりやすいので、参照してみてください。本記事中の図も、この公式ブログの図を真似しています（わかりやすさのため、本記事ではツリーオブジェクトなど一部省略しています）。
+
+コミットはスナップショットであり差分ではない
+パーシャルクローンとシャロークローンを活用しよう
+Git clone: データで見るクローンの仕組み
+クローン時のディスク・ダウンロード節約方法
+大きめのリポジトリをクローンする場合のコツについて説明します。
+
+git clone では通常、前述したオブジェクトの全体をダウンロードしてきて、 .git/objects 配下に置きます。以下では、この全部を取得するのではなく、一部を取得するためのテクニックを紹介します。これによって、クローン後のディスク使用量だけでなく、クローン時のネットワーク転送量（すなわち時間）も節約できます。
+
+シャロークローン（shallow clone）
+最新版だけを取ってきて、過去の歴史を取ってこない方法です。取得したい歴史の長さ（深さ）をdepthというパラメータで指定できます。通常は1でよいでしょう。シャロークローンの動作を図にすると以下のようになります。
+
+シャロークローン
+
+歴史の一番新しいほうからdepth分だけをサーバーから取得し、 .git 内に置きます。取得されない部分を図中では点線で表現しています。最新情報だけ取ってくるので、取得するオブジェクト数を節約できます。これは大きくなるリポジトリを歴史の長さ方向に限定して取得することに相当します。
+
+シャロークローンのやりかた
+CLIによる方法
+git clone 時に --depth オプションで取得したい歴史の深さを指定する
+git clone --depth=1 git@github.com:org/repo.git .
+Jenkinsfileによる方法
+checkout ステップに CloneOption を渡して shallow に true 、 depth を指定
+checkout([$class: 'GitSCM',
+    extensions: [[$class: 'CloneOption',
+        shallow: true,  // ← shallow cloneを指定
+        depth: 1,  // ← depthを指定
+        timeout: 60]],
+    branches: [[name: "feature/mybranch"]],
+    gitTool: 'Default',
+    userRemoteConfigs: [[url: 'git@github.com:org/repo.git']]])
+JenkinsのFreestyleジョブでの設定方法
+「ソースコード管理」の「追加処理」で「Advanced clone behaviors」を追加し、shallow cloneをチェック、shallow clone depthを入力
+シャロークローンの欠点
+シャロークローンには以下のような欠点があります。歴史に対する操作を使うことがわかっている場合は利用しないほうがいいかもしれません。
+
+シャロークローンで取ってきていると、歴史をあやつる作業はできなくなる
+git log で過去のコミットを見る
+過去のコミットをチェックアウトする
+git diff で差分を見る
+マージする
+公式ブログの説明によると、シャロークローン後のフェッチで、場合によっては結局過去の歴史を全部取ってしまうような場合もあるとのこと
+一度クローンした場所で、追加でフェッチをするような用途にはシャロークローンは向かない。つまりJenkins向きではない。一方でCircleCIなどクローンした結果を一度しか使わない環境では有効
+なお、いったんはシャロークローンしたものの明示的に全部を取り直したいという場合は、 git fetch に --unshallow オプションをつけます。
+
+git fetch --unshallow
+パーシャルクローン（partial clone）
+コミット内の各ファイルは、そのメタ情報（ツリーオブジェクト）とファイル実体（ブロブオブジェクト）から成っています（上述のGitHubブログを参照）。パーシャルクローンは、ブロブやツリーオブジェクトを必要な部分のみ取得します。ローカルには、必要に応じてオブジェクトを取得するという情報（下の図では中空の四角で表現）が記録され、checkoutやdiffなど、実際に必要になった時点でオンデマンドにブロブオブジェクトがダウンロードされます。
+
+パーシャルクローン
+
+パーシャルクローンは操作に必要な要素のみを取得するので、歴史の長さ×ファイル数を2次元的な広がりと見て、必要な部分だけを取得することに相当します。この図はクローン後、いくつか操作して必要なものが取得された状況を表現しています。
+
+パーシャルクローンのやりかた
+ここではブロブを必要な部分のみ取得し、ツリーはすべて取る方法（ブロブレスクローン）を紹介します。
+
+CLIによる方法
+git clone 時に、 --filter オプションでブロブを取得しないことを指定する
+git clone --filter=blob:none git@github.com:org/repo .
+Jenkinsfileによる方法
+checkout ステップには機能がない。 sh ステップでCLIのgitを利用する
+Freestyleジョブでの設定方法
+同様にシェルスクリプトからgitを利用
+パーシャルクローンの欠点
+パーシャルクローンには以下のような欠点があります。
+
+git diff など、ファイルの内容を必要とする操作をすると、オンデマンドでダウンロードされる
+その時点でネットワーク接続が必要であることと、ダウンロード時間がかかることに注意
+リファレンスリポジトリ（reference repository）の活用
+Jenkinsでは複数のジョブから同一のリポジトリ（アプリソースやアセットなど）を参照することが多くあります。その場合、ジョブごとに別のフォルダに同じリポジトリをクローンしてくることになります。2回クローンした状態を図にするとこうなります。
+
+複数回のフォルダにクローン
+
+このとき、 .git はフォルダAとBの下にそれぞれ作成され、歴史を記述したオブジェクトはそれぞれの下に保存されます。ブランチを切ったりコミットしたり、特定のブランチだけフェッチすると、内容は完全に同一とはならないのですが、サーバーからコピーした分は同一のものがディスク上で別の場所に複数回保管されていることになります。特定のリポジトリに関するジョブが十数個にもなると、その数だけ複製を持つことになります。
+
+Gitにはすでにクローン済の .git/objects を参照する機能があります。これを使うと、次の図のようになります。
+
+リファレンスクローン
+
+B/.git/objects の下に、「 A/.git/objects を見ろ」というファイルが記録され、そちらも参照してくれるようになります。AになくてBに必要なオブジェクトはサーバーからダウンロードされ、Bの .git/objects の下に保存されます（このため、Aの情報が多少古くても問題ありません）。これによって、Bの初回クローンは圧倒的に速くなり、ディスクも大きく節約できます。このとき、フォルダBから見てフォルダAを「リファレンス」と呼びます。リファレンスを利用したクローンを、この記事では「リファレンスクローン」と呼ぶことにしましょう。
+
+リファレンスクローンのやりかた
+フォルダBにクローンする時点で、すでにフォルダAにクローン済である場合、Aのパスをリファレンスとして指定できます。
+
+CLIによる方法
+git clone 時に、 --reference または --reference-if-able オプションでリファレンスとして使うクローン済みのフォルダを指定する
+git clone --reference-if-able=/path/to/A git@github.com:org/repo ./B
+--reference で指定するとリファレンスが存在しなければエラーとなる
+--reference-if-able では存在しなければ無視される（警告のみ）
+サブモジュールの取得にリファレンスを使いたい場合は、サブモジュールごとに指定する
+git submodule update --init --reference=/path/to/A -- submodule/path
+Jenkinsfileによる方法
+CloneOption に reference を指定できる。リファレンスが存在しないと無視される（エラーメッセージが出るが処理は続行される）
+checkout([$class: 'GitSCM',
+    extensions: [[$class: 'CloneOption',
+        reference: "/path/to/A", // ← リファレンスのパスを指定
+        timeout: 60]],
+    branches: [[name: "feature/mybranch"]],
+    gitTool: 'Default',
+    userRemoteConfigs: [[url: 'git@github.com:org/repo.git']]])
+Freestyleジョブでの設定方法
+「Advanced clone behaviors」→「リファレンスリポジトリのパス」に設定する。存在しないと無視される
+通常どおりにクローンしたフォルダに対して、後からリファレンスを加えることもできます。
+
+.git/objects/info/alternates というファイルを作成し、リファレンスの .git/objects のフルパスを書き込む
+サブモジュールの場合は .git/modules/<submodule_path>/objects/info/alternates
+alternates 作成後、以下のコマンドを実行すると、リファレンスに存在するオブジェクト（重複分）を削除できる
+git repack -a -d -l
+リファレンスクローンの注意点
+AをリファレンスとしてBをクローンした後に、A側でオブジェクトが削除されると、Bから参照しようとしたときにオブジェクトが見つからずにエラーとなります。 git pull などの操作をきっかけとして、A側で git gc が自動実行されることがあり、これが発生します。フォルダAをまるごと削除した場合も同様です。 その場合、以下のようなエラーにぶつかるでしょう。
+
+fatal: bad object HEAD
+fatal: bad object <commit_hash>
+fatal: unable to read <blob_hash>
+一度こうなってしまうと修復はなかなか大変なため、リファレンスクローンは事情をよく知って使う必要があります。 git help clone で --reference の項目を見ると、 --shared と同様の注意が必要と書いてあり、その注意書きはこうです。要約すると「A側でブランチが削除されるとB側で必要なものが消され、Bが壊れる場合がある。何をやっているかよく理解して使いなさい」ということです。
+
+NOTE: this is a possibly dangerous operation; do not use it unless you understand what it does. If you clone your repository using this option and then delete branches (or use any other Git command that makes any existing commit unreferenced) in the source repository, some objects may become unreferenced (or dangling). These objects may be removed by normal Git operations (such as git commit) which automatically call git maintenance run --auto. (See git-maintenance(1).) If these objects are removed and were referenced by the cloned repository, then the cloned repository will become corrupt.
+
+ローカルミラー活用法
+これらの問題を回避するために、リファレンスで指す先はリファレンスで使われることだけに特化したミラーフォルダとして用意するのがよいと思います。組織的に運用しないと安定した稼動は難しいかもしれません。以下に、自分達のプラクティスを紹介しますので、参考にしてみてください。
+
+ローカルマシン（Jenkinsエージェントなどごと）にリファレンス用途のクローン（以下ミラー）を作成する
+export MIRROR_DIR=/path/to/mirror/dir
+mkdir -p $MIRROR_DIR
+git clone --no-checkout git@github.com:org/repo $MIRROR_DIR/repo
+(cd $MIRROR_DIR/repo; git config gc.pruneExpire never)
+ミラーでは git config gc.pruneExpire never しておくことで、自動gcによるオブジェクトの削除が起こらないように設定する
+環境変数 MIRROR_DIR でミラー群の位置を指すよう、 .bash_profile や、Jenkinsのノード管理で定義しておく
+ミラーはベア（bare）リポジトリとしてクローンするか、 --no-checkout で作るとワーキングツリー分のディスクを節約できる
+定期的にフェッチするジョブをしかけておく
+.git/gc.log に「too many unreachable loose objects」が出力されるが、これは無視してよい。リファレンスする側のフォルダで使っているオブジェクトがloose objectsとして検出されることが多い
+ミラーにtmpオブジェクトが残ってしまったような場合など、どうしてもgcやpruneコマンドを使いたい場合は、以下のオプションをつける
+git prune --expire=never; git gc --no-prune
+クローン時は --reference-if-able=$MIRROR_DIR/repo オプションをつける
+リファレンスクローンを利用する場合、サーバーから取得する歴史はリファレンスにないオブジェクトのみになります。このため、シャロークローンやパーシャルクローンを利用しなくても十分な節約になります。プロジェクトで利用する全部のリポジトリについてミラーを作る必要はなく、複数の場所に何度もクローンされやすいリポジトリを選んで設定するだけで、大きな効果を得ることができるでしょう。
+
+チェックアウト時のディスク節約方法
+ここまで、クローンのときの工夫を見てきました。続いてチェックアウトのときの工夫を紹介します。
+
+ファイル数が多くなったリポジトリは、チェックアウトした結果のワーキングツリーもかなりディスクを使うことがあります。通常のチェックアウトの様子を図に示します。チェックアウト時にはHEADから参照されるすべてのファイルのコピーがワーキングツリーとしてコピーされます。
+
+チェックアウト
+
+スパースチェックアウト（sparse checkout）
+必要とするファイルがリポジトリ内の一部だけである場合、例えば特定のシェルスクリプト数個だけの場合、リポジトリ全体ではなく、一部のフォルダやファイルだけをチェックアウトすることで、ワーキングツリーを小さくできます。これをスパースチェックアウトと呼びます。
+
+スパースチェックアウト
+
+スパースチェックアウトはファイル数方向を限定してワーキングツリーを小さくすることに相当します。歴史オブジェクトは全部ローカルに持ってきているので、歴史をあやつる作業もできます。逆に言えば、歴史の取得や .git の容量は節約していません。
+
+スパースチェックアウトについては、こちらのブログ記事が参考になります。
+
+モノリポ時代に知っておくと便利な「git sparse-checkout」
+スパースチェックアウトのやりかた
+CLIによる方法 （上記ブログ記事も参照してください）
+git clone 時に --sparse オプションでスパースチェックアウトであることを、 --no-checkout オプションで初回のチェックアウトしないことを指定する
+クローン後 git sparse-checkout add でチェックアウトしたいフォルダを指定する
+必要なフォルダやファイルを指定するにはパターンも使える。パターンの書き方の詳細は git help sparse-checkout を参照
+git clone --sparse --no-checkout git@github.com:org/repo .
+cd repo
+git sparse-checkout add want_folder1 want_folder2
+git checkout
+Jenkinsfileによる方法
+checkout([$class: 'GitSCM',
+     extensions: [[$class: 'SparseCheckoutPaths',
+         sparseCheckoutPaths: // checkoutしたいフォルダ
+             [[path: "want_folder1"],
+              [path: "want_folder2"]]
+     ]],
+     branches: [[name: "feature/mybranch"]],
+     gitTool: 'Default',
+     userRemoteConfigs: [[url: 'git@github.com:org/repo.git']]])
+Freestyleジョブでの設定方法
+ソースコード管理の「追加の処理」から「Sparse checkout paths」に設定
+前述のパーシャルクローンと組み合わせて使うと、さらにディスクと通信時間を節約できます。
+
+パーシャルクローン+スパースチェックアウト
+
+このように組合せて使うと、ファイル数方向、歴史の長さ方向の両軸で限定したことに相当します。
+
+LFS （Large File Storage） の活用
+Gitリポジトリに大きいバイナリファイルをコミットしていくと、その歴史で .git は大きくなってしまいます。また、GitHubにはひとつのファイルの大きさは100MiBまでという制限があるため、これを超える大きさのファイルはそもそもコミットできません。ゲームのアセットなど、画像や音声ファイルを多く扱うリポジトリでは、ここで説明するLFSを利用するのがよいでしょう。
+
+LFSはファイルの実体を別のストレージに置き、その参照（SHA256ハッシュ）のみをコミットします。図にすると以下のようになります。 .git 内には参照しか入らないため、 git clone の段階ではファイルの実体はダウンロードされません。 git lfs pull により、必要なオブジェクトの実体がダウンロードされる仕組みです（通常はクローン直後のチェックアウトで自動的に行われます）。
+
+Git LFS
+
+Git LFSの設定は、リポジトリ作成直後から行うのがおすすめです。先に大きなオブジェクトをコミットして、後からLFS化しても、コミットしてしまった分は大きなオブジェクトが歴史に残ってしまうからです。以下の手順でLFSの設定ができます。
+
+マシンにgit-lfsをインストールする
+brew install git-lfs , apt install git-lfs など
+アカウントごとにLFSを使うことを設定する
+git lfs install
+チェックアウト時に自動的にLFSからダウンロードされるようになります
+LFSを導入したいリポジトリで、特定の拡張子のファイルをLFSに格納するよう設定する
+git lfs track "*.psd" "*.ogg"
+通常どおりコミットしてプッシュすると、設定した拡張子のファイルは、実体がLFSに送られる
+クローンした側ではチェックアウト時に自動的にLFSファイルが取得される。明示的に取得する場合は以下コマンドを実行する
+git lfs pull （現在チェックアウトしているブランチのオブジェクトを取得し、ワーキングツリーに置く）
+LFSの設定・動作ついては、以下の公式ドキュメントや記事が参考になります。
+
+Git Large File Storage を設定する
+Git LFS をちょっと詳しく
+すでに運用中のリポジトリを後からLFS化したい場合、 git lfs migrate というコマンドが使えます。LFSのマイグレーションは手順が多いため、ここでは説明しません。以下のチュートリアルが参考になるでしょう。
+
+Migrating existing repository data to LFS
+LFSのディスク節約方法
+git lfs pull の動作は以下の2つに分けられます。
+
+git lfs fetch
+現在のブランチで利用されているLFSオブジェクトをダウンロードし、ローカルストレージに置く
+ローカルストレージは通常、クローンしたフォルダの .git/lfs （サブモジュールでは .git/modules/<submodule_path>/lfs）
+git lfs checkout
+ローカルストレージからワーキングツリーにオブジェクトをコピーする
+git lfs pull は git lfs fetch の後 git lfs checkout を行うことに相当します。
+
+これを図にするとこうなります。 git lfs checkout でファイルがコピーされるため、LFSで管理されているファイルは、ローカルストレージ内とワーキングツリー内、通常2個ずつディスクに置かれることになります。
+
+クローン後のLFSチェックアウト
+
+ワーキングツリーのディスクを節約する
+ワーキングツリー内のファイルは書き換えてコミットする使い方もあるので、 git lfs checkout では（ハードリンクなどではなく）ファイルをコピーすることが必要です。CIなど、read-onlyの作業しかしないことがわかっている場合には、コピー分のディスクを節約したくなります。
+
+macOSではAPFSというファイルシステムの機能で、ファイルを複製するときに同じディスク領域を使い、ディスクを節約できます。書き込みが発生した時点でcopy-on-writeする動作になります（cpコマンドの -c オプション）。 git lfs dedup というコマンドを実行すると、LFSのローカルストレージとワーキングツリーを比較し、ファイル内容が同一のとき cp -c を使ってひとつにまとめるということをしてくれます。
+
+ローカルストレージを節約する
+ローカルストレージには過去のチェックアウトで使ったデータがたまっていくので、時々プルーン（おそうじ）したほうがよいかもしれません。とはいえ、よほど大きくなっていない限り、明示的にプルーンする必要はありません。
+
+git lfs prune
+ローカルストレージを共有する
+同一のリポジトリをJenkinsの複数ジョブなどで複数回クローンすると、ローカルストレージはそれぞれの .git 下に作られます。つまり、クローンした回数分のオブジェクトがディスク上に保存されます。
+
+複数フォルダとLFSローカルストレージ
+
+ローカルストレージを変更し、フォルダAとBの両方で共有するよう設定すると、この重複分を減らすことができます。
+
+git config --local lfs.storage /path/to/shared/storage
+LFSのローカルストレージを特定のパスに設定します
+同じリポジトリに対するクローンの各フォルダで、同一のパスを指定してこのコマンドを実行するとよいでしょう。
+
+共有ローカルストレージ
+
+この設定を使うと、大きくなりがちなLFSのローカルストレージを共有して、全体の容量を減らすことができます。なお、ストレージの共有を使っている場合は git lfs prune しないほうがよいです。図中のフォルダAで git lfs prune した場合、フォルダBからしか参照されていないオブジェクトは消されてしまいます（次回チェックアウト時にダウンロードし直されるので、エラーにはなりません）。
+
+この設定をグローバルに行うこともできます。
+
+git config --global lfs.storage /path/to/shared/storage
+--global に設定すると $HOME/.gitconfig に設定が書き込まれ、そのアカウントでクローンするリポジトリすべてのLFSローカルストレージが同一の場所になります。これには以下のように利点・欠点がありますので、それに注意して利用するとよいでしょう。
+
+利点
+クローンするたびにいちいちローカルストレージの設定をしなくてよい
+サブモジュールでもLFSを使っている場合、すべてのサブモジュールで設定する必要がない
+欠点
+異なる元リポジトリに由来するオブジェクトが、ローカルストレージ内で混在する
+機密レベルの異なるリポジトリを扱う場合には、混在するとよくないかもしれない
+なお、SHA256ハッシュを使っているので、別のオブジェクトが同名になってしまう（ハッシュの衝突）心配はない
+まとめ
+.git は気がつくと大きくなってしまうものです。うまく工夫することで、ディスク容量や転送時間を減らすことができます。歴史の長さとファイル数の増加どちらがより大きな要因であるか、また、クローンしたフォルダをどう使うかなどを考慮して、シャロークローンやパーシャルクローンなど適切な方法を選択しましょう。
+
+Jenkinsエージェントのような環境では、同一のリポジトリを複数のフォルダにクローンすることが多く、 .git はその数ぶんだけ作られてしまいます。リファレンスクローンで共有したり、LFSのローカルストレージを共有すると、この「複数回」が原因となる重複を減らすことができるでしょう。
+
+これらの工夫を使って、冒頭で例に出したタイトルでは、Jenkinsエージェントあたり300GiB程度のディスク容量を節約できました。いくつかのリポジトリが何度も何度もクローンされていたので、リファレンスクローンの効果が大きく250GiB程度の節約、LFSローカルストレージの共有が50GiB程度の節約になりました。スパースチェックアウトはまだ十分活用できていませんが、改善の余地があるのだと前向きに考えています。この内容と整合性取れてる?
+
+---
+
+sandboxで検証して。
+
+---
+
+--shared が影響するのは .git/objects/ の扱いだけで、.git/ 自体は新規作成されるため、元のリポジトリの hooks は引き継がれない。これほんと？何か問題ある？home/nancy/src/github.com/nansystem/sandboxで検証して。
+
+---
+
+。問題として起きるのは、post-checkout フックで .env のコピーや npm install
+  を自動実行するような設定をしていても、--shared クローンでは一切実行されない点です。git worktree や git clone --bare +
+  worktree では commondir 経由でフックが共有されるのと対照的です。　この部分を記事に入れといて。
+
+---
+
+git clone —bare との違いを整理する。
+
+git clone —bare    git clone —shared
+作業ディレクトリ    なし    あり
+.git/ ディレクトリ    なし（リポジトリ自体がオブジェクト置き場）    独立して作られる
+hooks の引き継ぎ    N/A（linked worktree 追加時に共有）    なし
+主な用途    linked worktree の土台    ツールが内部で使う（takt など）はいらない
+
+---
+
+post-checkout フック：worktree 作成時に自動実行する
+git hook は .git/hooks/ に置くシェルスクリプトで、特定の操作のタイミングで自動実行される。post-checkout は以下の操作で発火する。
+
+git switch（ブランチ切り替え）
+git checkout -- file（ファイルの復元）
+git worktree add（worktree 作成）
+引数でどの操作かを区別できる。
+
+引数    内容
+$1    前の HEAD
+$2    新しい HEAD
+$3    種別（1=ブランチ/worktree、0=ファイル）
+git worktree add のときだけ $1 がゼロhash（0000000000000000000000000000000000000000）になる。この判定を使えば worktree 作成時だけ処理を走らせられる。
+
+#!/bin/bash
+# .git/hooks/post-checkout
+[ "$1" != "0000000000000000000000000000000000000000" ] && exit 0
+
+# ここから worktree 作成時だけ実行される処理
+echo "worktree を作成しました: $(pwd)"
+この仕組みを使って .env や node_modules を引き継ぐ方法は、Claude Code の並行開発記事で詳しく扱う。
+
+git submodule（並行開発との関係）
+git submodule は外部の git リポジトリを自分のリポジトリの一部として取り込む仕組みだ。並行開発に直接関係しないものの、linked worktree を使う場合、注意すべき点がある。
+
+# 外部リポジトリをサブモジュールとして追加
+git submodule add git@github.com:org/shared-lib.git libs/shared
+my-app/
+├── .gitmodules       ← サブモジュールの設定ファイル
+├── libs/
+│   └── shared/       ← サブモジュール（別のgitリポジトリ）
+└── src/
+linked worktree を追加してもサブモジュールは自動で初期化されない。 追加直後はサブモジュールのディレクトリが空になるため、都度 git submodule update --init が必要だ。
+
+git worktree add -b feature/add-login ../feature-add-login
+
+# feature-add-login での確認
+git -C ../feature-add-login submodule status
+# → -571ff6f... libs/shared   （先頭の「-」は未チェックアウトを意味する）
+
+ls ../feature-add-login/libs/shared/
+# → 空ディレクトリ
+
+# 手動で初期化が必要
+git -C ../feature-add-login submodule update --init
+たとえば「Claude の rules を別リポジトリで管理し submodule として取り込む」構成でも同様だ。linked worktree を追加するたびに初期化コマンドが必要になる。post-checkout フックに追加しておけば自動化できる。
+
+#!/bin/bash
+# .git/hooks/post-checkout
+[ "$1" != "0000000000000000000000000000000000000000" ] && exit 0
+
+git submodule update --initの部分は別記事にして。
+
+---
+
+比較表
+複数clone    git worktree    git clone —bare + worktree    git clone —shared
+git オブジェクト    コピー    共有    共有    共有（リンク）
+リモート設定    独立    共有    共有    独立
+全ブランチが対等    ✗（リポジトリ自体が別）    ✗（メインが特別扱い）    ✓    ✗（元リポジトリに依存）
+hooks の引き継ぎ    N/A    ✓    ✓    ✗ここのまとめから得られることがない。この情報だと意思決定できないため。
+
+---
+
+まとめ
+目的    使うもの
+割り込み作業を一時退避したい    git stash
+複数ブランチを同時並行で触りたい    git worktree
+全linked worktreeを対等に管理したい    git clone —bare + worktree
+ここは日本語でも簡潔にまとめを入れたい。
+
+---
+
+複数ブランチを常時並行して作業するなら git worktree が基本の選択肢になる。なんで?.envやnode_modules問題を解決できればの前提では。
+
+---
+
+post-checkout フックやwtpなどのツール
+
+---
+
+wtpはリンクつけてあげてhttps://github.com/satococoa/wtp
+
+---
+
+wtpと同じ課題解決するツール調査して。
+
+---
+
+単発の割り込みには git stash で十分だ。複数ブランチを常時並行して作業するなら、git オブジェクトとリモート設定を共有できる git worktree が基本の選択肢になる。ただし linked worktree では .env や node_modules が引き継がれないため、post-checkout フックや wtp などのツールで補う必要がある。linked worktree をすべて対等に扱いたい場合は git clone —bare + worktree を選ぶ。の結論も変わってくるのでは?
+
+---
+
+はい。また、git clone —sharedの場合、.envやnode_modulesはどうすればいい?
+
+---
+
+/groveはいらない。git clone --sharedは複数cloneより軽いことは書いといて。
+
+---
+
+git worktree が実用的な標準選択肢、かどうかは実戦でやってないので言い切れない。
+
+---
+
+git clone —shared は複数 clone よりディスク使用量が少なく clone も速いが、元リポジトリへの依存が生まれるため、AI ツールが内部で使う仕組みとして知っておくとよい。　git cloneで複数作るのもありだとは思ってる。post-checkout フックや wtpとか考えずにシンプルに運用できるから。
+
+---
+
+[InvalidContentEntryDataError] blog → git-parallel-development-guide data does not match collection schema.
+
+  title**: **title: Required
+  date**: **date: Invalid date
+  permalink**: **permalink: Required
+
+  Hint:
+    See https://docs.astro.build/en/guides/content-collections/ for more information on content schemas.
+  Error reference:
+    https://docs.astro.build/en/reference/errors/invalid-content-entry-data-error/
+  Location:
+    /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/git-parallel-development-guide.md:0:0
+  Stack trace:
+    at getEntryDataAndImages (file:///home/nancy/src/github.com/nansystem/nancy-blog-astro/node_modules/.pnpm/astro@5.17.2_rollup@4.57.1_typescript@5.9.3/node_modules/astro/dist/content/utils.js:168:26)
+    at async syncData (/home/nancy/src/github.com/nansystem/nancy-blog-astro/node_modules/.pnpm/astro@5.17.2_rollup@4.57.1_typescript@5.9.3/node_modules/astro/dist/content/loaders/glob.js:97:28)
+
+nancy-blog-astro on ⎇ master [!?⇡] is 📦 v
+
+---
+
+複数ブランチを並行して開発していると、「別ブランチの作業が割り込んできた」場面に必ず直面する。その対処方法を軸に、git の選択肢を整理する。の序文を変えたい。　AIコーディングにより複数の機能を同時に並行して実装する機会が増えた。自分だけでなくチームメンバーも当然AIによりPRを出すまでのスピードも上がっており、ローカルでどうブランチ管理するのか考えるうえで、ふんわりgitの仕組みを知りたくてさわってみた。みたいな課題感を書きつつふんわりした感じで。
+
+---
+
+正直、commondir、alternatesとか全然知らない概念が出てきてまだ腹落ちしてない。という正直な感想も書いといて。 https://git-scm.com/docs/gitrepository-layout.html#Documentation/gitrepository-layout.txt-commondir https://git-scm.com/docs/gitrepository-layout.html#Documentation/gitrepository-layout.txt-objectsinfoalternatesはリンク貼っといて。
+
+---
+
+タイトル、descriptionを記事の内容に合わせて修正して。
+
+---
+
+触って整理した　触ってみた、が正確
+
+---
+
+git clone —shared は複数 clone よりディスク使用量が少なく clone も速いが、元リポジトリへの依存が生まれるため、AI ツールが内部で使う仕組みとして知っておくとよい。ここの説明にAIツールが内部で使う仕組み、というのは前提ありすぎるので別文章にしたい
+
+---
+
+taktについてはまだ触れたくない
+
+---
+
+単発の割り込みには git stash で十分だ。複数ブランチを常時並行して作業する場合、複数 clone は post-checkout フックや追加ツールを必要とせず、.env や node_modules もそのまま使い回せるシンプルな選択肢だ。git worktree も有力な選択肢だが、.env や node_modules の引き継ぎに post-checkout フックや wtp などのツールが必要になる。linked worktree をすべて対等に扱いたい場合は git clone —bare + worktree を選ぶ。git clone —shared は複数 clone よりディスク使用量が少なく clone も速いが、元リポジトリへの依存が生まれる。　選択肢を選べるほどの理解は得られなかったので有力な選択肢だ、という言い方は止めて。
+
+---
+
+git worktree + wtp など、はwtpがgit worktreeを内包してるのでは?確認して。
+
+---
+
+複数 clone は post-checkout フックや追加ツールを必要とせず、.env や node_modules もそのまま使い回せるシンプルな構成だ。も一覧に入れたら?
+
+---
+
+（.env・node_modules をそのまま使い回せる）は変
+
+---
+
+https://github.com/satococoa/wtpほんとに内包してる?
+
+---
+
+ok http://localhost:4321/git-parallel-development-guideをコミットして公開して。
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me analyze the conversation chronologically to create a comprehensive summary.
+
+The session started as a continuation from a previous conversation about a blog article on git parallel development. The work involved editing an MDX article and related Astro layout files.
+
+Key activities in this session:
+1. Research git branch naming conventions → update article
+2. Full article review and consistency fixes
+3. Multiple rounds of content editing based on user feedback
+4. Sandbox verification of git clone --shared behavior
+5. Final commit and publish
+
+Files modified:
+- `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/git-parallel-development-guide.mdx` - main article
+- `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/layouts/BlogPost.astro` - TOC CSS
+- Deleted: `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/git-parallel-development-guide.md` (empty file causing schema error)
+
+Key content changes made:
+1. Branch naming: `feature/A` → `feature/add-login`, `bugfix/fix-null`
+2. Directory naming: `my-app-feature-A` → `feature-add-login`, `my-app-bugfix` → `bugfix-fix-null`
+3. Removed "制約として、同一ブランチを複数の working tree でチェックアウトできない" sentence
+4. Multiple clone section: Added `git clone` commands, clarified UX (numbered clones, git switch)
+5. Added `.env`/`node_modules` benefit for multiple clones
+6. Updated bare clone section to flat naming (removed slash-based hierarchy)
+7. git clone --shared: Added commands, directory structure, alternates explanation
+8. Removed post-checkout フック and git submodule sections (moved to separate article)
+9. Removed comparison table (not actionable)
+10. Updated まとめ section multiple times
+11. wtp research: confirmed it wraps git worktree internally
+12. Fixed 全ブランチが対等 for git clone --shared to ✗ based on sandbox verification
+13. Updated title and description
+14. Set published: true and committed
+
+Errors encountered:
+- `InvalidContentEntryDataError` for empty `.md` file → deleted it
+- Pre-commit hook `oxfmt` modified files → re-staged and committed successfully
+
+Summary:
+1. Primary Request and Intent:
+   - Review and update the git parallel development guide article (`git-parallel-development-guide.mdx`) for consistency, accuracy, and readability
+   - Unify branch naming conventions (`feature/add-login`, `bugfix/fix-null`) and directory names (`feature-add-login`, `bugfix-fix-null`) throughout the article
+   - Add code commands and directory diagrams with `main.js` to illustrate where code lives
+   - Verify git behaviors in sandbox (`/home/nancy/src/github.com/nansystem/sandbox/git-shared-test/`)
+   - Research git branch naming conventions and wtp tool
+   - Remove sections to be covered in a separate article (post-checkout フック, git submodule)
+   - Update title, description, introduction, and まとめ to reflect honest/exploratory tone
+   - Set `published: true` and commit
+
+2. Key Technical Concepts:
+   - **git stash**: temporary stashing of work-in-progress
+   - **main working tree**: original clone that owns `.git/` directory; cannot be removed with `git worktree remove`
+   - **linked worktree**: added via `git worktree add`; has `.git` as a single-line file pointing to `main/.git/worktrees/<name>/`
+   - **commondir**: file inside `.git/worktrees/<name>/` containing `../..` to point back to main `.git/`
+   - **alternates**: `.git/objects/info/alternates` file used by `git clone --shared` to reference source repo's objects
+   - **git clone --bare + worktree**: all worktrees are equal (no main working tree), stored inside bare repo directory
+   - **git clone --shared**: clones LOCAL repo, shares objects via alternates; hooks NOT inherited; source repo deletion breaks clones
+   - **wtp** (https://github.com/satococoa/wtp): wraps `git worktree add` internally, handles `.env`/`node_modules` setup via `.wtp.yml`
+   - **post-checkout hook**: fires on `git worktree add` when `$1` is zero hash; NOT inherited by `git clone --shared`
+   - **oxfmt**: pre-commit hook that auto-formats MD/MDX files
+
+3. Files and Code Sections:
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/git-parallel-development-guide.mdx`**
+     - Main article file, heavily edited throughout session
+     - Final frontmatter:
+     ```yaml
+     title: AI コーディング時代の git 並行開発：複数clone・worktree・git clone --bare・git clone --shared を触ってみた
+     description: AI コーディングで並行開発の機会が増えたのを機に、git の並行開発の選択肢を整理した。git stash による一時退避から、複数 clone・git worktree・git clone --bare + worktree・git clone --shared の違いまで、sandbox で実際に動作を確認しながら比較する。
+     date: 2026-02-21T12:00:00+09:00
+     categories:
+       - AI
+     permalink: /git-parallel-development-guide
+     published: true
+     ```
+     - Introduction rewritten to personal/exploratory tone about AI coding motivation
+     - Branch names unified: `feature/add-login`, `bugfix/fix-null`
+     - Worktree directory names: `feature-add-login`, `bugfix-fix-null`
+     - git worktree section: uses official terms "main working tree" / "linked worktree" with links to https://git-scm.com/docs/git-worktree#_description
+     - Directory diagrams include `main.js` to show where code lives
+     - git clone --shared: shows `git clone git@... my-app` then `git clone --shared my-app my-app-1/my-app-2`, directory structure with alternates
+     - Removed: post-checkout フック section, git submodule section, bare vs shared comparison table, overall comparison table
+     - まとめ section (final):
+     ```
+     単発の割り込みには git stash で十分だ。複数ブランチを常時並行して作業する場合、複数 clone は post-checkout フックや追加ツールを必要とせず、.env や node_modules もそのまま使い回せるシンプルな構成だ。git worktree はオブジェクトとリモート設定を共有できるが、.env や node_modules の引き継ぎに post-checkout フックや wtp などのツールが必要になる。linked worktree をすべて対等に扱いたい場合は git clone --bare + worktree という構成もある。git clone --shared は複数 clone よりディスク使用量が少なく clone も速いが、元リポジトリへの依存が生まれる。
+     ```
+     - まとめ table (final):
+     ```
+     | 目的 | 使うもの |
+     | 割り込み作業を一時退避したい | git stash |
+     | シンプルに並行作業したい | 複数 clone |
+     | .env・node_modules のセットアップも含めて並行作業したい | wtp など（git worktree を内包） |
+     | 全linked worktreeを対等に管理したい | git clone --bare + worktree |
+     | 複数cloneより軽く並行作業したい | git clone --shared |
+     ```
+
+   - **`/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/layouts/BlogPost.astro`**
+     - Added `background: #fff` to `.toc` and `main.has-toc :global(.side-by-side)` CSS override (done in previous session)
+     - Committed as part of this session's changes
+
+   - **`/home/nancy/src/github.com/nansystem/sandbox/git-shared-test/`**
+     - Sandbox directory created for verifying git clone --shared behavior
+     - Verified: hooks not inherited, source repo deletion breaks clones (`fatal: bad object HEAD`)
+
+4. Errors and fixes:
+   - **`InvalidContentEntryDataError` for `git-parallel-development-guide.md`**: Empty `.md` file existed alongside the `.mdx` file, failing Astro schema validation → deleted the empty file with `rm`
+   - **Pre-commit hook `oxfmt` failing**: oxfmt auto-formatted the MDX file → re-staged the file and committed again successfully
+   - **`全ブランチが対等 | ✓` for git clone --shared**: Was incorrectly marked ✓ → sandbox verification confirmed source deletion breaks clones → changed to `✗（元リポジトリに依存）`
+   - **`feature/bugfix` nested under `feature/`**: Was incorrectly shown as `feature/bugfix/` → fixed to `bugfix/fix-null/` as a sibling of `feature/`
+
+5. Problem Solving:
+   - Researched git branch naming conventions: confirmed `feature/xxx` and `bugfix/xxx` are separate sibling prefixes (not nested)
+   - Researched wtp tool: confirmed via source code (`internal/command/builders.go`) that wtp calls `git worktree add` internally → table changed from "git worktree + wtp" to "wtp など（git worktree を内包）"
+   - Researched git clone --shared vs 複数clone: both need manual `.env`/`node_modules` setup; --shared is lighter but creates source dependency
+   - Investigated tools solving same problem as wtp: grove, wm, gwm, workmux, git-worktree-runner, copy-env (user chose not to add most of them)
+   - Verified bare clone flat naming is better for side-by-side comparison than slash-based hierarchy
+
+6. All user messages:
+   - "記事全体で見直して"
+   - "制約として、同一ブランチを複数の working tree でチェックアウトできない。はいらない"
+   - "my-app-featureをfeature-add-login、my-app-bugfixをbugfix-fix-nullにすると分かりやすいのでは?worktreeの慣習に従い統一して。"
+   - "矢印の位置がくずれてる"
+   - "ここにも反映して。（.git/内部構造）ここも書き方そろえて。（side-by-side panels）"
+   - "なんかディレクトリ名のつけ方変わってない?"
+   - "/groveはいらない。git clone --sharedは複数cloneより軽いことは書いといて。"
+   - "git cloneで複数作るのもありだとは思ってる。post-checkout フックや wtpとか考えずにシンプルに運用できるから。"
+   - "という説明を簡潔に複数cloneの下に書いて"
+   - "git clone git@github.com:org/my-app.gitの部分はリポジトリ名をmy-appとしたい。その方が1、2と別名をつけたのが分かるから"
+   - "git cloneは誰でも知ってるので追加の知識が不要でわかいりやすい。"
+   - "という説明を簡潔に複数cloneの下に書いて"
+   - "複数clone / git worktreeは同じCSS使ってる?前より横幅広くなってる気がして"（前セッションからの継続）
+   - ".envや.node_modulesなどが使いまわせるメリットがあることを書いて"
+   - "git オブジェクトはクローンごとにコピーされ...はいらない"
+   - "cloneコマンドも書いた方が分かりやすい"
+   - "という説明を簡潔に複数cloneの下に書いて"
+   - "複数clone / git worktree 文章を書く位置が違うので読みやすい方でそろえて"
+   - "ただし main working tree がリポジトリ本体として残り...この意味わからないので削除で"
+   - "git オブジェクトとリモート設定を共有できる。は上の文章で書いて"
+   - "main worktreeとlinked worktreeは公式のリンク貼っといて"
+   - "my-app/.git/...ここにmy-app-bugfixもほしい"
+   - "main.jsとかでコードの位置を示して、worktree利用時に対称性がなくなることを図解で示したい"
+   - "なんかディレクトリ名のつけ方変わってない?"
+   - "/groveはいらない..."
+   - "git clone —sharedは複数cloneと比べた時のメリットは?"
+   - "git clone —shared は複数 clone よりディスク使用量が少なく... AI ツールが内部で使う仕組みとして...これほんと？なんで?"
+   - "sandboxで検証して。"
+   - "/home/nancy/src/github.com/nansystem/sandboxのこと"
+   - "git clone —shared / 元のリポジトリの hooks は引き継がれない。これほんと？何か問題ある？home/nancy/src/github.com/nansystem/sandboxで検証して"
+   - "はい（hooks説明を記事に入れる）"
+   - "git clone —bare との違いを整理する。...はいらない"
+   - "post-checkout フック・git submoduleの部分は別記事にして"
+   - "比較表...ここのまとめから得られることがない...はいらない"
+   - "まとめ...日本語でも簡潔にまとめを入れたい"
+   - "複数ブランチを常時並行...なんで?"
+   - "post-checkout フックやwtpなどのツール"
+   - "wtpはリンクつけてあげてhttps://github.com/satococoa/wtp"
+   - "wtpと同じ課題解決するツール調査して"
+   - "git worktree が実用的な標準選択肢、かどうかは実戦でやってないので言い切れない"
+   - "git clone —sharedはほんとに内包してる?（wtp）"
+   - "複数 clone は post-checkout フックや...も一覧に入れたら?"
+   - "（.env・node_modules をそのまま使い回せる）は変"
+   - "git worktree + wtp など、はwtpがgit worktreeを内包してるのでは?確認して"
+   - "https://github.com/satococoa/wtpほんとに内包してる?"
+   - "ok http://localhost:4321/git-parallel-development-guideをコミットして公開して"
+   - "タイトル、descriptionを記事の内容に合わせて修正して"
+   - "触って整理した　触ってみた、が正確"
+   - "git clone —shared は複数 clone よりディスク使用量が少なく...ここの説明にAIツールが内部で使う仕組み、というのは前提ありすぎるので別文章にしたい"
+   - "taktについてはまだ触れたくない"
+   - "選択肢を選べるほどの理解は得られなかったので有力な選択肢だ、という言い方は止めて"
+   - "[InvalidContentEntryDataError]..."
+   - "bare cloneはgit clone --bareにするか、git clone —sharedの方をclone —sharedにするのかして対称性を保ってほしい"
+   - "git clone —shared は複数 clone よりディスク使用量が少なく clone も速いが、元リポジトリへの依存が生まれるため、AI ツールが内部で使う仕組みとして知っておくとよい。git cloneで複数作るのもありだとは思ってる..."
+   - "正直、commondir、alternatesとか全然知らない概念が出てきてまだ腹落ちしてない。という正直な感想も書いといて。リンク貼っといて"
+   - "sandboxで検証して（全ブランチが対等）"
+   - "--shared が影響するのは .git/objects/ の扱いだけで...これほんと？何か問題ある？sandboxで検証して"
+
+7. Pending Tasks:
+   - None. The article has been committed and published (`published: true`, pushed not yet confirmed but commit succeeded).
+
+8. Current Work:
+   The session concluded with committing the article. The commit was:
+   - `git add src/content/blog/git-parallel-development-guide.mdx src/layouts/BlogPost.astro`
+   - Pre-commit hook `oxfmt` modified the file on first attempt → re-staged → committed successfully as `8a58bb7`
+   - Message: "docs: git並行開発ガイド記事を追加"
+
+9. Optional Next Step:
+   The user said "ok http://localhost:4321/git-parallel-development-guideをコミットして公開して" and the commit was completed successfully. The user may want to `git push` to deploy to Cloudflare, but they did not explicitly request a push. Per the git safety protocol, push should not be done without explicit request. No next step is pending unless the user asks to push.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.

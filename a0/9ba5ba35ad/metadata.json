@@ -1,0 +1,29 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "a09ba5ba35ad",
+  "strategy": "manual-commit",
+  "branch": "master",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CLAUDE.md",
+    "src/content/blog/git-parallel-development-guide.md",
+    "src/content/blog/git-parallel-development-guide.mdx",
+    "src/layouts/BlogPost.astro"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a0/9ba5ba35ad/0/metadata.json",
+      "transcript": "/a0/9ba5ba35ad/0/full.jsonl",
+      "context": "/a0/9ba5ba35ad/0/context.md",
+      "content_hash": "/a0/9ba5ba35ad/0/content_hash.txt",
+      "prompt": "/a0/9ba5ba35ad/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 463,
+    "cache_creation_tokens": 363202,
+    "cache_read_tokens": 31930035,
+    "output_tokens": 73784,
+    "api_call_count": 283
+  }
+}
