@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "playwright install chromium && rm -rf .astro && astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "lint:text": "textlint 'src/content/blog/**/*.md'"

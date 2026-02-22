@@ -19,6 +19,6 @@ export default defineConfig({
 			type: 'shiki',
 			excludeLangs: ['mermaid'],
 		},
-		rehypePlugins: [rehypeMermaid],
+		rehypePlugins: [[rehypeMermaid, { strategy: 'pre-mermaid' }]],
 	},
 });
