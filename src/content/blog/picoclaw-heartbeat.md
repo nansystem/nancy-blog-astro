@@ -18,17 +18,17 @@ workspace のディレクトリ構成は次のとおりで、`HEARTBEAT.md` は1
 
 ```
 ~/.picoclaw/workspace/
-├── HEARTBEAT.md   # 定期タスクの定義
-├── AGENT.md
-├── IDENTITY.md
-├── SOUL.md
-├── USER.md
-├── cron/
-├── memory/
-├── sessions/
-├── skills/
-├── state/
-└── heartbeat.log
+├── HEARTBEAT.md   # 定期タスクの定義（本記事のテーマ）
+├── AGENT.md       # AIへの行動指針（ツール使用方針・確認のタイミング等）
+├── IDENTITY.md    # AIの自己紹介・バージョン・目的
+├── SOUL.md        # AIの性格・価値観（端的・正直・好奇心旺盛など）
+├── USER.md        # ユーザー情報（名前・タイムゾーン・好みなど）
+├── cron/          # スケジュールジョブの定義（jobs.json）
+├── memory/        # 長期記憶（MEMORY.md）
+├── sessions/      # 会話履歴
+├── skills/        # カスタムスキル
+├── state/         # 最後に通信したチャネル等の状態
+└── heartbeat.log  # HEARTBEATの実行ログ
 ```
 
 `HEARTBEAT.md` の中身はただの Markdown で、見出しや箇条書きはすべてユーザーが自由に書く。ファイル名や `# Periodic Tasks` といった見出し名にシステム上の意味はない。
