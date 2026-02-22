@@ -121,13 +121,20 @@ const jsonLd = JSON.stringify([
 </html>
 
 <style>
-	main.has-toc {
-		width: 1060px;
+	main {
 		max-width: calc(100% - 2em);
+	}
+	main.has-toc {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) 220px;
 		column-gap: 2.5rem;
 		align-items: start;
+	}
+	article {
+		max-width: 768px;
+	}
+	main.has-toc article {
+		max-width: none;
 	}
 
 	.post-header {
