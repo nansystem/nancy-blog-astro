@@ -37,6 +37,9 @@ const { category, posts } = Astro.props;
 						<a href={post.data.permalink}>
 							<span class="date">
 								<FormattedDate date={post.data.date} />
+								{post.data.published === false && (
+									<span class="preview-badge">Preview</span>
+								)}
 							</span>
 							<h3 class="title">{post.data.title}</h3>
 						</a>
@@ -81,6 +84,16 @@ const { category, posts } = Astro.props;
 	.date {
 		font-size: 0.9em;
 		color: rgb(var(--gray-dark));
+	}
+	.preview-badge {
+		font-size: 0.8em;
+		font-weight: 600;
+		color: #d97706;
+		background: #fef3c7;
+		padding: 0.1em 0.5em;
+		border-radius: 3px;
+		margin-left: 0.5em;
+		vertical-align: middle;
 	}
 	.title {
 		margin: 0.5em 0 0 0;

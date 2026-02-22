@@ -8,7 +8,7 @@ import Header from '../components/Header.astro';
 type Heading = { depth: number; slug: string; text: string };
 type Props = CollectionEntry<'blog'>['data'] & { headings?: Heading[] };
 
-const { title, description, date, categories, headings = [] } = Astro.props;
+const { title, description, date, categories, headings = [], published } = Astro.props;
 
 const tocHeadings = headings.filter(h => h.depth === 2 || h.depth === 3);
 
@@ -85,6 +85,9 @@ const jsonLd = JSON.stringify([
 				<div class="post-header">
 					<div class="post-meta">
 						<FormattedDate date={date} />
+						{published === false && (
+							<span class="preview-badge">Preview</span>
+						)}
 						{categories && categories.length > 0 && (
 							<span class="separator">/</span>
 							<span class="categories">
@@ -141,6 +144,16 @@ const jsonLd = JSON.stringify([
 		font-size: 0.85em;
 		color: rgb(var(--gray));
 		margin-bottom: 0.5em;
+	}
+	.preview-badge {
+		font-size: 0.85em;
+		font-weight: 600;
+		color: #d97706;
+		background: #fef3c7;
+		padding: 0.1em 0.5em;
+		border-radius: 3px;
+		margin-left: 0.5em;
+		vertical-align: middle;
 	}
 	.separator {
 		margin: 0 0.4em;
