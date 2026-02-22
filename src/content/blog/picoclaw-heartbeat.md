@@ -8,7 +8,7 @@ permalink: /picoclaw-heartbeat
 published: false
 ---
 
-[picoclaw](https://github.com/sipeed/picoclaw) は Go で書かれた超軽量パーソナル AI エージェントだ。メモリフットプリントが 10MB 未満で、$10 の RISC-V ボード（LicheeRV-Nano）でも動く。HEARTBEAT を試したところ「単なる cron では？」と思ったが、調べると本質的な違いがあった。
+[picoclaw](https://github.com/sipeed/picoclaw) は Go で書かれた超軽量パーソナル AI エージェントだ。メモリフットプリントが 10MB 未満で、$10 の RISC-V ボード（LicheeRV-Nano）でも動く。HEARTBEAT を試したところ「単なる cron ではないか」と思ったが、調べると大きな違いがあった。
 
 ## HEARTBEAT とは
 
@@ -37,7 +37,7 @@ If there is nothing that requires attention, respond ONLY with: HEARTBEAT_OK
 
 ## cron との違い
 
-一見すると cron と変わらないが、本質的な違いは **LLM が間に入る**点だ。
+一見すると cron と変わらないが、決定的な違いは **LLM が間に入る**点だ。
 
 |              | cron                   | HEARTBEAT                        |
 | ------------ | ---------------------- | -------------------------------- |
@@ -47,11 +47,11 @@ If there is nothing that requires attention, respond ONLY with: HEARTBEAT_OK
 
 cron は「毎朝 9 時にメッセージを送れ」→ そのまま送る。HEARTBEAT は「ニュースをチェックして重要なものだけ教えて」→ AI が `web_search` を使って調べ、重要かどうか判断して、結果だけ Telegram に通知する。
 
-ただし使えるツールは `web_search`（Brave/DuckDuckGo/Perplexity）、`web_fetch`、ファイル操作、`exec`（シェルコマンド）などで、メール・カレンダー等の統合は標準では存在しない。「判断を AI に委ねられる」のは Web 上の公開情報が対象で、メールのような認証が必要なものは事前に CLI ツールのセットアップが必要だ。
+ただし標準で使えるツールは `web_search`・`web_fetch`・ファイル操作・`exec` に限られ、メール・カレンダー等の統合は存在しない。「判断を AI に委ねられる」対象は Web 上の公開情報だ。メールのような認証が必要なものは事前に CLI ツールの準備が必要になる。
 
 ## spawn によるサブエージェントの非同期実行
 
-HEARTBEAT 実行中に AI が重いタスクと判断したとき、`spawn` tool を呼んでサブエージェントをバックグラウンドで走らせることができる。
+HEARTBEAT 実行中に AI が重いタスクと判断したとき、`spawn` tool を呼んでサブエージェントをバックグラウンドで実行できる。
 
 ```mermaid
 sequenceDiagram
@@ -72,7 +72,7 @@ sequenceDiagram
     S->>T: タスクB の結果を送信
 ```
 
-`spawn.go` を見ると `SubagentManager.Spawn()` が `go sm.runTask(...)` で goroutine を起動して即リターンし、`AsyncResult()` を返すためメイン AI はブロックされない。
+`spawn.go` を見ると `SubagentManager.Spawn()` は `go sm.runTask(...)` で goroutine を起動して即リターンする。`AsyncResult()` を返すのでメイン AI はブロックされない。
 
 ## forkするかどうかの判断はLLM任せ
 
@@ -100,7 +100,7 @@ func (t *SpawnTool) Description() string {
 
 ## subagent の実体
 
-新しいプロセスもスレッドも作らない。`subagent.go` の `runTask` を見ると、実態はメインエージェントと同じ `RunToolLoop` 関数を goroutine で呼んでいるだけだ。
+プロセスは起動せず、スレッドも作らない。`subagent.go` の `runTask` を見ると、実態はメインエージェントと同じ `RunToolLoop` 関数を goroutine で呼んでいるだけだ。
 
 ```mermaid
 flowchart LR
@@ -115,7 +115,7 @@ flowchart LR
     S -->|bus.PublishInbound| M
 ```
 
-メインエージェントとの違いはセッション履歴がない点とシステムプロンプトが `SOUL.md` 等ではなく固定文字列な点だけだ。「fork」というより**使い捨ての LLM セッションを goroutine で走らせる**が正確な表現だ。
+メインエージェントとの違いはセッション履歴がない点とシステムプロンプトが `SOUL.md` 等ではなく固定文字列な点だけだ。「fork」というより**使い捨ての LLM セッションを goroutine で実行する**が正確な表現だ。
 
 ## まとめ
 
