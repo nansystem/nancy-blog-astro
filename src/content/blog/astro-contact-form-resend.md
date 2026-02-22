@@ -214,13 +214,20 @@ export default defineConfig({
 });
 ```
 
-ローカルでは`.envrc`（direnv）で設定し、本番はCloudflare Pagesのダッシュボードで設定する。
+ローカルでは`.env`や`.envrc`など任意の方法で設定する。
 
 ```bash
-# .envrc
-export RESEND_API_KEY="re_xxxxxxxxx"
-export RESEND_FROM_EMAIL="noreply@send.example.com"
-export RESEND_TO_EMAIL="info@example.com"
+RESEND_API_KEY="re_xxxxxxxxx"
+RESEND_FROM_EMAIL="noreply@send.example.com"
+RESEND_TO_EMAIL="info@example.com"
+```
+
+本番（Cloudflare Pages）へは`wrangler`のCLIで設定する。`secret put`を使うと値は暗号化されて保存される。
+
+```bash
+npx wrangler pages secret put RESEND_API_KEY --project <your-project>
+npx wrangler pages secret put RESEND_FROM_EMAIL --project <your-project>
+npx wrangler pages secret put RESEND_TO_EMAIL --project <your-project>
 ```
 
 ## 設定中にResendが障害
