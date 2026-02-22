@@ -1,4 +1,0 @@
-ignoredBuiltDependencies:
-  - '@j178/prek'
-  - esbuild
-  - sharp
