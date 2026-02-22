@@ -59,25 +59,28 @@ const { category, posts } = Astro.props;
 		margin: 0;
 		padding: 0;
 	}
-	ul li {
-		border-bottom: 1px solid rgb(var(--border));
-	}
-	ul li:last-child {
-		border-bottom: none;
+	ul li + li::before {
+		content: '';
+		display: block;
+		width: 2em;
+		border-top: 2px solid var(--accent);
+		margin: 1.5em 0 0.5em;
 	}
 	ul li a {
 		display: block;
 		padding: 1.5em 0;
 		text-decoration: none;
-		transition: opacity 0.15s;
+		transition: color 0.25s ease;
 	}
 	ul li a:hover {
-		opacity: 0.7;
 		text-decoration: none;
 	}
+	ul li a:hover .title {
+		color: var(--accent);
+	}
 	.date {
-		font-size: 0.8em;
-		color: rgb(var(--gray));
+		font-size: 0.9em;
+		color: rgb(var(--gray-dark));
 	}
 	.title {
 		margin: 0.5em 0 0 0;
