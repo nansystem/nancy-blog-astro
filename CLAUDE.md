@@ -4,8 +4,8 @@
 
 Astro v5 の静的サイト。Cloudflare Workers (GitHub連携) でデプロイ。
 
-- ビルド: `npm run build` → `dist/` に出力
-- デプロイ: Cloudflare の Git 連携で push 時に自動ビルド & `npx wrangler deploy`
+- ビルド: `pnpm build` → `dist/` に出力
+- デプロイ: Cloudflare の Git 連携で push 時に自動ビルド & `pnpm exec wrangler deploy`
 
 ## Cloudflare デプロイ時の注意事項
 
@@ -13,11 +13,11 @@ Astro v5 の静的サイト。Cloudflare Workers (GitHub連携) でデプロイ�
 
 Cloudflare には2つのデプロイモードがある。設定を間違えるとデプロイが壊れる。
 
-| 項目                        | Workers (推奨・このプロジェクト)      | Pages (レガシー)                 |
-| --------------------------- | ------------------------------------- | -------------------------------- |
-| wrangler.jsonc の出力先キー | `assets.directory`                    | `pages_build_output_dir`         |
-| デプロイコマンド            | `npx wrangler deploy`                 | `npx wrangler pages deploy dist` |
-| 404 ハンドリング            | `not_found_handling` の明示設定が必要 | 自動                             |
+| 項目                        | Workers (推奨・このプロジェクト)      | Pages (レガシー)                       |
+| --------------------------- | ------------------------------------- | -------------------------------------- |
+| wrangler.jsonc の出力先キー | `assets.directory`                    | `pages_build_output_dir`               |
+| デプロイコマンド            | `pnpm exec wrangler deploy`           | `pnpm exec wrangler pages deploy dist` |
+| 404 ハンドリング            | `not_found_handling` の明示設定が必要 | 自動                                   |
 
 **`wrangler pages deploy` と `wrangler deploy` は別物。** Workers モードで `wrangler pages deploy` を使うと認証エラーになる。
 
@@ -41,7 +41,7 @@ Cloudflare Pages/Workers の Git 連携ビルドでは自動生成されるビ�
 
 | 場所    | パス                                                    | 用途                                  |
 | ------- | ------------------------------------------------------- | ------------------------------------- |
-| WSL     | `/home/nancy/ghq/github.com/nansystem/nancy-blog-astro` | レイアウト・コード修正、`npm run dev` |
+| WSL     | `/home/nancy/ghq/github.com/nansystem/nancy-blog-astro` | レイアウト・コード修正、`pnpm dev`    |
 | Windows | `C:\repos\nancy-blog-astro`                             | Obsidian で記事執筆 → push でデプロイ |
 
 **片方で push したら、もう片方で `git pull` すること。** 同じブランチを両方で編集すると競合する。

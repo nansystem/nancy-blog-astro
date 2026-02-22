@@ -7,6 +7,6 @@ repos:
     hooks:
       - id: oxfmt
         name: oxfmt (md/mdx)
-        entry: npx oxfmt --write
+        entry: pnpm exec oxfmt --write
         language: system
         files: \.(md|mdx)$
