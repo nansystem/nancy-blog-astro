@@ -23,9 +23,6 @@ const posts = (await getCollection('blog', ({ data }) => {
 								<FormattedDate date={post.data.date} />
 							</span>
 							<h3 class="title">{post.data.title}</h3>
-							{post.data.description && (
-								<p class="description">{post.data.description}</p>
-							)}
 						</a>
 					</li>
 				))
@@ -35,6 +32,9 @@ const posts = (await getCollection('blog', ({ data }) => {
 </BaseLayout>
 
 <style>
+	section {
+		max-width: 768px;
+	}
 	ul {
 		list-style-type: none;
 		margin: 0;
@@ -48,7 +48,7 @@ const posts = (await getCollection('blog', ({ data }) => {
 	}
 	ul li a {
 		display: block;
-		padding: 1em 0;
+		padding: 1.5em 0;
 		text-decoration: none;
 		transition: opacity 0.15s;
 	}
@@ -61,16 +61,10 @@ const posts = (await getCollection('blog', ({ data }) => {
 		color: rgb(var(--gray));
 	}
 	.title {
-		margin: 0.2em 0 0 0;
+		margin: 0.5em 0 0 0;
 		font-size: 1.1em;
 		font-weight: 600;
 		color: rgb(var(--black));
 		line-height: 1.5;
-	}
-	.description {
-		margin: 0.3em 0 0 0;
-		font-size: 0.85em;
-		color: rgb(var(--gray));
-		line-height: 1.6;
 	}
 </style>
