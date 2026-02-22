@@ -8,36 +8,61 @@ permalink: /picoclaw-heartbeat
 published: false
 ---
 
-[picoclaw](https://github.com/sipeed/picoclaw) は Go で書かれた超軽量パーソナル AI エージェントだ。メモリフットプリントが 10MB 未満で、$10 の RISC-V ボード（LicheeRV-Nano）でも動く。HEARTBEAT を試したところ「単なる cron ではないか」と思ったが、調べると大きな違いがあった。
+[picoclaw](https://github.com/sipeed/picoclaw) は Go で書かれた超軽量パーソナル AI エージェントだ。HEARTBEAT を試したところ「単なる cron ではないか」と思ったが、調べると違いがあった。
 
 ## HEARTBEAT とは
 
-ワークスペースの `HEARTBEAT.md` に書いたタスクを定期的（デフォルト 30 分）に AI が読んで実行する仕組みだ。
+`~/.picoclaw/workspace/HEARTBEAT.md` に書いたタスクを定期的（デフォルト 30 分）に AI が読んで実行する仕組みだ。
+
+workspace のディレクトリ構成は次のとおりで、`HEARTBEAT.md` は1つだけ存在する。
+
+```
+~/.picoclaw/workspace/
+├── HEARTBEAT.md   # 定期タスクの定義
+├── AGENT.md
+├── IDENTITY.md
+├── SOUL.md
+├── USER.md
+├── cron/
+├── memory/
+├── sessions/
+├── skills/
+├── state/
+└── heartbeat.log
+```
+
+`HEARTBEAT.md` の中身はただの Markdown で、見出しや箇条書きはすべてユーザーが自由に書く。ファイル名や `# Periodic Tasks` といった見出し名にシステム上の意味はない。
 
 ```markdown
-# Periodic Tasks
+## Tasks
 
-- ニュースをチェックして重要なものだけ教えて
-- 天気予報を取得してレポートして
+- 現在時刻を報告してください
+- 簡単な挨拶を返してください
 ```
 
-仕組みはシンプルで、`heartbeat/service.go` が以下のプロンプトを組み立てて AI に渡す。
+複数のタスクを依頼したい場合は箇条書きを並べるだけだ。AI はファイルの内容をまとめて1回のプロンプトで受け取り、すべてのタスクを順番に処理する。
 
-```
-# Heartbeat Check
+### AI に渡るプロンプト
 
-Current time: 2026-02-22 12:00:00
+`heartbeat/service.go` の `buildPrompt()` がファイル内容を読み込み、現在時刻とともにプロンプトを組み立てる。
 
-You are a proactive AI assistant. This is a scheduled heartbeat check.
-Review the following tasks and execute any necessary actions using available skills.
+```go
+now := time.Now().Format("2006-01-02 15:04:05")
+return fmt.Sprintf(`# Heartbeat Check
+
+Current time: %s
+
+You are a proactive AI assistant. ...
 If there is nothing that requires attention, respond ONLY with: HEARTBEAT_OK
 
-[HEARTBEAT.md の内容]
+%s`, now, content)
 ```
+
+`Current time:` の行は Go コードが挿入する。末尾の `%s` に `HEARTBEAT.md` の全内容がそのまま埋め込まれる。
 
 ## cron との違い
 
-一見すると cron と変わらないが、決定的な違いは **LLM が間に入る**点だ。
+一見すると cron と変わらないが、違いは **LLM が間に入る**点だ。
 
 |              | cron                   | HEARTBEAT                        |
 | ------------ | ---------------------- | -------------------------------- |
@@ -74,6 +99,15 @@ sequenceDiagram
 
 `spawn.go` を見ると `SubagentManager.Spawn()` は `go sm.runTask(...)` で goroutine を起動して即リターンする。`AsyncResult()` を返すのでメイン AI はブロックされない。
 
+### agent を順番に動かしたい場合
+
+`spawn` は非同期なので完了を待たずに次のタスクへ進む。agent を順番に実行したい場合は `subagent` tool（同期版）を使う。`subagent` は処理が完了するまで待ってから結果を返す。
+
+| tool       | 完了を待つか | 用途                                 |
+| ---------- | ------------ | ------------------------------------ |
+| `spawn`    | 待たない     | 重い処理を並列でバックグラウンド実行 |
+| `subagent` | 待つ         | 結果を受け取ってから次の処理へ       |
+
 ## forkするかどうかの判断はLLM任せ
 
 「この処理は重いからforkしよう」という判定コードはプログラム側に**一切ない**。
@@ -82,9 +116,9 @@ sequenceDiagram
 
 ```go
 func (t *SpawnTool) Description() string {
-    return "Spawn a subagent to handle a task in the background. " +
-           "Use this for complex or time-consuming tasks that can run independently. " +
-           "The subagent will complete the task and report back when done."
+	return "Spawn a subagent to handle a task in the background. " +
+		"Use this for complex or time-consuming tasks that can run independently. " +
+		"The subagent will complete the task and report back when done."
 }
 ```
 
