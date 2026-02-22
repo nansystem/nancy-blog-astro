@@ -10,3 +10,8 @@ repos:
         entry: pnpm exec oxfmt --write
         language: system
         files: \.(md|mdx)$
+      - id: textlint
+        name: textlint (md)
+        entry: pnpm exec textlint
+        language: system
+        files: src/content/blog/.*\.md$
