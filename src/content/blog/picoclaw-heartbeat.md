@@ -4,7 +4,7 @@ description: PicoClaw の HEARTBEAT は cron と違い AI が自然言語タス�
 date: 2026-02-22T12:00:00+09:00
 categories:
   - AI
-permalink: /PicoClaw-heartbeat
+permalink: /picoclaw-heartbeat
 published: true
 ---
 

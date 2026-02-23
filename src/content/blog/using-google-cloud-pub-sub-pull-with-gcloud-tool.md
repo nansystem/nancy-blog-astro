@@ -53,7 +53,7 @@ Created subscription [projects/using-pub-sub/subscriptions/my-sub].
 
 3. メッセージをトピックにパブリッシュする  
    `gcloud pubsub topics publish [トピックID] --message [メッセージ]`によりメッセージをトピックにパブリッシュする。メッセージには一意なIDが割り当てられる。  
-   `--attribute=[属性,…]`オプションにより、カンマ区切りで属性を指定することができる。各属性は`name=value`の形式で100個まで登録できる。
+   `--attribute=[属性,…]`オプションにより、カンマ区切りで属性を指定できる。各属性は`name=value`の形式で100個まで登録できる。
 
 属性なしでメッセージをトピックにパブリッシュする場合
 

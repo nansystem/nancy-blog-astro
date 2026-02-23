@@ -4,7 +4,7 @@ description: "PicoClaw（OpenClawのGo実装・超軽量AIエージェント）�
 date: 2026-02-17T12:00:00+09:00
 categories:
   - AI
-permalink: /PicoClaw-sakura-ai-engine
+permalink: /picoclaw-sakura-ai-engine
 published: true
 ---
 

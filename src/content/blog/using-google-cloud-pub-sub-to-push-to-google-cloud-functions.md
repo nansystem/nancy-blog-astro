@@ -20,7 +20,7 @@ Cloud Pub/Subのサブスクリプションの配信タイプをpushにして、
 
 ## gcloud コマンドライン ツールでCloud Pub/Subをイベントとして駆動するGoogle Cloud Functionsを作成する
 
-gcloud コマンドライン ツールを使うことで、トピック、サブスクリプションを個別で作成しなくても、Cloud Pub/Subをイベントとして駆動するGoogle Cloud Functionsを作成することができる。  
+gcloud コマンドライン ツールを使うことで、トピック、サブスクリプションを個別で作成しなくても、Cloud Pub/Subをイベントとして駆動するGoogle Cloud Functionsを作成できる。  
 次の手順で作業を進める。
 
 1. Cloud Pub/Subから配信されるメッセージの形式を確認する。

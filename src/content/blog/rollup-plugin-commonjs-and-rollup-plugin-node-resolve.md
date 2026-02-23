@@ -131,7 +131,7 @@ const result = add(1, 2);
 console.log(result);
 ```
 
-`node src/index.js`と実行するとさきほどと同じように計算結果を出力することができる。
+`node src/index.js`と実行するとさきほどと同じように計算結果を出力できる。
 再度、`rollup`コマンドで`calculator.js`と`index.js`を1つにまとめてみる。`npx rollup src/index.js --file dist/bundle.js --format umd --name "calculator"`を実行すると次のファイルが出力される。
 
 ```js

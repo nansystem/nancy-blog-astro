@@ -196,7 +196,7 @@ body {
 
 ### top:0、left:0、right:0、bottom:0で全画面に背景を表示する
 
-`top:0`、`left:0`だけでなく、`right:0`、`bottom:0`も指定することで全画面に背景色を指定することができる。
+`top:0`、`left:0`だけでなく、`right:0`、`bottom:0`も指定することで全画面に背景色を指定できる。
 
 ```css
 .full-page {

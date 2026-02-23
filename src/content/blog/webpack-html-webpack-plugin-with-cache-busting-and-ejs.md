@@ -13,7 +13,7 @@ published: true
 ## html-webpack-pluginとは
 
 [html-webpack-plugin](https://github.com/jantimon/html-webpack-plugin)とはwebpackのプラグインで、**webpackで生成したJavaScriptやCSSを埋め込んだHTMLを生成**する。  
-webpackで生成したJavaScriptやCSSにユニークな識別子を付与することでブラウザキャッシュを回避したり、テンプレートとなるHTMLをカスタマイズすることができる。
+webpackで生成したJavaScriptやCSSにユニークな識別子を付与することでブラウザキャッシュを回避したり、テンプレートとなるHTMLをカスタマイズできる。
 
 ## html-webpack-pluginでJavaScriptを読み込んだHTMLを生成する
 
@@ -155,7 +155,7 @@ bundle.js
 ]);
 ```
 
-HTMLを用意していなくても、`index.html`というHTMLファイルが出力され、そのHTMLファイルの`<script>`タグに出力された`bundle.js`が読み込まれている。
+HTMLを用意していなくても、`index.html`というHTMLファイルが出力され、そのHTMLファイルの`<script>`タグに出力された`bundle.js`が読み込まれている。
 
 index.html
 
@@ -179,7 +179,7 @@ Google Chromeのデベロッパーツール
 
 ## titleやmetaタグ、ファイル名を変更する
 
-HTMLを用意しなくても、titleやmetaタグ、出力されるHTML名を設定することができる。
+HTMLを用意しなくても、titleやmetaタグ、出力されるHTML名を設定できる。
 
 webpack.config.js抜粋
 
@@ -391,7 +391,7 @@ admin.html
 
 ## 独自のHTMLをテンプレートに使う
 
-ここまでは`html-webpack-plugin`が用意しているデフォルトのHTMLをテンプレートとして、HTMLを生成していた。しかし、テンプレートとなるHTMLは自分で指定することができる。  
+ここまでは`html-webpack-plugin`が用意しているデフォルトのHTMLをテンプレートとして、HTMLを生成していた。しかし、テンプレートとなるHTMLは自分で指定できる。  
 また、テンプレートでオプションを通して変数を渡すことができる。オプションは`htmlWebpackPlugin.options.[オプション名]`の形で渡す。
 
 template.html
@@ -409,7 +409,7 @@ template.html
 </html>
 ```
 
-プラグインの設定でテンプレートになるHTMLファイルのパスを`template`に指定する。オプションで`title`、`originalHeader`を設定したため、HTMLからそれぞれ`htmlWebpackPlugin.options.title`、`htmlWebpackPlugin.options.originalHeader`として参照することができる。
+プラグインの設定でテンプレートになるHTMLファイルのパスを`template`に指定する。オプションで`title`、`originalHeader`を設定したため、HTMLからそれぞれ`htmlWebpackPlugin.options.title`、`htmlWebpackPlugin.options.originalHeader`として参照できる。
 
 webpack.config.js抜粋
 

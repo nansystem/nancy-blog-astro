@@ -4,7 +4,7 @@ description: "Google Cloud Functionsのエミュレータをローカルにイ�
 date: 2019-04-25
 categories:
   - Google Cloud
-permalink: /develop-and_debug_google-cloud-function-with-emulator-locally
+permalink: /develop-and-debug-google-cloud-function-with-emulator-locally
 published: true
 ---
 
@@ -123,7 +123,7 @@ launch.json
 デバッグが始まるとVisual Studio Codeの下の方がオレンジ色になり、デバッグ中であることがわかるようになる。  
 ![デバッグモード](../../assets/images/20190425-debug-mode.jpg)
 
-`curl`で関数を実行すると、次のようにデバッグポイントで処理が止まり、ローカルのGoogle Cloud Functionsをデバッグすることができる。  
+`curl`で関数を実行すると、次のようにデバッグポイントで処理が止まり、ローカルのGoogle Cloud Functionsをデバッグできる。  
 ![デバッグモードでストップしている状態](../../assets/images/20190425-debug-stop.jpg)
 
 ・参考  

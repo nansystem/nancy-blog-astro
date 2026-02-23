@@ -4,7 +4,7 @@ description: Flaskのrender_templateでHTMLを返す方法を解説。Jinja2テ�
 date: 2019-05-06
 categories:
   - Flask
-permalink: /flask-render_template
+permalink: /flask-render-template
 published: true
 ---
 
@@ -75,7 +75,7 @@ Flaskは[Jinja2](http://jinja.pocoo.org/)テンプレートエンジンにより
 まずは変数が埋め込めることを確認する。
 
 `render_template`関数の第2引数以降に`HTMLで使う変数名 = 値`のように指定する。  
-変数は複数指定することができる。
+変数は複数指定できる。
 
 `application.py`抜粋
 
@@ -184,7 +184,7 @@ HTMLをヘッダーやフッター、あるいは意味ある単位でコンポ�
 
 各ページのHTMLでは、`extends レイアウトHTMLへのパス`のように`extends`に続けて、レイアウトのHTMLへのパスを指定する。  
 そして、`block ブロック名`でレイアウトHTMLで指定されているブロック名を指定して、各ページの内容を設定していく。  
-`super()`を使うことで、レイアウトで指定されているコンテンツを表示した上で、さらに各ページで表示したい内容を追加することができる。  
+`super()`を使うことで、レイアウトで指定されているコンテンツを表示した上で、さらに各ページで表示したい内容を追加できる。  
 また、各ページのHTMLでブロックを指定しない場合(このHTMLの場合は`footer`を指定していない)、レイアウトHTMLでのフォールバックの内容が表示される。
 
 `index.html`

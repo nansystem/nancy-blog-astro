@@ -1,30 +1,22 @@
 ---
-title: AIオーケストレーションを理解したい（1）シングルエージェントを自作する
-description: マルチエージェントの協調動作を理解するための第一歩として、シングルエージェントをゼロから自作する。CLI・Gemini API呼び出し・自作ツール・ループ実行の4ステップで、Tool Callingの仕組みを手を動かしながら腹落ちさせる。
+title: AIオーケストレーションを理解したい（1）AI エージェントを自作する
+description: マルチエージェントの協調動作を理解するための第一歩として、シングルエージェントをゼロから自作する。CLI・Gemini API呼び出し・ビルトインツール・自作ツール・ループ実行の5ステップで、LLM がツールを呼び出すループを手を動かしながら腹落ちさせる。
 date: 2026-02-23
 categories:
   - AI
 permalink: /ai-orchestration-1-single-agent
-published: false
+published: true
 ---
 
-マルチエージェントが協調して動く AI オーケストレーションツールに興味がある。ただ、その仕組みを理解しようとしたとき、まずシングルエージェントが何をしているのかが腹落ちしていないと先に進めないと感じた。
+AI オーケストレーションを理解したい。前の記事で [PicoClaw の HEARTBEAT](/picoclaw-heartbeat) を知ったため、そこからワークフローを動かせたら面白そうだからだ。
 
-この記事では、シングルエージェントの中心となる Tool Calling を4つのステップでゼロから自作する。
+そこで、オーケストレーションの前に AI エージェントの基本的な作り方を試してみる。AI エージェントとは、LLM が「次に何をするか」を判断し、ツールを呼び出して外部と連携し、その結果を踏まえてまた判断する。そうしたループを回すシステムのことだ。
 
-## 前提: LLM はローカルにアクセスできない
+この記事では、LLM がツールを呼び出すループを5つのステップで作り、シングルエージェントを実装する。
 
-Gemini はテキストを生成するモデルであり、Google のサーバー上で動いている。あなたの PC のファイルを読む手段を持っていない。「ファイルを読んで」と伝えたとき、Gemini がやることはファイルを読むことではなく、「read_file を呼びたい」という JSON を返すだけだ。
+## 1. CLI で入力を受け取り返す
 
-実際にファイルを読むのはアプリ側（Node.js 等）であり、Gemini はその結果を受け取って回答を生成する。この役割分担が Tool Calling の仕組みを端的に表している。
-
-では Claude Code や Gemini CLI はなぜローカルのファイルを読めるのか。答えは「CLI 自身がこのアプリ側の実装を持っているから」だ。LLM から「read_file を呼びたい」が返ってきたとき、CLI がローカルでファイルを読んで結果を LLM に渡している。この記事で自作するのは、まさにその実行層だ。
-
----
-
-## Step 1: CLI で入力を受け取り返す
-
-まず AI とは無関係に、標準入力を受け取って返すだけの CLI を作る。これが後のステップで使うループの土台になる。
+まず AI とは関係なく、標準入力を受け取って返すだけの CLI を作る。
 
 ```ts
 import * as readline from "node:readline";
@@ -51,7 +43,7 @@ rl.on("line", (line) => {
 
 `readline.createInterface` で標準入力を行単位で受け取る。`terminal: false` は入力のエコーを無効にするオプションだ。
 
-実行するとこうなる。
+実行するとこうなる。特に面白味もなく、オウム返し。
 
 ```
 $ pnpm run step1
@@ -64,7 +56,7 @@ Echo: ありがとう
 
 ---
 
-## Step 2: Gemini API をシンプルに呼び出す
+## 2. Gemini API をシンプルに呼び出す
 
 ツールを使わずにテキストを送ってテキストを受け取る。まずレスポンスのパターンを確認することが大事だ。
 
@@ -84,20 +76,85 @@ console.log("text        :", response.text); // "こんにちは！..."
 console.log("functionCalls:", response.functionCalls); // undefined（ツールなし）
 ```
 
-レスポンスには2種類のフィールドがある。
+レスポンスには2つのフィールドがある。
 
-| フィールド      | 内容                                                                 |
-| --------------- | -------------------------------------------------------------------- |
-| `text`          | Gemini のテキスト回答                                                |
-| `functionCalls` | 呼び出したいツールの一覧（ツールを渡していないので常に `undefined`） |
+```ts
+{
+  text: "こんにちは！...", // Gemini のテキスト回答
+  functionCalls: undefined, // 呼び出したいツールの一覧（ツールなしなので常に undefined）
+}
+```
 
 `ai.chats.create()` でチャットセッションを開始すると、会話履歴が SDK 内部で保持される。毎回の `sendMessage` で履歴が積み重なっていく。
 
+実行するとこうなる。AIが返事してくれた！オウム返しよりうれしい。
+
+```
+$ pnpm run step2
+Gemini chat (type "exit" to quit):
+You: あなたは誰ですか?
+--- response ---
+text       : 私はGoogleによってトレーニングされた、大規模言語モデルです。
+functionCalls: undefined
+```
+
 ---
 
-## Step 3: 自作ツールを渡す
+## 3. ビルトインツールを使う
 
-ここが重要な点だ。Gemini にツールの「仕様書」を渡すと、必要なタイミングで `functionCalls` が返ってくる。アプリ側でそれを実行して結果を返す。Step 4 のループへ進む前に、まず1往復だけ試して `functionCalls` が返ることを確認する。
+Gemini が標準で持つビルトインツールがある。`googleSearch` はその一つで、`tools` に指定するだけで使える。
+
+```ts
+const response = await ai.models.generateContent({
+  model: "gemini-2.5-flash-lite",
+  contents: "今日の東京の天気は？",
+  config: {
+    tools: [{ googleSearch: {} }], // {} はデフォルト設定で有効化
+  },
+});
+```
+
+実行するとこうなる。最新の情報を取得して表示してくれる。
+
+```
+--- response ---
+text        : 今日の東京の天気は晴れで、最高気温は23℃、最低気温は12℃の予報です。...
+functionCalls: undefined
+----------------
+```
+
+`googleSearch` を外して同じ質問をするとどうなるか。
+
+```
+今日の東京の天気は、晴れ時々曇りで、最高気温は27℃、最低気温は20℃の予想です。
+午後は次第に雲が広がりやすくなるでしょう。
+```
+
+めっちゃ嘘ついてくる。これがハルシネーションですか。
+
+では「どのクエリで検索が必要か」をアプリ側で判断しなければならないのか。[公式ドキュメント](https://ai.google.dev/gemini-api/docs/google-search)によると、その必要はない。**Dynamic Retrieval**（動的取得）という仕組みで、Gemini 自身がプロンプトごとに検索の必要性を自動判断してくれる。
+
+```ts
+tools: [
+  {
+    googleSearch: {
+      dynamicRetrievalConfig: {
+        dynamicThreshold: 0.7, // 0〜1。高いほど検索が実行されにくくなる（省略可）
+      },
+    },
+  },
+];
+```
+
+API がプロンプトに 0〜1 のスコアを付け、`dynamicThreshold` を超えたときだけ検索を実行する。超えなければ Gemini の学習データだけで応答する。`googleSearch: {}` では全クエリで検索が走るのに対し、Dynamic Retrieval を使うとコストとレイテンシを抑えられる。なお Google の公式ドキュメントでは、ハルシネーションを削減できるとしている。
+
+`googleSearch` 以外にも `codeExecution`（Pythonコードの実行）や `urlContext`（URLのコンテキスト取得）が用意されている。ただし Dynamic Retrieval は `googleSearch` のみで指定できる。
+
+---
+
+## 4. 自作ツールを渡す
+
+Claude Code などを使っているとローカルのファイルを検索・編集するのが当たり前に感じるが、API 呼び出しの場合はローカルファイルにアクセスするビルトインツールが存在しない。そこで自作ツールを使う。
 
 ```ts
 import "dotenv/config";
@@ -106,8 +163,7 @@ import * as fs from "node:fs/promises";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
-// Gemini に渡す「仕様書」
-// execute は Gemini には渡されない。アプリ側だけが持つ。
+// Gemini に渡すツール
 const readFileTool = {
   declaration: {
     name: "read_file",
@@ -144,7 +200,7 @@ console.log("functionCalls:", JSON.stringify(response.functionCalls, null, 2));
 // → [{ id: "...", name: "read_file", args: { path: "package.json" } }]
 ```
 
-Gemini は `execute` の中身を知らない。`description` を読んで「このツールを呼べばファイルを読める」と判断するだけだ。**AI にはツールが実際に何をするかは見えない。`description` を信じるだけ**なので、description に嘘を書かないことがツール設計の基本になる。
+Gemini は `execute` の中身を知らない。`description` を読んで「このツールを呼べばファイルを読める」と判断するだけだ。
 
 `functionCalls` が返ってきたら、アプリ側でツールを実行して結果を Gemini に返す。
 
@@ -159,7 +215,7 @@ const toolResponse = createPartFromFunctionResponse(fc.id ?? "", fc.name ?? "", 
   output: result,
 });
 const finalResponse = await chat.sendMessage({ message: [toolResponse] });
-console.log(finalResponse.text); // "package.json の name は gemini-tool-calling です"
+console.log(finalResponse.text); // "The value of the name field in package.json is \"gemini-tool-calling\"."
 ```
 
 `createPartFromFunctionResponse` は結果を Gemini SDK が要求する `Part` 形式に変換するヘルパーだ。`id` を含めることで Gemini が「このレスポンスはどの `functionCall` に対応するか」を紐付けられる。
@@ -180,13 +236,6 @@ functionCalls: [
     }
   }
 ]
-----------------
-
-→ Gemini が "read_file" を呼びたがっている
-  args: {"path":"package.json"}
-  実行結果（先頭100文字）: {
-  "name": "gemini-tool-calling",
-  ...
 
 Gemini: The value of the name field in package.json is "gemini-tool-calling".
 ```
@@ -195,9 +244,9 @@ Gemini: The value of the name field in package.json is "gemini-tool-calling".
 
 ---
 
-## Step 4: ループで実行する
+## 5. ループで実行する
 
-Step 3 では1往復だけだった。実際には Gemini が複数回ツールを呼び出すことがある。`functionCalls` が返ってくる間はループを続け、`text` が返ってきたら終了する。
+前の手順では1往復だけだった。実際には Gemini が複数回ツールを呼び出すことがある。`functionCalls` が返ってくる間はループを続け、`text` が返ってきたら終了する。
 
 ```ts
 import { Part } from "@google/genai";
@@ -253,9 +302,7 @@ text: "package.json は ... tsconfig.json は ..."
 
 ```
 $ pnpm run step4
-Gemini + read_file tool (type "exit" to quit):
 You: package.json と tsconfig.json を読んで、それぞれの name と compilerOptions.target を教えて
-  [tool] read_file, read_file を実行中...
 Gemini: package.json の name は gemini-tool-calling で、tsconfig.json の compilerOptions.target は ES2022 です。
 ```
 
@@ -263,11 +310,9 @@ Gemini: package.json の name は gemini-tool-calling で、tsconfig.json の co
 
 ## まとめ
 
-| ステップ | 学んだこと                                                                       |
-| -------- | -------------------------------------------------------------------------------- |
-| Step 1   | readline で CLI の対話ループを作る                                               |
-| Step 2   | Gemini のレスポンスは `text` と `functionCalls` の2種類                          |
-| Step 3   | ローカルのファイル操作には自作ツールが必要。Gemini は `description` を信じるだけ |
-| Step 4   | `functionCalls` がなくなるまでループし、最終的に1つの `text` になる              |
+LLM はツール呼び出しを要求する JSON を返し、実際に実行するのはアプリ側である。このループの繰り返しがシングルエージェントだ。
 
-**「LLM が JSON を返すだけ、動かすのはアプリ側」** — これが Tool Calling の役割分担だ。この仕組みは Gemini に限らず OpenAI・Claude でも同じで、Claude Code や Gemini CLI もこの構造をローカルに実装したものだ。
+## 参考
+
+- [I think "agent" may finally have a widely enough agreed upon definition to be useful jargon now - Simon Willison](https://simonwillison.net/2025/Sep/18/agents/) — AI エージェントの定義："An LLM agent runs tools in a loop to achieve a goal."
+- [The canonical agent architecture: A while loop with tools - Braintrust](https://www.braintrust.dev/blog/agent-while-loop) — Claude Code や OpenAI Agents SDK が採用する基本パターン

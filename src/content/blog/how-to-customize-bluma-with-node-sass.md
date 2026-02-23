@@ -56,7 +56,7 @@ body {
 ```
 
 `node-sass`を実行することによりSCSSからCSSを出力する。  
-`node-sass 入力元のSCSSファイル 出力先のCSSファイル`という形でコンパイルすることができる。
+`node-sass 入力元のSCSSファイル 出力先のCSSファイル`という形でコンパイルできる。
 
 ```sh
 npx node-sass scss/style.scss css/style.css

@@ -12,7 +12,7 @@ PythonでUnary RPCすなわち1リクエスト-1レスポンス形式のgRPCを�
 
 ## gRPCとは
 
-[gRPC](https://grpc.io/)とは、Remote Procedure Call (RPC) システムのことで、マイクロサービス間の通信を高速に、かつ簡易に記述することができる。  
+[gRPC](https://grpc.io/)とは、Remote Procedure Call (RPC) システムのことで、マイクロサービス間の通信を高速に、かつ簡易に記述できる。  
 gRPCには、gRPCクライアント(スタブ)とgRPCサーバの2つの役割がある。  
 gRPCクライアントはgRPCサーバ上のメソッドを、まるでgRPCクライアントのローカルオブジェクトのメソッドを呼び出しているかのように扱うことができる。
 
