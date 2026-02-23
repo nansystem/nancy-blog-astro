@@ -7,7 +7,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "lint:text": "textlint 'src/content/blog/**/*.md'"
+    "lint:text": "textlint 'src/content/blog/**/*.md'",
+    "lint:frontmatter": "node scripts/lint-frontmatter.mjs",
+    "lint:frontmatter:fix": "node scripts/lint-frontmatter.mjs --fix"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.13",
@@ -20,6 +22,8 @@
   "packageManager": "pnpm@10.16.1",
   "devDependencies": {
     "@j178/prek": "^0.3.2",
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^4.1.1",
     "oxfmt": "^0.31.0",
     "playwright": "^1.58.2",
     "textlint": "^15.5.1",

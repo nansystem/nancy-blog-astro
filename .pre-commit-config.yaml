@@ -15,3 +15,9 @@ repos:
         entry: pnpm exec textlint
         language: system
         files: src/content/blog/.*\.md$
+      - id: lint-frontmatter
+        name: lint frontmatter (md)
+        entry: node scripts/lint-frontmatter.mjs
+        language: system
+        files: src/content/blog/.*\.(md|mdx)$
+        pass_filenames: false

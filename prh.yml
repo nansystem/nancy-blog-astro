@@ -17,3 +17,19 @@ rules:
     patterns:
       - ランする
       - 走らせる
+
+  # 固有名詞・技術用語の表記統一
+  - expected: PicoClaw
+    patterns:
+      - picoClaw
+      - Picoclaw
+      - picoclaw
+  - expected: オーケストレーター型
+    patterns:
+      - Orchestrator型
+      - Orchestrator 型
+      - orchestrator型
+      - オーケストレーション型
+  - expected: LLM
+    patterns:
+      - llm

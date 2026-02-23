@@ -4,7 +4,7 @@ description: "PicoClaw（OpenClawのGo実装・超軽量AIエージェント）�
 date: 2026-02-17T12:00:00+09:00
 categories:
   - AI
-permalink: /picoclaw-sakura-ai-engine
+permalink: /PicoClaw-sakura-ai-engine
 published: true
 ---
 
@@ -52,7 +52,7 @@ cp config/config.example.json config/config.json
       "model": "gpt-oss-120b",
 ```
 
-**②vllmプロバイダにさくらのAPIキーとエンドポイントを設定**
+**②vLLMプロバイダにさくらのAPIキーとエンドポイントを設定**
 
 ```json
 "vllm": {
@@ -145,14 +145,14 @@ docker compose run --rm picoclaw-agent
 | **マルチチャネル通知** | Telegram・WhatsApp・Feishu などへメッセージ送信 | リマインダー、結果報告、アラート送信 |
 | **スキル拡張** | カスタムスキル (GitHub 操作、要約、tmux 制御、天気取得 など) | `github` スキルで Issue 作成、`summarize` で長文要約、`weather` で天気取得 |
 | **記憶・学習** | 永続メモリ (`MEMORY.md`) に重要情報を保存 | ユーザーの好みや過去の指示を次回以降も利用 |
-| **バックグラウンドタスク** | `subagent` / `spawn` で長時間処理を非同期実行 | 大規模検索や複数ステップのワークフローを裏で走らせる |
+| **バックグラウンドタスク** | `subagent` / `spawn` で長時間処理を非同期実行 | 大規模検索や複数ステップのワークフローをバックグラウンドで実行する |
 ```
 
 Markdownテーブルで整理された回答が返ってきた。
 
 ### ②Gatewayモード + チャットアプリ連携
 
-Discord、LINE、Slackなどと連携できる。プライベートのアカウントにAIエージェントを繋ぐのはまだ怖いので、Discordでテスト用サーバーを立てて試した。なお、DiscordのBot設定はちょっと面倒だった。Gatewayモードを試したいだけなら他のアプリの方が楽かも。
+Discord、LINE、Slackなどと連携できる。プライベートのアカウントにAIエージェントを繋ぐのはまだ怖いので、Discordでテスト用サーバーを立てて試した。なお、DiscordのBot設定はちょっと面倒だった。Gatewayモードを試したいだけなら、他のアプリを選ぶほうが手軽だ。
 
 #### テスト用Discordサーバーの作成
 
@@ -161,14 +161,14 @@ Botの招待先が必要なので、先にサーバーを作っておく。
 1. https://discord.com/channels/@me でログイン
 2. 左サイドバーの一番下にある「+」ボタンをクリック
 3. 「オリジナルの作成」→「自分と友達のため」を選択
-4. サーバー名を適当につける（例：picoclaw-test）
+4. サーバー名を適当につける（例：PicoClaw-test）
 
 #### Discord Botの作成とToken取得
 
 1. https://discord.com/developers/applications を開く
 2. 右上の「New Application」をクリック、Nameに `picoclaw-test` を入力してCreate
 3. 左メニューの「Bot」に進む
-4. 「Reset Token」をクリック → 確認ダイアログで「Yes, do it!」
+4. 「Reset Token」をクリック → 確認ダイアログで「Yes, do it」
 5. 表示されたBot Tokenをコピーして控える（一度しか表示されない）
 6. 下にスクロールして **Message Content Intent** をONにする
 7. ページ下部の「Save Changes」を押す
@@ -181,7 +181,7 @@ OAuth2 URL Generatorの「Generated URL」は、Redirect URLを設定しない�
 https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=67584&scope=bot
 ```
 
-Discordでは各権限にビット値が割り当てられており、複数権限はそれらを足した数で指定する（[Permissions \| Discord Developer Portal](https://discord.com/developers/docs/topics/permissions)）。`permissions=67584` は Send Messages（2048）と Read Message History（65536）の合計で、ボットがチャンネルのメッセージを読んで返信するために必要な最小限の権限になる。
+Discordでは各権限にビット値が割り当てられており、複数権限はそれらを足した数で指定する（[Permissions \| Discord Developer Portal](https://discord.com/developers/docs/topics/permissions)）。`permissions=67584` は Send Messages（2048）と Read Message History（65536）の合計だ。ボットがチャンネルのメッセージを読んで返信するために必要な最小限の権限になる。
 
 「サーバーに追加」で先ほど作成したテスト用サーバーを選択して「はい」で招待完了。
 
@@ -277,7 +277,7 @@ docker compose --profile gateway down
 
 他のプロバイダはデフォルトのままで問題ない。利用可能なモデルと料金はさくらのAI Engineのコントロールパネルで確認できる。
 
-ここまでだとClaudeやOpenAIと変わらないので、遊んでみようと思う。
+ここまでだとClaudeやOpenAIと変わらないので、遊んでみる。
 
 ## 参考
 

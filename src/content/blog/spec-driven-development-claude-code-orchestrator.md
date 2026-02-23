@@ -1,12 +1,14 @@
 ---
-title: 仕様駆動開発の実践：Claude Codeで作るOrchestrator型ワークフロー
-description: Claude Codeのrules・skills・subagentを活用し、仕様駆動開発をOrchestrator型ワークフローとして実践する方法を解説する。仕様テンプレート、CLAUDE.mdの設計、Taskツールによるサブエージェント活用の具体例を示す。
+title: 仕様駆動開発の実践：Claude Codeで作るオーケストレーター型ワークフロー
+description: Claude Codeのrules・skills・subagentを活用し、仕様駆動開発をオーケストレーター型ワークフローとして実践する方法を解説する。仕様テンプレート、CLAUDE.mdの設計、Taskツールによるサブエージェント活用の具体例を示す。
 date: 2026-02-21T13:00:00+09:00
 categories:
   - AI
 permalink: /spec-driven-development-claude-code-orchestrator
 published: false
 ---
+
+<!-- textlint-disable -->
 
 [仕様駆動開発（SDD）入門](/spec-driven-development)では、SDD の概念・ワークフロー・ツールを整理した。本記事はその実践編として、Claude Code で SDD を実現する具体的な方法を示す。
 
@@ -551,7 +553,7 @@ Claude: （内部で複数の Task を並列起動）
 
 ---
 
-## Orchestrator 型ワークフローの実践
+## オーケストレーター型ワークフローの実践
 
 ここまでに紹介した rules・skills・subagent を組み合わせ、仕様策定から実装完了まで 1 コマンドで実行する `/sdd` スキルを定義する。これが Orchestrator（指揮者）の実体である。
 

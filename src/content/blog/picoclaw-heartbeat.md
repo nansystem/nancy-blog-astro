@@ -1,10 +1,10 @@
 ---
-title: picoclaw の HEARTBEAT は単なる cron ではなく、AI が状況を判断して行動する仕組みだった
-description: picoclaw の HEARTBEAT は cron と違い AI が自然言語タスクを解釈して行動する仕組みだ。spawn によるサブエージェント分岐もコードではなくプロンプトエンジニアリングで制御されている。実機検証で spawn が発火する条件を確かめ、サブエージェントにツールが未登録な問題も見つけた。
+title: PicoClaw の HEARTBEAT は単なる cron ではなく、AI が状況を判断して行動する仕組みだった
+description: PicoClaw の HEARTBEAT は cron と違い AI が自然言語タスクを解釈して行動する仕組みだ。spawn によるサブエージェント分岐もコードではなくプロンプトエンジニアリングで制御されている。実機検証で spawn が発火する条件を確かめ、サブエージェントにツールが未登録な問題も見つけた。
 date: 2026-02-22T12:00:00+09:00
 categories:
   - AI
-permalink: /picoclaw-heartbeat
+permalink: /PicoClaw-heartbeat
 published: true
 ---
 
@@ -53,11 +53,11 @@ If there is nothing that requires attention, respond ONLY with: HEARTBEAT_OK
 
 `Current time:` の行は Go コードが挿入する。末尾の `%s` に `HEARTBEAT.md` の全内容がそのまま埋め込まれる。
 
-## picoclaw 内蔵 cron との違い
+## PicoClaw 内蔵 cron との違い
 
-picoclaw には HEARTBEAT とは別に cron 機能（`~/.picoclaw/workspace/cron/jobs.json`）がある。違いは **LLM が間に入るかどうか**だ。
+PicoClaw には HEARTBEAT とは別に cron 機能（`~/.picoclaw/workspace/cron/jobs.json`）がある。違いは **LLM が間に入るかどうか**だ。
 
-|              | picoclaw cron              | HEARTBEAT                        |
+|              | PicoClaw cron              | HEARTBEAT                        |
 | ------------ | -------------------------- | -------------------------------- |
 | タスク定義   | JSON 構造化                | 自然言語 Markdown                |
 | 実行エンジン | スケジューラがコマンド実行 | AI が解釈して実行                |
@@ -139,7 +139,7 @@ flowchart LR
 
 ## spawn は本当に発火するのか
 
-コードを読んだだけでは「spawn が実際に呼ばれるのか」は分からない。2パターンの `HEARTBEAT.md` を用意して `picoclaw gateway` を起動し、spawn が発火する条件を検証した。使用モデルは `gpt-oss-120b`（vllm）。
+コードを読んだだけでは「spawn が実際に呼ばれるのか」は分からない。2パターンの `HEARTBEAT.md` を用意して `picoclaw gateway` を起動し、spawn が発火する条件を検証した。使用モデルは `gpt-oss-120b`（vLLM）。
 
 ### パターン1：デフォルト指示 + 軽いタスク → spawn 不発火
 
@@ -228,5 +228,5 @@ PRを出すチャンスだと思ったけど、調べたらもうPR出てたorz
 
 ## まとめ
 
-picoclaw の HEARTBEAT が cron と異なる点は「コマンドを実行する」のではなく「AI が状況を判断して行動する」ことだ。spawn によるサブエージェントも、新プロセスのような大仰なものではなく goroutine + 使い捨て LLM セッションのシンプルな実装になっている。  
+PicoClaw の HEARTBEAT が cron と異なる点は「コマンドを実行する」のではなく「AI が状況を判断して行動する」ことだ。spawn によるサブエージェントも、新プロセスのような大仰なものではなく goroutine + 使い捨て LLM セッションのシンプルな実装になっている。  
 自分としては、プロンプトで分岐させているところが面白く、学びもあった。
