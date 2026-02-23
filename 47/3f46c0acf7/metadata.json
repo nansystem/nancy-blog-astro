@@ -1,0 +1,33 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "473f46c0acf7",
+  "strategy": "manual-commit",
+  "branch": "master",
+  "checkpoints_count": 7,
+  "files_touched": [
+    ".pre-commit-config.yaml",
+    ".textlintrc.json",
+    "scripts/check-url-format.sh",
+    "src/content/blog/develop-google-cloud-function-with-emulator.md",
+    "src/content/blog/flask-render_template.md",
+    "src/content/blog/gemini-tool-calling.md",
+    "src/content/blog/picoclaw-heartbeat.md",
+    "src/content/blog/picoclaw-sakura-ai-engine.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/47/3f46c0acf7/0/metadata.json",
+      "transcript": "/47/3f46c0acf7/0/full.jsonl",
+      "context": "/47/3f46c0acf7/0/context.md",
+      "content_hash": "/47/3f46c0acf7/0/content_hash.txt",
+      "prompt": "/47/3f46c0acf7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1342,
+    "cache_creation_tokens": 299029,
+    "cache_read_tokens": 20646525,
+    "output_tokens": 30431,
+    "api_call_count": 219
+  }
+}

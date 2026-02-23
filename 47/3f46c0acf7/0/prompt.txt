@@ -1,0 +1,536 @@
+以下の中でこのブログで適用する価値があると思われるものを選定して。　textlint-rule-ja-hiragana-daimeishi
+textlint-rule-ja-hiragana-fukushi
+textlint-rule-ja-hiragana-hojodoushi
+textlint-rule-ja-keishikimeishi
+textlint-rule-ja-no-abusage
+textlint-rule-ja-no-mixed-period
+textlint-rule-ja-no-redundant-expression
+textlint-rule-no-double-negative-ja
+textlint-rule-no-doubled-conjunction
+textlint-rule-no-doubled-conjunctive-particle-ga
+textlint-rule-no-doubled-joshi
+textlint-rule-no-dropping-the-ra
+textlint-rule-no-hankaku-kana
+textlint-rule-no-mix-dearu-desumasu
+textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet
+textlint-rule-no-nfd
+textlint-rule-prh
+textlint-rule-sentence-length
+textlint-rule-preset-ja-spacing（補足1）
+textlint-rule-ja-nakaguro-or-halfwidth-space-between-katakana
+textlint-rule-ja-no-space-around-parentheses
+textlint-rule-ja-no-space-between-full-width
+textlint-rule-ja-space-after-exclamation
+textlint-rule-ja-space-after-question
+textlint-rule-ja-space-around-code
+textlint-rule-ja-space-between-half-and-full-width
+textlint-rule-pattern
+
+---
+
+採用推奨のルールを追加して。
+
+---
+
+https://github.com/textlint-ja/textlint-rule-preset-ai-writingこれはどう?
+
+---
+
+no-ai-hype-expressions no-ai-colon-continuation no-ai-emphasis-patterns no-ai-list-formattingを採用して。
+
+---
+
+commit and push
+
+---
+
+Step 1:この書きかた英語っぽいのでは？　http://localhost:4321/ai-orchestration-1-single-agent
+
+---
+
+1. とかでいいと思う
+
+---
+
+step1と同様に実際の返事を書きたい。> pnpm run step2
+
+> gemini-tool-calling@1.0.0 step2 /home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling
+> tsx step2-gemini.ts
+
+Gemini chat (type "exit" to quit):
+You: あなたは誰ですか?
+--- response ---
+text       : 私はGoogleによってトレーニングされた、大規模言語モデルです。
+functionCalls: undefined
+
+---
+
+step3を追加して、buildツールが使われるときのresponseを確認したい。/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-callingにコードを追加して検証して。
+
+---
+
+[Request interrupted by user for tool use]
+
+---
+
+レスポンスには2種類のフィールドがある。
+
+フィールド    内容
+text    Gemini のテキスト回答
+functionCalls    呼び出したいツールの一覧（ツールを渡していないので常に undefined） この書き方より戻りのJSONにコメントを入れて解説の方が分かりやすい。
+
+---
+
+ビルドインのツールはどうやって使うの?
+
+---
+
+/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-callingに検証コードを追加して、検証結果を記事に追加して。
+
+---
+
+補足: ビルトインツールではなく3.にして。現在３のは4のようにずらして。
+
+---
+
+googleSearchの{}は何を意味するの? もしこれなしで天気を聞いたらどうなる?
+
+---
+
+はい
+
+---
+
+つまり、アプリケーション側がハルシネーションを起こしやすいか判断する必要があるってこと?公式サイトではどうすればいいと言っている?
+
+---
+
+公式の見解をリンク付きで記事に反映して。
+
+---
+
+codeExecution（Pythonコードの実行）や urlContextも同様の仕組みがある?
+
+---
+
+それも補足で書いておいて。
+
+---
+
+コード実行が必要かはモデルが問題の性質から判断でき、の意味が分からない。数学的なことがAIは苦手だからそういう時に使うんだと思うが、なぜ問題の性質から判断できると言えるのか
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the conversation to create a thorough summary.
+
+1. **textlint rules selection**: User asked to evaluate a list of textlint rules. I reviewed current .textlintrc.json and recommended 7 rules to add, noting which were already covered by preset-ja-technical-writing.
+
+2. **Adding recommended rules**: User approved, I installed 7 packages and added them to .textlintrc.json.
+
+3. **preset-ai-writing evaluation**: User asked about textlint-rule-preset-ai-writing from GitHub. I fetched the page and evaluated 4 of 5 rules as worth adopting.
+
+4. **Adding ai-writing rules**: User approved 4 rules (no-ai-hype-expressions, no-ai-colon-continuation, no-ai-emphasis-patterns, no-ai-list-formatting). I installed @textlint-ja/textlint-rule-preset-ai-writing and configured it with ai-tech-writing-guideline: false.
+
+5. **commit and push**: Committed only the 3 config files (.textlintrc.json, package.json, pnpm-lock.yaml), not the blog post files.
+
+6. **"Step 1:" is English-like**: User pointed out the heading format at http://localhost:4321/ai-orchestration-1-single-agent. I found the file is gemini-tool-calling.md. User chose "1." format. I changed all Step N: headings to N. format, updated body references and summary table.
+
+7. **Table to code block**: User said the table for response fields in step2 was less readable than inline code comments. I replaced it with a ts code block with comments.
+
+8. **Step 3 sandbox verification**: User wanted to add step3 execution results to the article and verify with sandbox code. But user interrupted the Bash execution.
+
+9. **"Step 1:" English-like discussion moved to article improvements**: User asked about making step2 response description better with code comments instead of table - done.
+
+10. **Built-in tools (googleSearch) section**: User asked how to use built-in tools. I explained and then user asked to add verification code in sandbox and add results to article. I created step5-builtin-tool.ts, ran it (got error with gemini-2.0-flash, fixed to gemini-2.5-flash-lite), got results showing functionCalls: undefined.
+
+11. **Restructuring**: User asked to make "補足: ビルトインツール" into section 3, shifting old 3→4, 4→5. I did this and updated summary table.
+
+12. **googleSearch {} meaning + no-search comparison**: User asked what {} means and what happens without googleSearch. I verified in sandbox (no-search gave hallucinated weather: 27°C/20°C vs actual 23°C/12°C), checked type definitions showing GoogleSearch has optional properties.
+
+13. **Adding hallucination comparison to article**: User approved adding this.
+
+14. **Dynamic Retrieval**: User asked if app needs to judge hallucination risk. I researched and found Dynamic Retrieval (dynamicRetrievalConfig/dynamicThreshold) is the official recommendation. User asked to add this to article with link.
+
+15. **codeExecution/urlContext Dynamic Retrieval question**: User asked if same mechanism exists for other tools. I checked type definitions: both are empty interfaces {}. I wrote an explanation saying "codeExecution doesn't need it because model can judge from problem nature" but user correctly pointed out this was inaccurate/unclear.
+
+16. **Fix inaccurate explanation**: User said "コード実行が必要かはモデルが問題の性質から判断でき" doesn't make sense. I admitted this was speculation and corrected to just state the fact: the interfaces are empty objects with no properties.
+
+Key files:
+- /home/nancy/src/github.com/nansystem/nancy-blog-astro/.textlintrc.json
+- /home/nancy/src/github.com/nansystem/nancy-blog-astro/package.json
+- /home/nancy/src/github.com/nansystem/nancy-blog-astro/prh.yml
+- /home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/gemini-tool-calling.md
+- /home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/step5-builtin-tool.ts
+- /home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/package.json
+
+Summary:
+1. Primary Request and Intent:
+   - textlintルール一覧から採用価値のあるものを選定し、採用推奨の7ルールと@textlint-ja/preset-ai-writingの4ルールを追加・設定する
+   - gemini-tool-calling.md（permalink: /ai-orchestration-1-single-agent）の記事を改善する：
+     - 見出し「Step 1:」形式を「1.」形式に変更
+     - step2のレスポンス説明をテーブルからコメント付きコードブロックに変更
+     - ビルトインツール（googleSearch）の説明を「補足」から「3.」セクションに昇格し、旧3.→4.、旧4.→5.にずらす
+     - googleSearch: {}の意味とツールなしの場合のハルシネーション比較を追加
+     - Dynamic Retrievalに関する公式見解をリンク付きで追記
+     - codeExecution/urlContextにDynamic Retrievalがない事実を追記（推測を排除）
+
+2. Key Technical Concepts:
+   - textlint: 日本語記事の品質チェックツール
+   - preset-ja-technical-writing: 技術文書向けtextlintプリセット（多くのルールを内包）
+   - @textlint-ja/textlint-rule-preset-ai-writing: AI生成文章のパターンを検出するプリセット
+   - Dynamic Retrieval（dynamicRetrievalConfig/dynamicThreshold）: googleSearch専用の動的検索判断機能
+   - Grounding with Google Search: ハルシネーションを約40%削減する公式機能
+   - Tool Calling: LLMがfunctionCallsを返し、アプリ側が実行する仕組み
+   - ビルトインツール vs 自作ツール: ビルトインはGoogleサーバー側で実行されfunctionCallsが返らない
+   - ハルシネーション: googleSearchなしで天気を聞くと実際と異なる数値を自信満々に返す
+   - SDK型定義: GoogleSearch/ToolCodeExecution/UrlContextのインターフェース確認
+
+3. Files and Code Sections:
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/.textlintrc.json`
+     - 追加したルール群を管理する中心ファイル
+     - 最終的な設定:
+     ```json
+     {
+       "rules": {
+         "@textlint-ja/preset-ai-writing": {
+           "no-ai-hype-expressions": true,
+           "no-ai-colon-continuation": true,
+           "no-ai-emphasis-patterns": true,
+           "no-ai-list-formatting": true,
+           "ai-tech-writing-guideline": false
+         },
+         "ja-hiragana-fukushi": true,
+         "ja-hiragana-hojodoushi": true,
+         "ja-keishikimeishi": true,
+         "ja-no-redundant-expression": true,
+         "no-doubled-conjunction": true,
+         "no-dropping-the-ra": true,
+         "no-mixed-zenkaku-and-hankaku-alphabet": true,
+         "ng-word": { "words": [...] },
+         "prh": { "rulePaths": ["./prh.yml"] },
+         "preset-ja-technical-writing": { ... }
+       },
+       "filters": { "comments": true }
+     }
+     ```
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/gemini-tool-calling.md`
+     - permalink: /ai-orchestration-1-single-agent
+     - 記事の主要な変更点:
+       - 見出し: `## Step N: タイトル` → `## N. タイトル`
+       - 冒頭: 「4つのステップ」→「5つのステップ」
+       - step2のレスポンス説明: テーブル → コメント付きtsコードブロック
+       - 「補足: ビルトインツール」→「3. ビルトインツールを使う」として昇格
+       - 旧3.→4.「自作ツールを渡す」、旧4.→5.「ループで実行する」
+       - googleSearch: {}の意味説明を追加
+       - googleSearchなしのハルシネーション実例を追加
+       - Dynamic Retrievalの説明と公式リンクを追加
+       - codeExecution/urlContextにはDynamic Retrievalがない事実（空インターフェース）を追記
+     - まとめテーブル最終版:
+       ```
+       | 手順 | 学んだこと |
+       | 1.   | readline で CLI の対話ループを作る |
+       | 2.   | Gemini のレスポンスは text と functionCalls の2種類 |
+       | 3.   | ビルトインツールは Google サーバーで実行され、functionCalls は返らず1往復で完結する |
+       | 4.   | ローカルのファイル操作には自作ツールが必要。Gemini は description を信じるだけ |
+       | 5.   | functionCalls がなくなるまでループし、最終的に1つの text になる |
+       ```
+
+   - `/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/step5-builtin-tool.ts`
+     - ビルトインツール（googleSearch）の動作検証用コード
+     ```ts
+     import 'dotenv/config';
+     import { GoogleGenAI } from '@google/genai';
+     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+     const response = await ai.models.generateContent({
+       model: 'gemini-2.5-flash-lite',
+       contents: '今日の東京の天気は？',
+       config: { tools: [{ googleSearch: {} }] },
+     });
+     console.log('text        :', response.text);
+     console.log('functionCalls:', response.functionCalls);
+     ```
+
+   - `/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/package.json`
+     - step5スクリプトを追加: `"step5": "tsx step5-builtin-tool.ts"`
+
+4. Errors and fixes:
+   - **gemini-2.0-flash モデルエラー**: step5-builtin-tool.tsで`gemini-2.0-flash`を使用したところ「This model is no longer available to new users」エラー。→ `gemini-2.5-flash-lite`に変更して解決
+   - **「コード実行が必要かはモデルが問題の性質から判断できる」という不正確な説明**: ユーザーから「なぜそう言えるのか？」と指摘。これは推測だったと認め、型定義が空オブジェクトという事実のみを記述するよう修正:
+     ```
+     修正前: 「コード実行が必要かはモデルが問題の性質から判断でき、URLはユーザーが明示的に指定するため、動的判断の必要がないためだ」
+     修正後: 「SDK の型定義を確認すると codeExecution と urlContext のインターフェースはプロパティを持たない空のオブジェクトで、有効・無効の切り替えしかできない」
+     ```
+
+5. Problem Solving:
+   - preset-ja-technical-writingで既にカバーされているルールを除外しての選定
+   - ビルトインツールとカスタムツールのfunctionCalls動作の違いを実際の検証で確認
+   - googleSearchなしのハルシネーション実例を検証（最高気温23℃ vs 27℃の差）
+   - Dynamic Retrievalはgoogleearch専用であることをSDK型定義から確認
+
+6. All user messages:
+   - 「以下の中でこのブログで適用する価値があると思われるものを選定して。[ルール一覧]」
+   - 「採用推奨のルールを追加して。」
+   - 「https://github.com/textlint-ja/textlint-rule-preset-ai-writingこれはどう?」
+   - 「no-ai-hype-expressions no-ai-colon-continuation no-ai-emphasis-patterns no-ai-list-formattingを採用して。」
+   - 「commit and push」
+   - 「Step 1:この書きかた英語っぽいのでは？　http://localhost:4321/ai-orchestration-1-single-agent」
+   - 「1. とかでいいと思う」
+   - 「レスポンスには2種類のフィールドがある。[テーブル] この書き方より戻りのJSONにコメントを入れて解説の方が分かりやすい。」
+   - 「step3を追加して、buildツールが使われるときのresponseを確認したい。/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-callingにコードを追加して検証して。」（その後ユーザーが中断）
+   - 「ビルトインのツールはどうやって使うの?」
+   - 「/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-callingに検証コードを追加して、検証結果を記事に追加して。」
+   - 「補足: ビルトインツールではなく3.にして。現在３のは4のようにずらして。」
+   - 「googleSearchの{}は何を意味するの? もしこれなしで天気を聞いたらどうなる?」
+   - 「はい」（ハルシネーション比較を記事に追加することへの承認）
+   - 「つまり、アプリケーション側がハルシネーションを起こしやすいか判断する必要があるってこと?公式サイトではどうすればいいと言っている?」
+   - 「公式の見解をリンク付きで記事に反映して。」
+   - 「codeExecution（Pythonコードの実行）や urlContextも同様の仕組みがある?」
+   - 「それも補足で書いておいて。」
+   - 「コード実行が必要かはモデルが問題の性質から判断でき、の意味が分からない。数学的なことがAIは苦手だからそういう時に使うんだと思うが、なぜ問題の性質から判断できると言えるのか」
+   - 「Your task is to create a detailed summary...」
+
+7. Pending Tasks:
+   - 特になし。直前の修正（codeExecution/urlContextのDynamic Retrieval説明を事実ベースに修正）は完了済み
+
+8. Current Work:
+   記事 `gemini-tool-calling.md` の「3. ビルトインツールを使う」セクション末尾の説明を修正していた。
+   
+   修正前:
+   ```
+   ただし Dynamic Retrieval は `googleSearch` 専用の仕組みで、`codeExecution` と `urlContext` には設定オプション自体が存在しない（有効・無効のみ）。コード実行が必要かはモデルが問題の性質から判断でき、URLはユーザーが明示的に指定するため、動的判断の必要がないためだ。
+   ```
+   
+   修正後:
+   ```
+   ただし Dynamic Retrieval は `googleSearch` 専用の仕組みだ。SDK の型定義を確認すると `codeExecution` と `urlContext` のインターフェースはプロパティを持たない空のオブジェクトで、有効・無効の切り替えしかできない。
+   ```
+
+9. Optional Next Step:
+   直前の修正は完了済み。ユーザーからの直近の明示的な指示は「それも補足で書いておいて」→完了、「コード実行が必要かは〜の意味が分からない」→修正完了。次の明示的な指示はないため、特定の次ステップはない。
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+前提: LLM はローカルにアクセスできない
+Gemini はテキストを生成するモデルであり、Google のサーバー上で動いている。あなたの PC のファイルを読む手段を持っていない。「ファイルを読んで」と伝えたとき、Gemini がやることはファイルを読むことではなく、「read_file を呼びたい」という JSON を返すだけだ。
+
+実際にファイルを読むのはアプリ側（Node.js 等）であり、Gemini はその結果を受け取って回答を生成する。この役割分担が Tool Calling の仕組みを端的に表している。
+
+では Claude Code や Gemini CLI はなぜローカルのファイルを読めるのか。答えは「CLI 自身がこのアプリ側の実装を持っているから」だ。LLM から「read_file を呼びたい」が返ってきたとき、CLI がローカルでファイルを読んで結果を LLM に渡している。この記事で自作するのは、まさにその実行層だ。の部分不要。無関係に→関係なく　「これが後のステップで使うループの土台になる。」削除　「実行するとこうなる。」→「実行するとこうなる。特に面白味もなく、オウム返し。」
+
+---
+
+「レスポンスには2種類のフィールドがある。」→「レスポンスには2つのフィールドがある。」「実行するとこうなる。」→「実行するとこうなる。AIが返事してくれた！オウム返しよりうれしい。」
+
+---
+
+{} はすべてデフォルト設定でツールを有効にするという意味だ。はコード内に簡潔に説明いれるようにして。「実行するとこうなる。」→「実行するとこうなる。最新の情報を取得して表示してくれる。」「自作ツールと決定的に違う点が functionCalls: undefined だ。ビルトインツールは Google のサーバー側で実行されるため、アプリ側に functionCalls は返ってこない。」の部分は削除。「{
+  text: "今日の東京の天気は...", // 検索結果を踏まえた回答
+  functionCalls: undefined,    // 常に undefined（アプリ側での処理不要）
+}」の部分は削除。「googleSearch を外して同じ質問をするとどうなるか。」「なお、googleSearch を外して同じ質問をするとどうなるか。」「実際とは異なる数字を自信満々に返してきた。Gemini はリアルタイムの情報を持っていないため、学習データからそれらしい値を生成している。これがハルシネーションだ。天気のように「今の状態」が必要な質問には googleSearch が必要になる。」→「めっちゃ嘘ついてくる。これがハルシネーションですか。」「Dynamic Retrieval（動的取得）という仕組みを使えば」→「Dynamic Retrieval（動的取得）という仕組みで」「グラウンディングによって」は削除。説明なくてわからないから。「SDK の型定義を確認すると codeExecution と urlContext のインターフェースはプロパティを持たない空のオブジェクトで、有効・無効の切り替えしかできない。」は削除。
+
+---
+
+ハルシネーションが約 40% 削減されるのところに出所をリンクで貼っといて。
+
+---
+
+記事古くない?
+
+---
+
+1. 数値ごと削除 → 「ハルシネーションを削減できる」に変更
+  2. 公式ブログにリンク → 削減率の具体的な言及はないが、グラウンディングの効果を紹介している
+  https://developers.googleblog.com/en/gemini-api-and-ai-studio-now-offer-grounding-with-google-search/ にリンクする
+ここの部分で参照する記事が古くないか、ってこと。モデルは安いの選んでるから問題ない。
+
+---
+
+ok
+
+---
+
+高いほど検索を絞り込むの意味がわからない
+
+---
+
+高いほど検索が実行されにくくなる。　　専用の仕組みだ。→のみで指定できる。
+
+---
+
+dynamicThresholdのデフォルトは?
+
+---
+
+デフォルトの根拠は?
+
+---
+
+ok オプショナルなことだけ書いて。ここが重要な点だ。Gemini にツールの「仕様書」を渡すと、必要なタイミングで functionCalls が返ってくる。
+→
+claude codeなどを使っていると当たり前にローカルのファイルを検索して、編集するが、API呼び出しの場合ローカルファイルにアクセスするツールはビルドインにない。
+
+---
+
+Gemini にツールの「仕様書」を渡すと、必要なタイミングで functionCalls が返ってくる。アプリ側でそれを実行して結果を返す。次のループ実装へ進む前に、まず1往復だけ試して functionCalls が返ることを確認する。は削除・
+
+---
+
+execute は Gemini には渡されない。アプリ側だけが持つ。の意味が分からないので削除。Gemini に渡す「仕様書」→Geminiに渡すツール
+
+---
+
+parameters: {
+      type: Type.OBJECT,
+      properties: {
+        path: { type: Type.STRING, description: "ファイルパス" },
+      },
+      required: ["path"],
+    },にコメントほしい。
+
+---
+
+// gemini-2.5-flash-lite は thinking モデルのため、ツール応答が空になることがある
+    // thinkingBudget: 0 で thinking を無効化して安定させる　ここの意味が分からない。
+
+---
+
+description を信じるだけなので、description に嘘を書かないことがツール設計の基本になる。は削除。嘘つくメリットないから。
+
+---
+
+const fc = response.functionCalls![0];これのJSON知りたい。
+
+---
+
+// "package.json の name は gemini-tool-calling です"は日本語、Gemini: The value of the name field in package.json is "gemini-tool-calling".は英語で一貫性ない?
+
+---
+
+→ Gemini が "read_file" を呼びたがっている
+  args: {"path":"package.json"}
+  実行結果（先頭100文字）: {
+  "name": "gemini-tool-calling",
+  ... これなに
+
+---
+
+記事に書いてないコードは記載しない方が分かりやすいと思う。
+
+---
+
+pnpm run step4
+Gemini + read_file tool (type "exit" to quit):
+You: package.json と tsconfig.json を読んで、それぞれの name と compilerOptions.target を教えて
+  [tool] read_file, read_file を実行中...
+Gemini: package.json の name は gemini-tool-calling で、tsconfig.json の compilerOptions.target は ES2022 です。ここも同様。
+
+---
+
+## まとめ　はあっていい。
+
+---
+
+「LLM が JSON を返すだけ、動かすのはアプリ側」 — これが Tool Calling の仕組みだ。英語っぽい。太字もやめて。
+
+---
+
+序文を「AIオーケストレーションを理解したい。
+前の記事[http://localhost:4321/PicoClaw-heartbeat]でpicoClowのHEARTBEATを知ったため、そこからワークフローを動かせたら面白そうだからだ。
+そこで、オーケストレーションの前にAIエージェントの基本的な作り方を試してみる。」という内容で分かりやすく簡潔に初めて。
+
+---
+
+AI オーケストレーションを理解したい。前の記事 PicoClaw の HEARTBEAT で PicoClaw の HEARTBEAT を知ったため、そこからワークフローを動かせたら面白そうだからだ。
+
+そこで、オーケストレーションの前に AI エージェントの基本的な作り方を試してみる。この記事では、シングルエージェントの中心となる Tool Calling を5つのステップでゼロから自作する。　そもそもAI界隈における一般的なエージェントの定義を知らない。
+
+---
+
+AI エージェントの定義はどこ根拠？もし出典あればリンクしたい。
+
+---
+
+記事の末尾につけといて。
+
+---
+
+——が英語っぽいのでNGにtextlintで。
+
+---
+
+この記事では、シングルエージェントの中心となる Tool Calling を5つのステップでゼロから自作する。　何か分かりづらい。
+
+---
+
+tool callingが何か分からないから。
+
+---
+
+ループを回すシステムのことだ。で改行して。
+
+---
+
+LLM は JSON を返すだけで、実際に動かすのはアプリ側である。これが Tool Calling の仕組みだ。が変では？序文とあってない。
+
+---
+
+2がいい。
+
+---
+
+タイトルの「シングルエージェントを自作する」にAIを入れた方がいいか？
+
+---
+
+1
+
+---
+
+記事全体をレビューして。
+
+---
+
+はい。
+
+---
+
+URLは大文字使わない方がいいのでは？googleの推奨は?あと文字の区切りはハイフンがいいのか?
+
+---
+
+他の記事は?
+
+---
+
+過去記事もURL修正していい。
+
+---
+
+今後ミスしないようにshでチェックしたい。
+
+---
+
+はい
+
+---
+
+precommitに追加。
+
+---
+
+サイト内へリンクする際、そのブログタイトルと違う文言でリンクを貼ってるけどSEO的にどうなの?
+
+---
+
+前の記事 PicoClaw の HEARTBEAT で PicoClaw の HEARTBEAT を知ったためが２重じゃない
+
+---
+
+記事公開ok commit and push
