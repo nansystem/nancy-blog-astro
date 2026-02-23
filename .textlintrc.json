@@ -1,5 +1,19 @@
 {
   "rules": {
+    "@textlint-ja/preset-ai-writing": {
+      "no-ai-hype-expressions": true,
+      "no-ai-colon-continuation": true,
+      "no-ai-emphasis-patterns": true,
+      "no-ai-list-formatting": true,
+      "ai-tech-writing-guideline": false
+    },
+    "ja-hiragana-fukushi": true,
+    "ja-hiragana-hojodoushi": true,
+    "ja-keishikimeishi": true,
+    "ja-no-redundant-expression": true,
+    "no-doubled-conjunction": true,
+    "no-dropping-the-ra": true,
+    "no-mixed-zenkaku-and-hankaku-alphabet": true,
     "ng-word": {
       "words": [
         "本質",
