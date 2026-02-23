@@ -1,0 +1,43 @@
+以下の中でこのブログで適用する価値があると思われるものを選定して。　textlint-rule-ja-hiragana-daimeishi
+textlint-rule-ja-hiragana-fukushi
+textlint-rule-ja-hiragana-hojodoushi
+textlint-rule-ja-keishikimeishi
+textlint-rule-ja-no-abusage
+textlint-rule-ja-no-mixed-period
+textlint-rule-ja-no-redundant-expression
+textlint-rule-no-double-negative-ja
+textlint-rule-no-doubled-conjunction
+textlint-rule-no-doubled-conjunctive-particle-ga
+textlint-rule-no-doubled-joshi
+textlint-rule-no-dropping-the-ra
+textlint-rule-no-hankaku-kana
+textlint-rule-no-mix-dearu-desumasu
+textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet
+textlint-rule-no-nfd
+textlint-rule-prh
+textlint-rule-sentence-length
+textlint-rule-preset-ja-spacing（補足1）
+textlint-rule-ja-nakaguro-or-halfwidth-space-between-katakana
+textlint-rule-ja-no-space-around-parentheses
+textlint-rule-ja-no-space-between-full-width
+textlint-rule-ja-space-after-exclamation
+textlint-rule-ja-space-after-question
+textlint-rule-ja-space-around-code
+textlint-rule-ja-space-between-half-and-full-width
+textlint-rule-pattern
+
+---
+
+採用推奨のルールを追加して。
+
+---
+
+https://github.com/textlint-ja/textlint-rule-preset-ai-writingこれはどう?
+
+---
+
+no-ai-hype-expressions no-ai-colon-continuation no-ai-emphasis-patterns no-ai-list-formattingを採用して。
+
+---
+
+commit and push

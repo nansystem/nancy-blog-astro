@@ -1,0 +1,31 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "d80a7ed5b04c",
+  "session_id": "e7af5ba5-ee2f-4fa7-a3cb-843f68ff479d",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-23T08:52:04.437397071Z",
+  "branch": "master",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".textlintrc.json"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "6b591b54-d487-488d-bec7-2776ba4ea7b0",
+  "token_usage": {
+    "input_tokens": 34,
+    "cache_creation_tokens": 46724,
+    "cache_read_tokens": 1044144,
+    "output_tokens": 2376,
+    "api_call_count": 24
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-23T08:52:04.387001409Z",
+    "agent_lines": 14,
+    "human_added": 892,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 906,
+    "agent_percentage": 1.545253863134658
+  },
+  "transcript_path": ".claude/projects/-home-nancy-src-github-com-nansystem-nancy-blog-astro/e7af5ba5-ee2f-4fa7-a3cb-843f68ff479d.jsonl"
+}
