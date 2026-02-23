@@ -1,0 +1,649 @@
+codebaseを理解するためにmermaidも含めた解説をmdに作成して。
+
+---
+
+アーキテクチャ概要
+Parse error on line 15:
+...fig + ToolDefinition[]| Runtime    Tool
+-----------------------^
+Expecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'SQS'
+
+---
+
+execute_bash\ncommand, timeoutと表示されてしまう
+
+---
+
+mermaidの全箇所で\nがそのまま表示されている。消すのではなく改行方法を調べて。
+
+---
+
+起動フローの図だけでなく、文章での説明もほしい。
+
+---
+
+なぜread_fileを定義する必要があるのか? gemini aiが勝手に読み取ってくれるはずなのに。
+
+---
+
+openaiやclaudeでも同じなのか?CLIで使うときはローカルのファイルを読み取ってると思うが。
+
+---
+
+つまりgemini cliも同様の機能を持っているということか。そして、API呼び出しの場合はその部分を自作する必要があるということか？
+
+---
+
+overwrite=trueとは?
+
+---
+
+ここでいうedit_file（差分編集）とは各APIの機能のことなのか？
+
+---
+
+つまり、editとwriteを使い分けるよう強制しているのか
+
+---
+
+nodeからbashを実行できるのか?
+
+---
+
+/home/nancy/src/github.com/nrslib/taktはbash実行をどのように行っているか?
+
+---
+
+execFileSyncにリファクタして。
+
+---
+
+execFileSync('/bin/sh', ['-c', command])これだと前に比べてどう安全なの？
+
+---
+
+意味ないなら戻して。
+
+---
+
+アーキテクチャ概要
+Parse error on line 15:
+...fig + ToolDefinition[]| Runtime    Tool
+-----------------------^
+Expecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'SQS'
+
+---
+
+new AgentRuntimeは何をしているのか?
+
+---
+
+geminiaiにsystemInstructionって機能があるのか・
+
+---
+
+toolsはどんなのがあるの?
+
+---
+
+googleSearchとurlContext違いは？codeExecutionはローカルで行われるの？何に使えるの?
+
+---
+
+moco-tsでどういうときにcodeExecutionを渡してるの?
+
+---
+
+じゃあどれを指定してるの?
+
+---
+
+つまりビルドインツールだけでなく、自作のツールをAIに渡せるってこと?
+
+---
+
+AIからはどういうレスポンスが返ってくるの?
+
+---
+
+functionCallsがループして呼び出され、最終的にtextで答えが返ってくるってこと?
+
+---
+
+/home/nancy/src/github.com/nansystem/nancy-blog-astroの記事に追加したいから。質問したことと回答を分かりやすい形で記事にしといて。
+
+---
+
+published: falseにして。functionResponse の Partってなに?
+
+---
+
+AI側は渡された関数がどうやってそれがローカルのファイルを読み込んだり、bashを実行したりするツールだと判断できるの?の回答およびPartの回答も記事に盛り込んで。
+
+---
+
+ここまでの質問でいまのcodebaseについて理解が不足していそうなところはないか？
+
+---
+
+ToolCallTracker — 無限ループ防止の仕組みを軽く触れただけで、「なぜ同じツール+引数が繰り返されるのか」という具体的なシナリオを見ていない これ気になる。　edit_file の2フェーズ検索 — 完全一致が失敗したときの空白正規化マッチの動きこれはどういうこと？　 string | Part[] の union 型 — executeLoop の引数が最初のターンと2回目以降で型が変わる理由これも教えて。
+
+---
+
+記事に盛り込んで。記事全体をレビューして。
+
+---
+
+pwd
+
+---
+
+/home/nancy/src/github.com/nansystem/nancy-blog-astroに移動して。
+以下が本質だと理解した。ガードレールや複数のツール呼び出しは以下が分かれば考えられるので、以下に絞った記事にしたい。
+必要ならば、別記事として作成したい。sandboxリポジトリで順番に確認したい。
+
+1. cliで入力を受取何かを返す
+2. シンプルにgemini APIを呼び出す(組み込みのツールだけ使う) レスポンスのパターンを理解することが大事
+3. gemini APIに自作ツール(read_file)を渡す                ローカルのファイル操作は自作ツールが必要であることが伝えたい
+4. ループで実行する                                      ツールを繰り返し呼び出すことで、１つのレスポンスになることを理解したい
+
+---
+
+sandboxは/home/nancy/src/github.com/nansystem/sandboxにディレクトリ切って使っていい。4つのステップは１記事で書いてみて。ボリューム多かったら後から分割する判断をする。llm-tool-calling.mdは削除でいい。
+
+---
+
+タイトルはAIオーケストレーションフレームワークを理解するために分解して自作して腹落ちさせることが目的であることが伝わるようにしたい
+
+---
+
+AI エージェントの仕組みを自作して腹落ちさせる、が近いと思う。そもそもAIエージェントが何なのかの定義を知らないけど
+
+---
+
+全体像としてはAIオーケストレーションツールの理解で、マルチエージェントを共同させて動かす方法を理解したい。その前提としてシングルエージェントの作り方を理解しているところ。
+
+---
+
+AIオーケストレーション入門（1）シングルエージェントをゼロから自作するのような感じがいい。ただし、入門というとまるで教えられる感じがするが、実際は自分も学んでいる
+
+---
+
+AIオーケストレーションを理解したい（1）シングルエージェントを自作する
+
+---
+
+オーケストレーションとか、Orchestrator型とかPicoClaw、picoclawで表記ゆれが発生しているのでtextlintで修正して。
+
+---
+
+PicoClawが正しい。オーケストレーター型がいい。
+
+---
+
+[Request interrupted by user for tool use]
+
+---
+
+ok
+
+---
+
+なんでtextlintの対象外なの?
+
+---
+
+どちらがいい？
+
+---
+
+はい
+
+---
+
+今回は手動で直して。lint 対象のスクリプトを自作して。
+
+---
+
+precommitに入れてくれた?
+
+---
+
+commit and push
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me analyze this conversation chronologically and thoroughly.
+
+## Session Overview
+The conversation started with the user wanting to understand the moco-ts codebase - a TypeScript re-implementation of the MOCO AI orchestration framework using Google Gemini. The conversation evolved through codebase exploration, Q&A about concepts, blog article creation, and textlint/pre-commit configuration.
+
+## Key Activities
+
+### 1. Codebase Understanding
+- Used Explore agent to analyze the full moco-ts codebase
+- Created `.agents/codebase-overview.md` with Mermaid diagrams
+- Fixed multiple Mermaid rendering issues (`\n` → `<br/>`, `ToolDefinition[]` → `ToolDefinitions` in edge labels)
+- Added text explanations to the startup flow section
+
+### 2. Technical Q&A
+- Why read_file needs to be defined (LLM can't access filesystem)
+- OpenAI/Claude same mechanism, Claude Code is same structure
+- API calls require self-implementation of tool execution layer
+- `overwrite=true` safety guard explanation
+- execFileSync refactor (then reverted - user said it was pointless)
+- `new AgentRuntime` constructor walkthrough
+- systemInstruction feature, config.tools types
+- functionCalls loop and response patterns
+- ToolCallTracker infinite loop prevention
+- edit_file 2-phase search
+- string | Part[] union type in executeLoop
+- functionResponse Part concept
+
+### 3. Blog Articles
+- Created `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/llm-tool-calling.md` (later deleted)
+- Created `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/gemini-tool-calling.md` with title "AIオーケストレーションを理解したい（1）シングルエージェントを自作する"
+
+### 4. Sandbox Code
+Created `/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/`:
+- `package.json`
+- `tsconfig.json`
+- `.env.example`
+- `step1-cli.ts`
+- `step2-gemini.ts`
+- `step3-custom-tool.ts`
+- `step4-loop.ts`
+
+### 5. textlint and prh.yml
+- Added rules to `prh.yml`: PicoClaw, オーケストレーター型, LLM
+- Ran textlint --fix (55 fixes)
+- Added `scripts/lint-frontmatter.mjs` 
+- Added scripts to `package.json`
+- Added hook to `.pre-commit-config.yaml`
+
+### 6. Git commit attempts
+Multiple failures due to:
+1. textlint errors in existing articles (pre-existing)
+2. ng-word violations in new article ("本質", "核心")
+3. `走らせる` in picoclaw-sakura-ai-engine.md
+4. spec-driven-development-claude-code-orchestrator.md has である調/ですます調 mix
+5. `picoclaw-sakura-ai-engine.md` has weak phrases and exclamation marks
+
+Current state: commit is still failing. The most recent attempt showed errors in:
+- `gemini-tool-calling.md`: "本質"、"核心" ng-words, doubled joshi は
+- `spec-driven-development-claude-code-orchestrator.md`: である調, sentence length, doubled joshi
+- `picoclaw-sakura-ai-engine.md`: "走らせる" ng-word, weak phrases, exclamation marks
+- `picoclaw-heartbeat.md`: similar issues
+
+The commit hasn't succeeded yet.
+
+Summary:
+1. Primary Request and Intent:
+   - Understand the moco-ts codebase (TypeScript AI orchestration framework) via MD with Mermaid diagrams
+   - Q&A about Tool Calling mechanics, LLM limitations, Gemini API features
+   - Create blog articles for `nancy-blog-astro` about AI orchestration
+   - Create sandbox code at `/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/` with 4 step-by-step files
+   - Fix 表記ゆれ (spelling inconsistencies) with textlint/prh
+   - Add frontmatter lint script + pre-commit hook
+   - Commit and push all changes to `nancy-blog-astro`
+
+2. Key Technical Concepts:
+   - Tool Calling / Function Calling (LLM cannot access local filesystem; returns JSON, app executes)
+   - Gemini API: `config.tools` (built-in: googleSearch/codeExecution/urlContext; custom: functionDeclarations)
+   - `functionCalls` loop → `text` response pattern
+   - `Part` type in Gemini SDK (text Part, functionCall Part, functionResponse Part)
+   - `ToolCallTracker` - infinite loop prevention via Set of `toolName:argsJSON` keys
+   - `edit_file` 2-phase search (exact match → whitespace-normalized match)
+   - `string | Part[]` union type: first turn is string, subsequent turns are Part[]
+   - `createPartFromFunctionResponse` helper for creating functionResponse Parts with id for correlation
+   - `prh.yml` textlint rules for spelling normalization
+   - `pre-commit` hooks via `.pre-commit-config.yaml`
+   - textlint does NOT lint YAML frontmatter by default
+
+3. Files and Code Sections:
+   - `/home/nancy/src/github.com/nansystem/moco-ts/.agents/codebase-overview.md`
+     - Created with Mermaid diagrams (graph TB, sequenceDiagram, classDiagram, flowchart)
+     - Fixed `\n` → `<br/>` in node labels, `ToolDefinition[]` → `ToolDefinitions` in edge labels
+     - Added text explanations for startup flow, ToolCallTracker, edit_file 2-phase search, string|Part[] union
+
+   - `/home/nancy/src/github.com/nansystem/moco-ts/src/tools/bash.ts`
+     - Refactored from `exec`+`promisify` to `execFileSync` (then REVERTED because no security benefit)
+     - User said "意味ないなら戻して"
+     - Final state: uses `exec` + `promisify(exec)` → `execAsync`
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/llm-tool-calling.md`
+     - Created then DELETED per user request
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/gemini-tool-calling.md`
+     - NEW article: "AIオーケストレーションを理解したい（1）シングルエージェントを自作する"
+     - `published: false`, permalink: `/ai-orchestration-1-single-agent`
+     - Contains 4 steps + explanations about ToolCallTracker, edit_file, string|Part[], AI can't judge tool internals, Part concept
+     - Has textlint errors: "本質" (ng-word line ~57), "核心" (ng-word), doubled joshi は (line 218)
+
+   - `/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/step1-cli.ts`
+     - readline interface, `terminal: false`, echo loop
+
+   - `/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/step2-gemini.ts`
+     - GoogleGenAI chat, shows `response.text` and `response.functionCalls`
+
+   - `/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/step3-custom-tool.ts`
+     - Defines `readFileTool` with `declaration` (for Gemini) and `execute` (local only)
+     - Shows single-round functionCall → execute → functionResponse
+
+   - `/home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling/step4-loop.ts`
+     - `run()` function with `while(true)` loop
+     - `let currentInput: string | Part[] = userInput`
+     - `Promise.all()` for parallel tool execution
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/prh.yml`
+     - Added rules:
+       ```yaml
+       - expected: PicoClaw
+         patterns: [picoClaw, Picoclaw, picoclaw]
+       - expected: オーケストレーター型
+         patterns: [Orchestrator型, Orchestrator 型, orchestrator型, オーケストレーション型]
+       - expected: LLM
+         patterns: [llm]
+       ```
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/scripts/lint-frontmatter.mjs`
+     - NEW script reading prh.yml rules via `js-yaml`, scanning frontmatter of all .md/.mdx
+     - `--fix` flag for auto-correction
+     - Uses `extractFrontmatter()` to parse `---` blocks
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/package.json`
+     - Added scripts: `"lint:frontmatter"`, `"lint:frontmatter:fix"`
+     - Added devDependencies: `js-yaml`, `@types/js-yaml`
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/.pre-commit-config.yaml`
+     - Added hook:
+       ```yaml
+       - id: lint-frontmatter
+         name: lint frontmatter (md)
+         entry: node scripts/lint-frontmatter.mjs
+         language: system
+         files: src/content/blog/.*\.(md|mdx)$
+         pass_filenames: false
+       ```
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/spec-driven-development-claude-code-orchestrator.md`
+     - `replace_all: true` changed all `Orchestrator型` → `オーケストレーター型`
+     - Still has pre-existing textlint errors (である調, sentence length, etc.)
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-sakura-ai-engine.md`
+     - frontmatter `picoclaw` → `PicoClaw` fixed
+     - Still has textlint errors: "走らせる" ng-word, weak phrases, exclamation marks
+
+   - `/home/nancy/src/github.com/nansystem/nancy-blog-astro/src/content/blog/picoclaw-heartbeat.md`
+     - frontmatter `picoclaw` → `PicoClaw` fixed
+
+4. Errors and fixes:
+   - **Mermaid `\n` not rendering as newline**: Fixed by replacing all `\n` with `<br/>` in node labels
+   - **Mermaid parse error `ToolDefinition[]` in edge label**: Fixed by replacing `ToolDefinition[]` → `ToolDefinitions` (brackets are node syntax in Mermaid)
+   - **execFileSync refactor**: User asked to revert because `execFileSync('/bin/sh', ['-c', command])` is functionally identical to `exec(command)` - no security benefit
+   - **textlint --fix touching old articles**: Old articles got modified by textlint --fix but have remaining non-auto-fixable errors. Fixed by `git restore` + `git restore --staged` to remove them from staging
+   - **commit still failing**: New articles and modified articles still have textlint errors:
+     - `gemini-tool-calling.md`: "本質", "核心" (ng-words), doubled は
+     - `spec-driven-development-claude-code-orchestrator.md`: である調 mix (pre-existing), sentence length
+     - `picoclaw-sakura-ai-engine.md`: "走らせる" ng-word, weak phrases, "!"
+
+5. Problem Solving:
+   - Mermaid diagram rendering issues resolved via `<br/>` and removing `[]` from edge labels
+   - textlint frontmatter gap addressed with custom `scripts/lint-frontmatter.mjs`
+   - Staging area contamination resolved with `git restore --staged`
+   - **Ongoing**: git commit still failing due to textlint errors in staged articles
+
+6. All user messages:
+   - "codebaseを理解するためにmermaidも含めた解説をmdに作成して。"
+   - "アーキテクチャ概要 Parse error on line 15: ...fig + ToolDefinition[]| Runtime ... got 'SQS'"
+   - "execute_bash\ncommand, timeoutと表示されてしまう"
+   - "mermaidの全箇所で\nがそのまま表示されている。消すのではなく改行方法を調べて。"
+   - "起動フローの図だけでなく、文章での説明もほしい。"
+   - "なぜread_fileを定義する必要があるのか? gemini aiが勝手に読み取ってくれるはずなのに。"
+   - "openaiやclaudeでも同じなのか?CLIで使うときはローカルのファイルを読み取ってると思うが。"
+   - "つまりgemini cliも同様の機能を持っているということか。そして、API呼び出しの場合はその部分を自作する必要があるということか？"
+   - "execFileSyncにリファクタして。"
+   - "execFileSync('/bin/sh', ['-c', command])これだと前に比べてどう安全なの？"
+   - "意味ないなら戻して。"
+   - "アーキテクチャ概要 Parse error on line 15: ... (second occurrence, stale cache)"
+   - "overwrite=trueとは?"
+   - "ここでいうedit_file（差分編集）とは各APIの機能のことなのか？"
+   - "つまりeditとwriteを使い分けるよう強制しているのか"
+   - "nodeからbashを実行できるのか?"
+   - "/home/nancy/src/github.com/nrslib/taktはbash実行をどのように行っているか?"
+   - "execFileSyncにリファクタして。" (again, after takt analysis)
+   - "意味ないなら戻して。" (second time)
+   - "new AgentRuntimeは何をしているのか?"
+   - "systemInstructionって機能があるのか"
+   - "toolsはどんなのがあるの?"
+   - "googleSearchとurlContext違いは？codeExecutionはローカルで行われるの？何に使えるの?"
+   - "moco-tsでどういうときにcodeExecutionを渡してるの?"
+   - "じゃあどれを指定してるの?"
+   - "つまりビルドインツールだけでなく、自作のツールをAIに渡せるってこと?"
+   - "AIからはどういうレスポンスが返ってくるの?"
+   - "functionCallsがループして呼び出され、最終的にtextで答えが返ってくるってこと?"
+   - "/home/nancy/src/github.com/nansystem/nancy-blog-astroの記事に追加したいから。質問したことと回答を分かりやすい形で記事にしといて。"
+   - "published: falseにして。functionResponse の Partってなに?"
+   - "記事に盛り込んで。記事全体をレビューして。"
+   - "ここまでの質問でいまのcodebaseについて理解が不足していそうなところはないか？"
+   - "ToolCallTracker — 無限ループ防止の仕組みを軽く触れただけで... edit_file の2フェーズ検索... string | Part[] の union 型..."
+   - "記事に盛り込んで。記事全体をレビューして。"
+   - "以下が本質だと理解した。...1. cliで入力を受取何かを返す 2. シンプルにgemini APIを呼び出す 3. gemini APIに自作ツール(read_file)を渡す 4. ループで実行する"
+   - "pwd"
+   - "/home/nancy/src/github.com/nansystem/nancy-blog-astroに移動して。以下が本質だと理解した... 4つのステップは１記事で書いてみて。llm-tool-calling.mdは削除でいい。"
+   - "タイトルはAIオーケストレーションフレームワークを理解するために分解して自作して腹落ちさせることが目的であることが伝わるようにしたい"
+   - "AIオーケストレーション入門（1）シングルエージェントをゼロから自作するのような感じがいい。ただし、入門というとまるで教えられる感じがするが、実際は自分も学んでいる"
+   - "全体像としてはAIオーケストレーションツールの理解で、マルチエージェントを共同させて動かす方法を理解したい。その前提としてシングルエージェントの作り方を理解しているところ。"
+   - "AIオーケストレーションを理解したい（1）シングルエージェントを自作する"
+   - "オーケストレーションとか、Orchestrator型とかPicoClaw、picoclawで表記ゆれが発生しているのでtextlintで修正して。"
+   - "PicoClawが正しい。オーケストレーター型がいい。"
+   - "なんでtextlintの対象外なの?"
+   - "どちらがいい？"
+   - "はい"
+   - "今回は手動で直して。lint 対象のスクリプトを自作して。"
+   - "precommitに入れてくれた?"
+   - "commit and push"
+
+7. Pending Tasks:
+   - Fix textlint errors in staged files so commit succeeds:
+     - `gemini-tool-calling.md`: remove/replace "本質" and "核心" (ng-words), fix doubled は on line 218
+     - `picoclaw-sakura-ai-engine.md`: fix "走らせる" (→ "実行する" per prh.yml), fix weak phrases ("かも", "思う"), remove "!"
+     - `spec-driven-development-claude-code-orchestrator.md`: pre-existing errors (である調 mix, sentence length) - may need `# textlint-disable` or fix
+   - Then push to remote
+
+8. Current Work:
+   Attempting `git commit` in `/home/nancy/src/github.com/nansystem/nancy-blog-astro`. The commit keeps failing because the pre-commit textlint hook finds errors in staged files:
+   
+   **gemini-tool-calling.md errors:**
+   - Line ~1: `ng-word "本質"` and `ng-word "核心"`
+   - Line 218: `一文に二回以上利用されている助詞 "は"`
+   
+   **spec-driven-development-claude-code-orchestrator.md errors:**
+   - Multiple `"ですます"調` violations (である調 used throughout)
+   - Sentence length violations
+   - Doubled joshi errors
+   
+   **picoclaw-sakura-ai-engine.md errors:**
+   - `ng-word "走らせる"` (line 1 of document)
+   - Weak phrase "かも", "思う"
+   - Exclamation mark "!"
+
+   The staged files are:
+   - `.pre-commit-config.yaml`
+   - `package.json`
+   - `pnpm-lock.yaml`
+   - `prh.yml`
+   - `scripts/lint-frontmatter.mjs`
+   - `src/content/blog/gemini-tool-calling.md`
+   - `src/content/blog/picoclaw-heartbeat.md`
+   - `src/content/blog/picoclaw-sakura-ai-engine.md`
+   - `src/content/blog/spec-driven-development-claude-code-orchestrator.md`
+
+9. Optional Next Step:
+   The user said "commit and push" and the commit is still failing. The next step is to fix the textlint errors in the staged files:
+   
+   1. In `gemini-tool-calling.md`: Replace "本質" and "核心" (ng-words listed in `.textlintrc.json`), fix doubled は
+   2. In `picoclaw-sakura-ai-engine.md`: Replace "走らせる" → "実行する" (already in prh.yml), address weak phrases and "!"  
+   3. For `spec-driven-development-claude-code-orchestrator.md`: These are pre-existing errors - add `<!-- textlint-disable -->` comments or fix them
+
+   Then retry the commit and push.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /home/nancy/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+1. sandboxのリポジトリは公開しないで。
+
+2. 以下の個所でじゃあなんでclaude code cliはアクセスできているのか、の説明がないと納得感がない。実はcliが裏でやってくれてたことを説明したい。
+前提: LLM はローカルにアクセスできない
+Gemini はテキストを生成するモデルであり、Google のサーバー上で動いている。あなたの PC のファイルを読む手段を持っていない。「ファイルを読んで」と伝えたとき、Gemini がやることはファイルを読むことではなく、「read_file を呼びたい」という JSON を返すだけだ。
+
+実際にファイルを読むのはアプリ側（Node.js 等）であり、Gemini はその結果を受け取って回答を生成する。この役割分担が Tool Calling の仕組みを端的に表している。
+
+3. 動かした感じも載せたい。step2は長すぎるので省略してよい。
+sandbox/gemini-tool-calling on ⎇ master [?] is 📦 v1.0.0 via ⬢ v22.13.1 🅰 personal-admin  ️G prigela
+> pnpm run step1
+
+> gemini-tool-calling@1.0.0 step1 /home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling
+> tsx step1-cli.ts
+
+Type something (type "exit" to quit):
+You: こんにちは
+Echo: こんにちは
+You: ありがとう
+Echo: ありがとう
+
+
+> gemini-tool-calling@1.0.0 step2 /home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling
+> tsx step2-gemini.ts
+
+Gemini chat (type "exit" to quit):
+You: こんにちは
+--- response ---
+text       : こんにちは！何かお手伝いできることはありますか？
+functionCalls: undefined
+----------------
+Gemini: こんにちは！何かお手伝いできることはありますか？
+You: geminiについて教えて。
+--- response ---
+text       : ## Geminiについて
+
+Geminiは、Googleが開発した**最先端の大規模言語モデル（LLM）**です。
+
+**Geminiの主な特徴は以下の通りです。**
+
+*   **マルチモーダル性 (Multimodality):** Geminiは、テキストだけでなく、**画像、音声、動画、コード**など、さまざまな種類の情報を理解し、生成することができます。これは、これまでのLLMの多くがテキスト中心だったのに対し、Geminiが大きな進化を遂げた点です。例えば、画像を見てその内容を説明したり、動画の内容を要約したり、音声で質問に答えたりすることが可能です。
+*   **高性能 (High Performance):** Geminiは、特に複雑なタスクや推論が求められる場面で、高い性能を発揮するように設計されています。例えば、数学の問題を解いたり、科学的な概念を説明したり、プログラミングコードを生成したりする能力に優れています。
+*   **効率性 (Efficiency):** Geminiは、様々なデバイスで効率的に動作するように設計されており、クラウドだけでなく、スマートフォンなどのオンデバイスでも実行可能なモデルも提供されています。
+*   **スケーラビリティ (Scalability):** Geminiは、様々なサイズで提供されており、用途に応じて最適なモデルを選択できます。
+    *   **Gemini Ultra:** 最も高性能で、複雑なタスクに最適です。
+    *   **Gemini Pro:** 多くのタスクでバランスの取れた性能を発揮し、様々なアプリケーションに活用できます。
+    *   **Gemini Nano:** スマートフォンなどのオンデバイスでの実行に特化しており、リアルタイムでの処理やプライバシー保護に貢献します。
+*   **開発者向けツール (Developer Tools):** Googleは、開発者がGeminiを活用するためのAPIやツールを提供しており、様々なアプリケーションやサービスへの組み込みを容易にしています。
+
+**Geminiでできることの例:**
+
+*   **質問応答:** 幅広いトピックについて、詳細で的確な回答を提供します。
+*   **文章作成:** ブログ記事、メール、詩、コードなど、様々な形式の文章を生成します。
+*   **要約:** 長文のドキュメントや記事を短くまとめることができます。
+*   **翻訳:** 多言語間の翻訳を行います。
+*   **コード生成:** プログラミングコードを生成したり、既存のコードをデバッグしたりします。
+*   **画像認識・説明:** 画像の内容を理解し、説明文を生成します。
+*   **データ分析:** テキストデータからインサイトを抽出します。
+*   **クリエイティブなコンテンツ生成:** ストーリーのアイデア出しや、様々なスタイルの文章作成を支援します。
+
+**Geminiの応用例:**
+
+*   **Google製品への統合:** Google検索、Workspace（Gmail、Docsなど）、Bard（現Gemini）などのGoogle製品にGeminiの機能が組み込まれています。
+*   **AIチャットボット:** より高度で自然な会話が可能なチャットボットの開発。
+*   **研究開発:** 新しい科学的発見や技術革新の支援。
+*   **教育:** 個別学習プランの作成や、教材の生成。
+*   **ビジネス:** 業務効率化、顧客対応の自動化、データ分析など。
+
+Geminiは、AIの能力を大きく前進させる可能性を秘めたモデルであり、今後様々な分野での活用が期待されています。
+
+もし、Geminiについてさらに詳しく知りたい点や、特定の機能について知りたいことがあれば、遠慮なく質問してください。
+functionCalls: undefined
+----------------
+Gemini: ## Geminiについて
+
+Geminiは、Googleが開発した**最先端の大規模言語モデル（LLM）**です。
+
+**Geminiの主な特徴は以下の通りです。**
+
+*   **マルチモーダル性 (Multimodality):** Geminiは、テキストだけでなく、**画像、音声、動画、コード**など、さまざまな種類の情報を理解し、生成することができます。これは、これまでのLLMの多くがテキスト中心だったのに対し、Geminiが大きな進化を遂げた点です。例えば、画像を見てその内容を説明したり、動画の内容を要約したり、音声で質問に答えたりすることが可能です。
+*   **高性能 (High Performance):** Geminiは、特に複雑なタスクや推論が求められる場面で、高い性能を発揮するように設計されています。例えば、数学の問題を解いたり、科学的な概念を説明したり、プログラミングコードを生成したりする能力に優れています。
+*   **効率性 (Efficiency):** Geminiは、様々なデバイスで効率的に動作するように設計されており、クラウドだけでなく、スマートフォンなどのオンデバイスでも実行可能なモデルも提供されています。
+*   **スケーラビリティ (Scalability):** Geminiは、様々なサイズで提供されており、用途に応じて最適なモデルを選択できます。
+    *   **Gemini Ultra:** 最も高性能で、複雑なタスクに最適です。
+    *   **Gemini Pro:** 多くのタスクでバランスの取れた性能を発揮し、様々なアプリケーションに活用できます。
+    *   **Gemini Nano:** スマートフォンなどのオンデバイスでの実行に特化しており、リアルタイムでの処理やプライバシー保護に貢献します。
+*   **開発者向けツール (Developer Tools):** Googleは、開発者がGeminiを活用するためのAPIやツールを提供しており、様々なアプリケーションやサービスへの組み込みを容易にしています。
+
+**Geminiでできることの例:**
+
+*   **質問応答:** 幅広いトピックについて、詳細で的確な回答を提供します。
+*   **文章作成:** ブログ記事、メール、詩、コードなど、様々な形式の文章を生成します。
+*   **要約:** 長文のドキュメントや記事を短くまとめることができます。
+*   **翻訳:** 多言語間の翻訳を行います。
+*   **コード生成:** プログラミングコードを生成したり、既存のコードをデバッグしたりします。
+*   **画像認識・説明:** 画像の内容を理解し、説明文を生成します。
+*   **データ分析:** テキストデータからインサイトを抽出します。
+*   **クリエイティブなコンテンツ生成:** ストーリーのアイデア出しや、様々なスタイルの文章作成を支援します。
+
+**Geminiの応用例:**
+
+*   **Google製品への統合:** Google検索、Workspace（Gmail、Docsなど）、Bard（現Gemini）などのGoogle製品にGeminiの機能が組み込まれています。
+*   **AIチャットボット:** より高度で自然な会話が可能なチャットボットの開発。
+*   **研究開発:** 新しい科学的発見や技術革新の支援。
+*   **教育:** 個別学習プランの作成や、教材の生成。
+*   **ビジネス:** 業務効率化、顧客対応の自動化、データ分析など。
+
+Geminiは、AIの能力を大きく前進させる可能性を秘めたモデルであり、今後様々な分野での活用が期待されています。
+
+もし、Geminiについてさらに詳しく知りたい点や、特定の機能について知りたいことがあれば、遠慮なく質問してください。
+
+step3は何の検証か分からなかった。
+> pnpm run step3
+
+> gemini-tool-calling@1.0.0 step3 /home/nancy/src/github.com/nansystem/sandbox/gemini-tool-calling
+> tsx step3-custom-tool.ts
+
+You: package.json の name フィールドを教えて
+
+--- response ---
+there are non-text parts functionCall in the response, returning concatenation of all text parts. Please refer to the non text parts for a full response from model.
+text        : undefined
+functionCalls: [
+  {
+    "name": "read_file",
+    "args": {
+      "path": "package.json"
+    }
+  }
+]
+----------------
+
+→ Gemini が "read_file" を呼びたがっている
+  args: {"path":"package.json"}
+  実行結果（先頭100文字）: {
+  "name": "gemini-tool-calling",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "ste
+
+Gemini: The name field in package.json is "gemini-tool-calling".
+
+step4は何も返してこなかった
+> tsx step4-loop.ts
+
+Gemini + read_file tool (type "exit" to quit):
+You: package.jsonの内容を教えて。
+  [tool] read_file を実行中...
+Gemini:
+You:

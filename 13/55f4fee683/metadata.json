@@ -1,0 +1,26 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "1355f4fee683",
+  "strategy": "manual-commit",
+  "branch": "master",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/content/blog/gemini-tool-calling.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/13/55f4fee683/0/metadata.json",
+      "transcript": "/13/55f4fee683/0/full.jsonl",
+      "context": "/13/55f4fee683/0/context.md",
+      "content_hash": "/13/55f4fee683/0/content_hash.txt",
+      "prompt": "/13/55f4fee683/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 50,
+    "cache_creation_tokens": 125198,
+    "cache_read_tokens": 6197967,
+    "output_tokens": 31339,
+    "api_call_count": 49
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "1355f4fee683",
+  "session_id": "1ac65b06-ff5c-4b13-8e47-2dd926e6a7c8",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-23T03:57:38.349160442Z",
+  "branch": "master",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/content/blog/gemini-tool-calling.md"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "3cfb763a-a6f6-4048-a961-f714e3277067",
+  "checkpoint_transcript_start": 812,
+  "transcript_lines_at_start": 812,
+  "token_usage": {
+    "input_tokens": 50,
+    "cache_creation_tokens": 125198,
+    "cache_read_tokens": 6197967,
+    "output_tokens": 31339,
+    "api_call_count": 49
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-23T03:57:37.775139255Z",
+    "agent_lines": 0,
+    "human_added": 501,
+    "human_modified": 4,
+    "human_removed": 0,
+    "total_committed": 501,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-home-nancy-src-github-com-nansystem-moco-ts/1ac65b06-ff5c-4b13-8e47-2dd926e6a7c8.jsonl"
+}
