@@ -1,0 +1,29 @@
+{
+  "cli_version": "dev",
+  "checkpoint_id": "fe2d360d85ec",
+  "strategy": "manual-commit",
+  "branch": "master",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "src/content/blog/ai-orchestration-1-single-agent.md",
+    "src/content/blog/gemini-tool-calling.md",
+    "src/content/blog/picoclaw-heartbeat.md",
+    "src/content/blog/picoclaw-sakura-ai-engine.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fe/2d360d85ec/0/metadata.json",
+      "transcript": "/fe/2d360d85ec/0/full.jsonl",
+      "context": "/fe/2d360d85ec/0/context.md",
+      "content_hash": "/fe/2d360d85ec/0/content_hash.txt",
+      "prompt": "/fe/2d360d85ec/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 342,
+    "cache_creation_tokens": 47107,
+    "cache_read_tokens": 1779464,
+    "output_tokens": 4736,
+    "api_call_count": 41
+  }
+}
