@@ -140,7 +140,7 @@ COPYコマンドで`requirements.txt`をホストからコンテナへコピー�
 
 `Dockerfile`
 
-```docker{4-5}
+```docker
 FROM python:3
 WORKDIR /usr/src/app
 
@@ -151,7 +151,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 Dockerイメージを作成し、コンテナにログインして`pip list`で依存関係が解決されているか確認する。  
 Packageにfireが入っていることが分かる。
 
-```sh{5}
+```sh
 $ docker container run -it --rm python-script /bin/bash
 root@06c2e1384171:/usr/src/app# pip list
 Package    Version
@@ -168,7 +168,7 @@ wheel      0.33.4
 
 COPYコマンドでPythonスクリプトをホストからコンテナへコピーする。
 
-```docker{7}
+```docker
 FROM python:3
 WORKDIR /usr/src/app
 
@@ -189,7 +189,7 @@ app.py	requirements.txt
 
 ENTRYPOINTコマンドにすることで、引数をPythonスクリプトに渡せるようになる。
 
-```docker{9}
+```docker
 FROM python:3
 WORKDIR /usr/src/app
 

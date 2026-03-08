@@ -1,0 +1,62 @@
+{
+  "rules": {
+    "@textlint-ja/preset-ai-writing": {
+      "no-ai-hype-expressions": true,
+      "no-ai-colon-continuation": true,
+      "no-ai-emphasis-patterns": true,
+      "no-ai-list-formatting": true,
+      "ai-tech-writing-guideline": false
+    },
+    "ja-hiragana-fukushi": true,
+    "ja-hiragana-hojodoushi": true,
+    "ja-keishikimeishi": true,
+    "ja-no-redundant-expression": true,
+    "no-doubled-conjunction": true,
+    "no-dropping-the-ra": true,
+    "no-mixed-zenkaku-and-hankaku-alphabet": true,
+    "ng-word": {
+      "words": [
+        "本質",
+        "起点",
+        "核心",
+        "洞察",
+        "シームレス",
+        "ロバスト",
+        "スケーラブル",
+        "エレガント",
+        "パラダイム",
+        "エコシステム",
+        "ハンドルする",
+        "カバーする",
+        "面倒を見る",
+        "走らせる",
+        "担保する",
+        "❌",
+        "✅",
+        "🔀",
+        "自力で処理",
+        "骨格",
+        "エコーバック",
+        "——"
+      ]
+    },
+    "prh": {
+      "rulePaths": ["./prh.yml"]
+    },
+    "preset-ja-technical-writing": {
+      "sentence-length": {
+        "max": 100
+      },
+      "no-exclamation-question-mark": true,
+      "no-doubled-joshi": true,
+      "no-doubled-conjunctive-particle-ga": true,
+      "no-double-negative-ja": true,
+      "no-invalid-control-character": true,
+      "ja-no-successive-word": true,
+      "ja-no-abusage": true
+    }
+  },
+  "filters": {
+    "comments": true
+  }
+}

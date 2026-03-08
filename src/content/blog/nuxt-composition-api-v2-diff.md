@@ -264,7 +264,7 @@ watch( () => form, (currentForm, prevForm) => { console.info('currentForm: ', cu
 ### created → 普通の関数呼び出しとして書く
 
 `created`は`computed`のような`Vue`独自の決まりにしたがって書く必要はなく普通の関数として書く。  
-`created`はDOMを参照できないが、setup関数内の変数は参照することができるため、APIによる値の初期化などに使われる。
+`created`はDOMを参照できないが、setup関数内の変数は参照できるため、APIによる値の初期化などに使われる。
 
 次のコードはAPIで`data`を初期化するのを模倣して、`setTimeout`で3秒後に初期化されることを確認している。
 

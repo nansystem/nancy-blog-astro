@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
 :root {
 	--accent: #3574f0;
 	--accent-dark: #1a4fc9;
@@ -14,7 +20,7 @@ body {
 	margin: 0;
 	padding: 0;
 	text-align: left;
-	background: #fff;
+	background: #f8f9fa;
 	word-wrap: break-word;
 	overflow-wrap: break-word;
 	overflow-x: hidden;
@@ -25,8 +31,7 @@ body {
 }
 
 main {
-	width: 768px;
-	max-width: calc(100% - 2em);
+	max-width: 1060px;
 	margin: auto;
 	padding: 2em 1em;
 }
@@ -93,6 +98,8 @@ input {
 table {
 	width: 100%;
 	border-collapse: collapse;
+	display: block;
+	overflow-x: auto;
 }
 table th,
 table td {
@@ -115,7 +122,8 @@ code {
 	font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 	font-size: 0.875em;
 	padding: 0.2em 0.4em;
-	background-color: rgb(var(--gray-light));
+	background-color: #ffffff;
+	border: 1px solid rgb(var(--border));
 	border-radius: 4px;
 }
 
@@ -136,7 +144,7 @@ blockquote {
 	border-left: 3px solid rgb(var(--border));
 	padding: 0.5em 0 0.5em 1em;
 	margin: 1em 0;
-	color: rgb(var(--gray));
+	color: rgb(var(--gray-dark));
 	font-size: 0.95em;
 }
 
@@ -196,7 +204,7 @@ li {
 
 @media (max-width: 768px) {
 	.side-by-side {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 		width: 100%;
 		margin-left: 0;
 		transform: none;

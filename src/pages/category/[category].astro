@@ -28,8 +28,8 @@ const { category, posts } = Astro.props;
 ---
 
 <BaseLayout title={`${category} - nansystem`} description={SITE_DESCRIPTION}>
-	<h1>{category}</h1>
 	<section>
+		<h1>{category}</h1>
 		<ul>
 			{
 				posts.map((post: any) => (
@@ -37,11 +37,11 @@ const { category, posts } = Astro.props;
 						<a href={post.data.permalink}>
 							<span class="date">
 								<FormattedDate date={post.data.date} />
+								{post.data.published === false && (
+									<span class="preview-badge">Preview</span>
+								)}
 							</span>
 							<h3 class="title">{post.data.title}</h3>
-							{post.data.description && (
-								<p class="description">{post.data.description}</p>
-							)}
 						</a>
 					</li>
 				))
@@ -51,6 +51,9 @@ const { category, posts } = Astro.props;
 </BaseLayout>
 
 <style>
+	section {
+		max-width: 768px;
+	}
 	h1 {
 		margin-bottom: 1em;
 	}
@@ -59,37 +62,44 @@ const { category, posts } = Astro.props;
 		margin: 0;
 		padding: 0;
 	}
-	ul li {
-		border-bottom: 1px solid rgb(var(--border));
-	}
-	ul li:last-child {
-		border-bottom: none;
+	ul li + li::before {
+		content: '';
+		display: block;
+		width: 2em;
+		border-top: 2px solid var(--accent);
+		margin: 1.5em 0 0.5em;
 	}
 	ul li a {
 		display: block;
-		padding: 1em 0;
+		padding: 1.5em 0;
 		text-decoration: none;
-		transition: opacity 0.15s;
+		transition: color 0.25s ease;
 	}
 	ul li a:hover {
-		opacity: 0.7;
 		text-decoration: none;
 	}
+	ul li a:hover .title {
+		color: var(--accent);
+	}
 	.date {
+		font-size: 0.9em;
+		color: rgb(var(--gray-dark));
+	}
+	.preview-badge {
 		font-size: 0.8em;
-		color: rgb(var(--gray));
+		font-weight: 600;
+		color: #d97706;
+		background: #fef3c7;
+		padding: 0.1em 0.5em;
+		border-radius: 3px;
+		margin-left: 0.5em;
+		vertical-align: middle;
 	}
 	.title {
-		margin: 0.2em 0 0 0;
+		margin: 0.5em 0 0 0;
 		font-size: 1.1em;
 		font-weight: 600;
 		color: rgb(var(--black));
 		line-height: 1.5;
-	}
-	.description {
-		margin: 0.3em 0 0 0;
-		font-size: 0.85em;
-		color: rgb(var(--gray));
-		line-height: 1.6;
 	}
 </style>

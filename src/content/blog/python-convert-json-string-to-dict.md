@@ -42,7 +42,7 @@ age:99, type:<class 'int'>
 もしJSON文字列が正しい形式でない場合、`json.decoder.JSONDecodeError`が発生する。  
 したがって、エラーをハンドリングするにはtry/exceptで`json.loads`の処理をくくる必要がある。
 
-次のコードはJSON文字列から`,`を一つ少なくしているため、JSON文字列からdictへデコードできず、エラーになる。
+次のコードはJSON文字列から`,`を1つ少なくしているため、JSON文字列からdictへデコードできず、エラーになる。
 
 ```py
 import json

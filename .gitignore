@@ -27,3 +27,12 @@ pnpm-debug.log*
 .obsidian/
 Welcome.md
 src/content/blog/templates/
+
+# agents docs
+.agents/
+
+# claude local settings
+.claude/settings.local.json
+
+# playwright mcp
+.playwright-mcp/

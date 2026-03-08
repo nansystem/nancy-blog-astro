@@ -32,7 +32,7 @@ npm-scriptsに`build`を追加して、`npm run build`実行時にwebpackのビ�
 
 `package.json`
 
-```json{3}
+```json
 {
   "scripts": {
     "build": "webpack"

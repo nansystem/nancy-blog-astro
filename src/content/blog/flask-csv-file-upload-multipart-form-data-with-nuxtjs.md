@@ -84,7 +84,7 @@ $ curl -X POST http://127.0.0.1:5000/api/upload
 `app.config['UPLOAD_FOLDER']`にアップロード先のディレクトリを指定しておく。  
 `multipart/form-data`によりアップロードされたファイルは`request.files`に格納されている。  
 `request.files[フィールド名]`からファイルを`FileStorage`オブジェクトとして取得する。  
-`FileStorage`オブジェクトは`save`メソッドを持っており、このメソッドでファイルを保存することができる。  
+`FileStorage`オブジェクトは`save`メソッドを持っており、このメソッドでファイルを保存できる。  
 保存時は`secure_filename`関数で安全なファイル名にする。
 
 ```py

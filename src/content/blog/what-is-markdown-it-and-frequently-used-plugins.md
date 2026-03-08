@@ -13,8 +13,8 @@ JavaScriptでMarkdownをHTMLに変換したいときには、`markdown-it`が使
 ## markdown-itとは
 
 `markdown-it`はMarkdownパーサーだ。  
-Markdown(マークダウン)は文書を記述するための記法の1つだ。ヘッダー、太字、箇条書きなどの書式を簡単に設定することができる。
-そして、`markdown-it`はMarkdown記法で書かれた文字列をHTML形式に変換(パーサー)することができる。
+Markdown(マークダウン)は文書を記述するための記法の1つだ。ヘッダー、太字、箇条書きなどの書式を簡単に設定できる。
+そして、`markdown-it`はMarkdown記法で書かれた文字列をHTML形式に変換(パーサー)できる。
 
 ## markdown-itインストール
 
@@ -243,7 +243,7 @@ console.log(foo(5));
 ## markdown-itをJavaScriptファイルから呼び出す
 
 オプションやプラグインを使うためにJavaScriptファイルを用意する。  
-まずは今まで通り、Markdown記法で書かれたファイルがHTMLに変換できるようにする。　　
+まずは今まで通り、Markdown記法で書かれたファイルがHTMLに変換できるようにする。
 
 なお`node`のバージョンは`10.15.2`を使っている。
 
@@ -321,7 +321,7 @@ HTML
 npm install markdown-it-emoji --save
 ```
 
-```json{4}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
@@ -365,7 +365,7 @@ npm install twemoji --save
 
 package.json
 
-```json{5}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
@@ -425,7 +425,7 @@ npm install markdown-it-footnote --save
 
 package.json
 
-```json{5}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
@@ -476,7 +476,7 @@ npm install markdown-it-mark --save
 
 package.json
 
-```json{6}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
@@ -516,7 +516,7 @@ npm install markdown-it-deflist --save
 
 package.json
 
-```json{4}
+```json
 {
   "dependencies": {
     "markdown-it": "^8.4.2",
