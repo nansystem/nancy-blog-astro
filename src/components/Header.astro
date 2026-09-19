@@ -9,7 +9,7 @@ const pathname = decodeURIComponent(Astro.url.pathname).replace(/\/$/, '');
     <div class="nav-links">
       <a href="/" aria-current={pathname === '' ? 'page' : undefined}>記事一覧</a>
       {topics.map(topic => <a href={`/category/${encodeURIComponent(topic.toLowerCase())}`} aria-current={pathname === `/category/${topic.toLowerCase()}` ? 'page' : undefined}>{topic}</a>)}
-      <a href="/rss.xml">RSS ↗</a>
+      <a href="/rss.xml">RSS</a>
     </div>
   </nav>
 </header>

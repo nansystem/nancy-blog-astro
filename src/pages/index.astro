@@ -23,7 +23,7 @@ const categories = [...new Set(posts.flatMap(post => post.data.categories))]
     <aside aria-labelledby="topics-heading">
       <h2 id="topics-heading">テーマから探す</h2>
       <ul>{categories.map(({ name, count }) => <li><a href={`/category/${encodeURIComponent(name.toLowerCase())}`}><span>{name}</span><span class="count">{count}</span></a></li>)}</ul>
-      <div class="about"><p class="eyebrow">ABOUT THIS BLOG</p><p>コードだけでなく、考えた過程も。日々の開発で得た経験を共有しています。</p><a href="/rss.xml">RSSで更新を受け取る ↗</a></div>
+      <div class="about"><p class="eyebrow">ABOUT THIS BLOG</p><p>コードだけでなく、考えた過程も。日々の開発で得た経験を共有しています。</p><a href="/rss.xml">RSSで更新を受け取る</a></div>
     </aside>
   </div>
 </BaseLayout>
