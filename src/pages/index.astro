@@ -1,86 +1,48 @@
 ---
 import { getCollection } from 'astro:content';
-import FormattedDate from '../components/FormattedDate.astro';
+import PostList from '../components/PostList.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-
-const posts = (await getCollection('blog', ({ data }) => {
-	// 開発環境では未公開記事も表示
-	if (import.meta.env.DEV) return true;
-	return data.published !== false;
-}))
-	.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const posts = (await getCollection('blog', ({ data }) => import.meta.env.DEV || data.published !== false))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const categories = [...new Set(posts.flatMap(post => post.data.categories))]
+  .map(name => ({ name, count: posts.filter(post => post.data.categories.includes(name)).length }))
+  .sort((a, b) => b.count - a.count);
 ---
-
 <BaseLayout title={SITE_TITLE} description={SITE_DESCRIPTION}>
-	<section>
-		<ul>
-			{
-				posts.map((post) => (
-					<li>
-						<a href={post.data.permalink}>
-							<span class="date">
-								<FormattedDate date={post.data.date} />
-								{post.data.published === false && (
-									<span class="preview-badge">Preview</span>
-								)}
-							</span>
-							<h3 class="title">{post.data.title}</h3>
-						</a>
-					</li>
-				))
-			}
-		</ul>
-	</section>
+  <section class="intro">
+    <p class="eyebrow">NANSYSTEM / ENGINEERING NOTES</p>
+    <h1>つくりながら学んだことを、<br />次の一歩に。</h1>
+    <p class="lead">Web開発とAI活用の試行錯誤。<br />なんしーが試したこと、つまずいたことを書き残す技術ブログです。</p>
+    <a href="#articles" class="read-link">記事を読む <span aria-hidden="true">↓</span></a>
+  </section>
+  <div class="content-grid">
+    <section id="articles" aria-labelledby="articles-heading">
+      <div class="section-heading"><h2 id="articles-heading">新着記事</h2><span>{posts.length} ARTICLES</span></div>
+      <PostList posts={posts} />
+    </section>
+    <aside aria-labelledby="topics-heading">
+      <h2 id="topics-heading">テーマから探す</h2>
+      <ul>{categories.map(({ name, count }) => <li><a href={`/category/${encodeURIComponent(name.toLowerCase())}`}><span>{name}</span><span class="count">{count}</span></a></li>)}</ul>
+      <div class="about"><p class="eyebrow">ABOUT THIS BLOG</p><p>コードだけでなく、考えた過程も。日々の開発で得た経験を共有しています。</p><a href="/rss.xml">RSSで更新を受け取る ↗</a></div>
+    </aside>
+  </div>
 </BaseLayout>
-
 <style>
-	section {
-		max-width: 768px;
-	}
-	ul {
-		list-style-type: none;
-		margin: 0;
-		padding: 0;
-	}
-	ul li + li::before {
-		content: '';
-		display: block;
-		width: 2em;
-		border-top: 2px solid var(--accent);
-		margin: 1.5em 0 0.5em;
-	}
-	ul li a {
-		display: block;
-		padding: 1.5em 0;
-		text-decoration: none;
-		transition: color 0.25s ease;
-	}
-	ul li a:hover {
-		text-decoration: none;
-	}
-	ul li a:hover .title {
-		color: var(--accent);
-	}
-	.date {
-		font-size: 0.9em;
-		color: rgb(var(--gray-dark));
-	}
-	.preview-badge {
-		font-size: 0.8em;
-		font-weight: 600;
-		color: #d97706;
-		background: #fef3c7;
-		padding: 0.1em 0.5em;
-		border-radius: 3px;
-		margin-left: 0.5em;
-		vertical-align: middle;
-	}
-	.title {
-		margin: 0.5em 0 0 0;
-		font-size: 1.1em;
-		font-weight: 600;
-		color: rgb(var(--black));
-		line-height: 1.5;
-	}
+.intro { padding: 1.5rem 0 3.5rem; border-bottom: 1px solid rgb(var(--border)); margin-bottom: 3rem; }
+.eyebrow { color: var(--accent); font-size: .7rem; font-weight: 700; letter-spacing: .14em; }
+h1 { font-size: clamp(1.9rem, 4.4vw, 3.1rem); line-height: 1.5; letter-spacing: -.04em; margin: 1rem 0; }
+.lead { color: rgb(var(--gray)); font-size: .95rem; line-height: 2; }
+.read-link { display: inline-block; margin-top: 1rem; font-size: .85rem; font-weight: 600; }
+.read-link span { margin-left: 1rem; }
+.content-grid { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 4rem; }
+.section-heading { display: flex; justify-content: space-between; align-items: center; }
+.section-heading h2, aside h2 { font-size: .95rem; border: 0; margin: 0; padding: 0; }
+.section-heading > span { font-size: .65rem; letter-spacing: .1em; color: rgb(var(--gray)); }
+aside ul { list-style: none; padding: 0; margin: 1rem 0 2rem; }
+aside li { margin: 0; }
+aside li a { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; color: rgb(var(--gray-dark)); font-size: .8rem; }
+.count { color: rgb(var(--gray)); font-size: .7rem; }
+.about { border-top: 1px solid rgb(var(--border)); padding-top: 1rem; color: rgb(var(--gray)); font-size: .8rem; }
+@media(max-width: 760px) { h1 { font-size: 1.5rem; text-wrap: balance; } .intro { padding-top: 1rem; margin-bottom: 2rem; padding-bottom: 2rem; } .content-grid { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; } aside ul { display: flex; flex-wrap: wrap; gap: .3rem 1rem; } aside li a { gap: .6rem; } }
 </style>

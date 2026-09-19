@@ -1,0 +1,8 @@
+minimumReleaseAgeStrict: true
+allowBuilds:
+  esbuild: true
+  workerd: true
+  sharp: true
+# Mermaid の間接依存にある既知の脆弱性を修正版で解消する。
+overrides:
+  lodash-es: ^4.18.1
